@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
+  <channel>
+    <title>Exemple</title>
+    <link>https://mastodon.example/@exemple</link>
+    <image><url>https://mastodon.example/avatar.png</url></image>
+    <item>
+      <guid isPermaLink="true">https://mastodon.example/@exemple/1</guid>
+      <link>https://mastodon.example/@exemple/1</link>
+      <pubDate>Fri, 30 Oct 2026 09:00:00 +0000</pubDate>
+      <description>&lt;p&gt;Lecture du jour : un fil passionnant sur l'histoire des protocoles réseau. #réseau&lt;/p&gt;</description>
+      <media:content url="https://mastodon.example/media/1.jpg" type="image/jpeg" medium="image"/>
+    </item>
+  </channel>
+</rss>

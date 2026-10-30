@@ -1,0 +1,1392 @@
+{
+  "version": 1,
+  "note": "Catalogue de départ. Les adresses de flux sont vérifiées chaque semaine par scripts/check-feeds.mjs. L'orientation politique (−3 gauche radicale … +3 droite radicale) est indicative : c'est un repère pour diversifier ses lectures, pas un jugement. Chacun peut la corriger.",
+  "categories": [
+    {
+      "id": "tech",
+      "fr": "Tech & informatique",
+      "en": "Tech & computing",
+      "icon": "cpu"
+    },
+    {
+      "id": "politique",
+      "fr": "Politique",
+      "en": "Politics",
+      "icon": "landmark"
+    },
+    {
+      "id": "sciences",
+      "fr": "Sciences",
+      "en": "Science",
+      "icon": "atom"
+    },
+    {
+      "id": "economie",
+      "fr": "Économie",
+      "en": "Economy",
+      "icon": "trending-up"
+    },
+    {
+      "id": "geopolitique",
+      "fr": "Géopolitique",
+      "en": "World affairs",
+      "icon": "globe"
+    },
+    {
+      "id": "histoire",
+      "fr": "Histoire",
+      "en": "History",
+      "icon": "scroll"
+    },
+    {
+      "id": "sport",
+      "fr": "Sport & échecs",
+      "en": "Sport & chess",
+      "icon": "trophy"
+    },
+    {
+      "id": "culture",
+      "fr": "Culture & idées",
+      "en": "Culture & ideas",
+      "icon": "book-open"
+    },
+    {
+      "id": "sante",
+      "fr": "Santé",
+      "en": "Health",
+      "icon": "heart-pulse"
+    },
+    {
+      "id": "jeux",
+      "fr": "Jeux vidéo",
+      "en": "Video games",
+      "icon": "gamepad-2"
+    }
+  ],
+  "entries": [
+    {
+      "id": "fr-tech-numerama",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Numerama",
+      "input": "https://www.numerama.com/feed/",
+      "preselected": true
+    },
+    {
+      "id": "fr-tech-frandroid",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Frandroid",
+      "input": "https://www.frandroid.com/feed",
+      "preselected": true
+    },
+    {
+      "id": "fr-tech-next",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Next",
+      "input": "https://next.ink/feed/",
+      "preselected": true
+    },
+    {
+      "id": "fr-tech-korben",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Korben",
+      "input": "https://korben.info/feed",
+      "preselected": true
+    },
+    {
+      "id": "fr-tech-journal-du-geek",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Journal du Geek",
+      "input": "https://www.journaldugeek.com/feed/",
+      "preselected": false
+    },
+    {
+      "id": "fr-tech-clubic",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Clubic",
+      "input": "https://www.clubic.com/feed/news.rss",
+      "preselected": false
+    },
+    {
+      "id": "fr-tech-presse-citron",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Presse-citron",
+      "input": "https://www.presse-citron.net/feed/",
+      "preselected": false
+    },
+    {
+      "id": "fr-tech-01net",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "01net",
+      "input": "https://www.01net.com/feed/",
+      "preselected": false
+    },
+    {
+      "id": "fr-tech-les-numeriques",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Les Numériques",
+      "input": "https://www.lesnumeriques.com/rss.xml",
+      "preselected": false
+    },
+    {
+      "id": "fr-tech-siecle-digital",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Siècle Digital",
+      "input": "https://siecledigital.fr/feed/",
+      "preselected": false
+    },
+    {
+      "id": "fr-tech-linuxfr-org",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "forum",
+      "title": "LinuxFr.org",
+      "input": "https://linuxfr.org/news.atom",
+      "preselected": true
+    },
+    {
+      "id": "fr-tech-r-developpeurs",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "reddit",
+      "title": "r/developpeurs",
+      "input": "r/developpeurs",
+      "preselected": false
+    },
+    {
+      "id": "en-tech-ars-technica",
+      "category": "tech",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Ars Technica",
+      "input": "https://feeds.arstechnica.com/arstechnica/index",
+      "preselected": true
+    },
+    {
+      "id": "en-tech-the-verge",
+      "category": "tech",
+      "lang": "en",
+      "kind": "rss",
+      "title": "The Verge",
+      "input": "https://www.theverge.com/rss/index.xml",
+      "preselected": true
+    },
+    {
+      "id": "en-tech-404-media",
+      "category": "tech",
+      "lang": "en",
+      "kind": "rss",
+      "title": "404 Media",
+      "input": "https://www.404media.co/rss/",
+      "preselected": true
+    },
+    {
+      "id": "en-tech-techcrunch",
+      "category": "tech",
+      "lang": "en",
+      "kind": "rss",
+      "title": "TechCrunch",
+      "input": "https://techcrunch.com/feed/",
+      "preselected": false
+    },
+    {
+      "id": "en-tech-wired",
+      "category": "tech",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Wired",
+      "input": "https://www.wired.com/feed/rss",
+      "preselected": false
+    },
+    {
+      "id": "en-tech-mit-technology-review",
+      "category": "tech",
+      "lang": "en",
+      "kind": "rss",
+      "title": "MIT Technology Review",
+      "input": "https://www.technologyreview.com/feed/",
+      "preselected": false
+    },
+    {
+      "id": "en-tech-lwn-net",
+      "category": "tech",
+      "lang": "en",
+      "kind": "rss",
+      "title": "LWN.net",
+      "input": "https://lwn.net/headlines/rss",
+      "preselected": false
+    },
+    {
+      "id": "en-tech-krebs-on-security",
+      "category": "tech",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Krebs on Security",
+      "input": "https://krebsonsecurity.com/feed/",
+      "preselected": false
+    },
+    {
+      "id": "en-tech-hacker-news",
+      "category": "tech",
+      "lang": "en",
+      "kind": "forum",
+      "title": "Hacker News",
+      "input": "https://hnrss.org/frontpage",
+      "preselected": true
+    },
+    {
+      "id": "en-tech-lobsters",
+      "category": "tech",
+      "lang": "en",
+      "kind": "forum",
+      "title": "Lobsters",
+      "input": "https://lobste.rs/rss",
+      "preselected": false
+    },
+    {
+      "id": "en-tech-lemmy-technology",
+      "category": "tech",
+      "lang": "en",
+      "kind": "forum",
+      "title": "Lemmy — Technology",
+      "input": "https://lemmy.world/feeds/c/technology.xml",
+      "preselected": false
+    },
+    {
+      "id": "en-tech-r-technology",
+      "category": "tech",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/technology",
+      "input": "r/technology",
+      "preselected": false
+    },
+    {
+      "id": "en-tech-r-programming",
+      "category": "tech",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/programming",
+      "input": "r/programming",
+      "preselected": false
+    },
+    {
+      "id": "en-tech-r-linux",
+      "category": "tech",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/linux",
+      "input": "r/linux",
+      "preselected": true
+    },
+    {
+      "id": "en-tech-r-sysadmin",
+      "category": "tech",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/sysadmin",
+      "input": "r/sysadmin",
+      "preselected": false
+    },
+    {
+      "id": "en-tech-r-networking",
+      "category": "tech",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/networking",
+      "input": "r/networking",
+      "preselected": false
+    },
+    {
+      "id": "en-tech-r-selfhosted",
+      "category": "tech",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/selfhosted",
+      "input": "r/selfhosted",
+      "preselected": false
+    },
+    {
+      "id": "en-tech-r-netsec",
+      "category": "tech",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/netsec",
+      "input": "r/netsec",
+      "preselected": false
+    },
+    {
+      "id": "en-tech-nixcraft",
+      "category": "tech",
+      "lang": "en",
+      "kind": "mastodon",
+      "title": "nixCraft",
+      "input": "@nixCraft@mastodon.social",
+      "preselected": false
+    },
+    {
+      "id": "en-tech-the-verge-2",
+      "category": "tech",
+      "lang": "en",
+      "kind": "bluesky",
+      "title": "The Verge",
+      "input": "@theverge.com",
+      "preselected": false
+    },
+    {
+      "id": "en-tech-404-media-2",
+      "category": "tech",
+      "lang": "en",
+      "kind": "bluesky",
+      "title": "404 Media",
+      "input": "@404media.co",
+      "preselected": false
+    },
+    {
+      "id": "fr-politique-l-humanite",
+      "category": "politique",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "L'Humanité",
+      "input": "https://www.humanite.fr/feed",
+      "preselected": true,
+      "leaning": -3
+    },
+    {
+      "id": "fr-politique-le-monde-diplomatique",
+      "category": "politique",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Le Monde diplomatique",
+      "input": "https://www.monde-diplomatique.fr/recents.xml",
+      "preselected": false,
+      "leaning": -2
+    },
+    {
+      "id": "fr-politique-mediapart",
+      "category": "politique",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Mediapart",
+      "input": "https://www.mediapart.fr/articles/feed",
+      "preselected": false,
+      "leaning": -2
+    },
+    {
+      "id": "fr-politique-reporterre",
+      "category": "politique",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Reporterre",
+      "input": "https://reporterre.net/spip.php?page=backend",
+      "preselected": false,
+      "leaning": -2
+    },
+    {
+      "id": "fr-politique-liberation",
+      "category": "politique",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Libération",
+      "input": "https://www.liberation.fr/arc/outboundfeeds/rss-all/?outputType=xml",
+      "preselected": true,
+      "leaning": -2
+    },
+    {
+      "id": "fr-politique-le-monde-politique",
+      "category": "politique",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Le Monde — Politique",
+      "input": "https://www.lemonde.fr/politique/rss_full.xml",
+      "preselected": true,
+      "leaning": -1
+    },
+    {
+      "id": "fr-politique-franceinfo-politique",
+      "category": "politique",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "franceinfo — Politique",
+      "input": "https://www.francetvinfo.fr/politique.rss",
+      "preselected": true,
+      "leaning": 0
+    },
+    {
+      "id": "fr-politique-marianne",
+      "category": "politique",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Marianne",
+      "input": "https://www.marianne.net/rss.xml",
+      "preselected": false,
+      "leaning": 0
+    },
+    {
+      "id": "fr-politique-l-express",
+      "category": "politique",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "L'Express",
+      "input": "https://www.lexpress.fr/arc/outboundfeeds/rss/alaune.xml",
+      "preselected": false,
+      "leaning": 1
+    },
+    {
+      "id": "fr-politique-le-point-politique",
+      "category": "politique",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Le Point — Politique",
+      "input": "https://www.lepoint.fr/politique/rss.xml",
+      "preselected": true,
+      "leaning": 1
+    },
+    {
+      "id": "fr-politique-contrepoints",
+      "category": "politique",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Contrepoints",
+      "input": "https://www.contrepoints.org/feed",
+      "preselected": false,
+      "leaning": 1
+    },
+    {
+      "id": "fr-politique-le-figaro-politique",
+      "category": "politique",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Le Figaro — Politique",
+      "input": "https://www.lefigaro.fr/rss/figaro_politique.xml",
+      "preselected": true,
+      "leaning": 2
+    },
+    {
+      "id": "fr-politique-causeur",
+      "category": "politique",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Causeur",
+      "input": "https://www.causeur.fr/feed",
+      "preselected": false,
+      "leaning": 2
+    },
+    {
+      "id": "fr-politique-valeurs-actuelles",
+      "category": "politique",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Valeurs actuelles",
+      "input": "https://www.valeursactuelles.com/feed",
+      "preselected": true,
+      "leaning": 3
+    },
+    {
+      "id": "fr-politique-r-france",
+      "category": "politique",
+      "lang": "fr",
+      "kind": "reddit",
+      "title": "r/france",
+      "input": "r/france",
+      "preselected": false
+    },
+    {
+      "id": "fr-politique-le-monde",
+      "category": "politique",
+      "lang": "fr",
+      "kind": "bluesky",
+      "title": "Le Monde",
+      "input": "@lemonde.fr",
+      "preselected": false
+    },
+    {
+      "id": "en-politique-jacobin",
+      "category": "politique",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Jacobin",
+      "input": "https://jacobin.com/feed/",
+      "preselected": false,
+      "leaning": -3
+    },
+    {
+      "id": "en-politique-the-nation",
+      "category": "politique",
+      "lang": "en",
+      "kind": "rss",
+      "title": "The Nation",
+      "input": "https://www.thenation.com/feed/?post_type=article",
+      "preselected": false,
+      "leaning": -2
+    },
+    {
+      "id": "en-politique-the-guardian-politics",
+      "category": "politique",
+      "lang": "en",
+      "kind": "rss",
+      "title": "The Guardian — Politics",
+      "input": "https://www.theguardian.com/politics/rss",
+      "preselected": true,
+      "leaning": -2
+    },
+    {
+      "id": "en-politique-the-new-york-times-politics",
+      "category": "politique",
+      "lang": "en",
+      "kind": "rss",
+      "title": "The New York Times — Politics",
+      "input": "https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml",
+      "preselected": true,
+      "leaning": -1
+    },
+    {
+      "id": "en-politique-npr-politics",
+      "category": "politique",
+      "lang": "en",
+      "kind": "rss",
+      "title": "NPR — Politics",
+      "input": "https://feeds.npr.org/1014/rss.xml",
+      "preselected": false,
+      "leaning": -1
+    },
+    {
+      "id": "en-politique-bbc-politics",
+      "category": "politique",
+      "lang": "en",
+      "kind": "rss",
+      "title": "BBC — Politics",
+      "input": "https://feeds.bbci.co.uk/news/politics/rss.xml",
+      "preselected": true,
+      "leaning": 0
+    },
+    {
+      "id": "en-politique-the-economist",
+      "category": "politique",
+      "lang": "en",
+      "kind": "rss",
+      "title": "The Economist",
+      "input": "https://www.economist.com/united-states/rss.xml",
+      "preselected": false,
+      "leaning": 0
+    },
+    {
+      "id": "en-politique-the-wall-street-journal-world",
+      "category": "politique",
+      "lang": "en",
+      "kind": "rss",
+      "title": "The Wall Street Journal — World",
+      "input": "https://feeds.a.dj.com/rss/RSSWorldNews.xml",
+      "preselected": true,
+      "leaning": 1
+    },
+    {
+      "id": "en-politique-reason",
+      "category": "politique",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Reason",
+      "input": "https://reason.com/feed/",
+      "preselected": false,
+      "leaning": 1
+    },
+    {
+      "id": "en-politique-the-telegraph-politics",
+      "category": "politique",
+      "lang": "en",
+      "kind": "rss",
+      "title": "The Telegraph — Politics",
+      "input": "https://www.telegraph.co.uk/politics/rss.xml",
+      "preselected": false,
+      "leaning": 2
+    },
+    {
+      "id": "en-politique-national-review",
+      "category": "politique",
+      "lang": "en",
+      "kind": "rss",
+      "title": "National Review",
+      "input": "https://www.nationalreview.com/feed/",
+      "preselected": true,
+      "leaning": 2
+    },
+    {
+      "id": "en-politique-fox-news-politics",
+      "category": "politique",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Fox News — Politics",
+      "input": "https://moxie.foxnews.com/google-publisher/politics.xml",
+      "preselected": false,
+      "leaning": 2
+    },
+    {
+      "id": "en-politique-the-federalist",
+      "category": "politique",
+      "lang": "en",
+      "kind": "rss",
+      "title": "The Federalist",
+      "input": "https://thefederalist.com/feed/",
+      "preselected": false,
+      "leaning": 3
+    },
+    {
+      "id": "en-politique-breitbart",
+      "category": "politique",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Breitbart",
+      "input": "https://feeds.feedburner.com/breitbart",
+      "preselected": true,
+      "leaning": 3
+    },
+    {
+      "id": "en-politique-r-moderatepolitics",
+      "category": "politique",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/moderatepolitics",
+      "input": "r/moderatepolitics",
+      "preselected": false
+    },
+    {
+      "id": "en-politique-r-politicaldiscussion",
+      "category": "politique",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/PoliticalDiscussion",
+      "input": "r/PoliticalDiscussion",
+      "preselected": false
+    },
+    {
+      "id": "fr-sciences-the-conversation-france",
+      "category": "sciences",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "The Conversation France",
+      "input": "https://theconversation.com/fr/articles.atom",
+      "preselected": true
+    },
+    {
+      "id": "fr-sciences-cnrs-le-journal",
+      "category": "sciences",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "CNRS Le journal",
+      "input": "https://lejournal.cnrs.fr/rss",
+      "preselected": true
+    },
+    {
+      "id": "fr-sciences-futura-sciences",
+      "category": "sciences",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Futura Sciences",
+      "input": "https://www.futura-sciences.com/rss/actualites.xml",
+      "preselected": true
+    },
+    {
+      "id": "fr-sciences-sciences-et-avenir",
+      "category": "sciences",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Sciences et Avenir",
+      "input": "https://www.sciencesetavenir.fr/rss.xml",
+      "preselected": false
+    },
+    {
+      "id": "fr-sciences-le-monde-sciences",
+      "category": "sciences",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Le Monde — Sciences",
+      "input": "https://www.lemonde.fr/sciences/rss_full.xml",
+      "preselected": false
+    },
+    {
+      "id": "en-sciences-quanta-magazine",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Quanta Magazine",
+      "input": "https://www.quantamagazine.org/feed/",
+      "preselected": true
+    },
+    {
+      "id": "en-sciences-nature",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Nature",
+      "input": "https://www.nature.com/nature.rss",
+      "preselected": true
+    },
+    {
+      "id": "en-sciences-new-scientist",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "rss",
+      "title": "New Scientist",
+      "input": "https://www.newscientist.com/feed/home/",
+      "preselected": false
+    },
+    {
+      "id": "en-sciences-sciencedaily",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "rss",
+      "title": "ScienceDaily",
+      "input": "https://www.sciencedaily.com/rss/all.xml",
+      "preselected": false
+    },
+    {
+      "id": "en-sciences-phys-org",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Phys.org",
+      "input": "https://phys.org/rss-feed/",
+      "preselected": false
+    },
+    {
+      "id": "en-sciences-nasa",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "rss",
+      "title": "NASA",
+      "input": "https://www.nasa.gov/feed/",
+      "preselected": true
+    },
+    {
+      "id": "en-sciences-r-science",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/science",
+      "input": "r/science",
+      "preselected": false
+    },
+    {
+      "id": "en-sciences-r-askscience",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/askscience",
+      "input": "r/askscience",
+      "preselected": false
+    },
+    {
+      "id": "en-sciences-r-space",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/space",
+      "input": "r/space",
+      "preselected": false
+    },
+    {
+      "id": "en-sciences-nature-2",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "bluesky",
+      "title": "Nature",
+      "input": "@nature.com",
+      "preselected": false
+    },
+    {
+      "id": "fr-economie-les-echos",
+      "category": "economie",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Les Échos",
+      "input": "https://syndication.lesechos.fr/rss/rss_une.xml",
+      "preselected": true
+    },
+    {
+      "id": "fr-economie-le-monde-economie",
+      "category": "economie",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Le Monde — Économie",
+      "input": "https://www.lemonde.fr/economie/rss_full.xml",
+      "preselected": true
+    },
+    {
+      "id": "fr-economie-alternatives-economiques",
+      "category": "economie",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Alternatives Économiques",
+      "input": "https://www.alternatives-economiques.fr/rss.xml",
+      "preselected": false
+    },
+    {
+      "id": "fr-economie-la-tribune",
+      "category": "economie",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "La Tribune",
+      "input": "https://www.latribune.fr/feed.xml",
+      "preselected": false
+    },
+    {
+      "id": "fr-economie-r-vosfinances",
+      "category": "economie",
+      "lang": "fr",
+      "kind": "reddit",
+      "title": "r/vosfinances",
+      "input": "r/vosfinances",
+      "preselected": false
+    },
+    {
+      "id": "en-economie-the-economist-finance-economics",
+      "category": "economie",
+      "lang": "en",
+      "kind": "rss",
+      "title": "The Economist — Finance & economics",
+      "input": "https://www.economist.com/finance-and-economics/rss.xml",
+      "preselected": true
+    },
+    {
+      "id": "en-economie-bbc-business",
+      "category": "economie",
+      "lang": "en",
+      "kind": "rss",
+      "title": "BBC — Business",
+      "input": "https://feeds.bbci.co.uk/news/business/rss.xml",
+      "preselected": true
+    },
+    {
+      "id": "en-economie-the-guardian-business",
+      "category": "economie",
+      "lang": "en",
+      "kind": "rss",
+      "title": "The Guardian — Business",
+      "input": "https://www.theguardian.com/business/rss",
+      "preselected": false
+    },
+    {
+      "id": "en-economie-marginal-revolution",
+      "category": "economie",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Marginal Revolution",
+      "input": "https://marginalrevolution.com/feed",
+      "preselected": false
+    },
+    {
+      "id": "en-economie-r-askeconomics",
+      "category": "economie",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/AskEconomics",
+      "input": "r/AskEconomics",
+      "preselected": false
+    },
+    {
+      "id": "en-economie-r-economics",
+      "category": "economie",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/economics",
+      "input": "r/economics",
+      "preselected": false
+    },
+    {
+      "id": "fr-geopolitique-le-grand-continent",
+      "category": "geopolitique",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Le Grand Continent",
+      "input": "https://legrandcontinent.eu/fr/feed/",
+      "preselected": true
+    },
+    {
+      "id": "fr-geopolitique-le-monde-international",
+      "category": "geopolitique",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Le Monde — International",
+      "input": "https://www.lemonde.fr/international/rss_full.xml",
+      "preselected": true
+    },
+    {
+      "id": "fr-geopolitique-courrier-international",
+      "category": "geopolitique",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Courrier international",
+      "input": "https://www.courrierinternational.com/feed/all/rss.xml",
+      "preselected": true
+    },
+    {
+      "id": "fr-geopolitique-france-24",
+      "category": "geopolitique",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "France 24",
+      "input": "https://www.france24.com/fr/rss",
+      "preselected": false
+    },
+    {
+      "id": "fr-geopolitique-rfi",
+      "category": "geopolitique",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "RFI",
+      "input": "https://www.rfi.fr/fr/rss",
+      "preselected": false
+    },
+    {
+      "id": "fr-geopolitique-iris",
+      "category": "geopolitique",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "IRIS",
+      "input": "https://www.iris-france.org/feed/",
+      "preselected": false
+    },
+    {
+      "id": "fr-geopolitique-diploweb",
+      "category": "geopolitique",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Diploweb",
+      "input": "https://www.diploweb.com/spip.php?page=backend",
+      "preselected": false
+    },
+    {
+      "id": "en-geopolitique-foreign-policy",
+      "category": "geopolitique",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Foreign Policy",
+      "input": "https://foreignpolicy.com/feed/",
+      "preselected": true
+    },
+    {
+      "id": "en-geopolitique-foreign-affairs",
+      "category": "geopolitique",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Foreign Affairs",
+      "input": "https://www.foreignaffairs.com/rss.xml",
+      "preselected": true
+    },
+    {
+      "id": "en-geopolitique-bbc-world",
+      "category": "geopolitique",
+      "lang": "en",
+      "kind": "rss",
+      "title": "BBC — World",
+      "input": "https://feeds.bbci.co.uk/news/world/rss.xml",
+      "preselected": true
+    },
+    {
+      "id": "en-geopolitique-al-jazeera",
+      "category": "geopolitique",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Al Jazeera",
+      "input": "https://www.aljazeera.com/xml/rss/all.xml",
+      "preselected": false
+    },
+    {
+      "id": "en-geopolitique-the-diplomat",
+      "category": "geopolitique",
+      "lang": "en",
+      "kind": "rss",
+      "title": "The Diplomat",
+      "input": "https://thediplomat.com/feed/",
+      "preselected": false
+    },
+    {
+      "id": "en-geopolitique-war-on-the-rocks",
+      "category": "geopolitique",
+      "lang": "en",
+      "kind": "rss",
+      "title": "War on the Rocks",
+      "input": "https://warontherocks.com/feed/",
+      "preselected": false
+    },
+    {
+      "id": "en-geopolitique-r-geopolitics",
+      "category": "geopolitique",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/geopolitics",
+      "input": "r/geopolitics",
+      "preselected": false
+    },
+    {
+      "id": "fr-histoire-l-histoire",
+      "category": "histoire",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "L'Histoire",
+      "input": "https://www.lhistoire.fr/rss.xml",
+      "preselected": true
+    },
+    {
+      "id": "fr-histoire-herodote-net",
+      "category": "histoire",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Hérodote.net",
+      "input": "https://www.herodote.net/rss.xml",
+      "preselected": true
+    },
+    {
+      "id": "fr-histoire-retronews",
+      "category": "histoire",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "RetroNews",
+      "input": "https://www.retronews.fr/rss.xml",
+      "preselected": false
+    },
+    {
+      "id": "en-histoire-history-today",
+      "category": "histoire",
+      "lang": "en",
+      "kind": "rss",
+      "title": "History Today",
+      "input": "https://www.historytoday.com/feed/rss.xml",
+      "preselected": true
+    },
+    {
+      "id": "en-histoire-jstor-daily",
+      "category": "histoire",
+      "lang": "en",
+      "kind": "rss",
+      "title": "JSTOR Daily",
+      "input": "https://daily.jstor.org/feed/",
+      "preselected": true
+    },
+    {
+      "id": "en-histoire-smithsonian-history",
+      "category": "histoire",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Smithsonian — History",
+      "input": "https://www.smithsonianmag.com/rss/history/",
+      "preselected": false
+    },
+    {
+      "id": "en-histoire-r-askhistorians",
+      "category": "histoire",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/AskHistorians",
+      "input": "r/AskHistorians",
+      "preselected": true
+    },
+    {
+      "id": "en-histoire-r-history",
+      "category": "histoire",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/history",
+      "input": "r/history",
+      "preselected": false
+    },
+    {
+      "id": "fr-sport-l-equipe",
+      "category": "sport",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "L'Équipe",
+      "input": "https://dwh.lequipe.fr/api/edito/rss?path=/",
+      "preselected": true
+    },
+    {
+      "id": "fr-sport-rmc-sport",
+      "category": "sport",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "RMC Sport",
+      "input": "https://rmcsport.bfmtv.com/rss/info/flux-rss/flux-toutes-les-actualites/",
+      "preselected": false
+    },
+    {
+      "id": "fr-sport-so-foot",
+      "category": "sport",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "So Foot",
+      "input": "https://www.sofoot.com/rss.xml",
+      "preselected": false
+    },
+    {
+      "id": "fr-sport-r-ligue1",
+      "category": "sport",
+      "lang": "fr",
+      "kind": "reddit",
+      "title": "r/Ligue1",
+      "input": "r/Ligue1",
+      "preselected": false
+    },
+    {
+      "id": "en-sport-bbc-sport",
+      "category": "sport",
+      "lang": "en",
+      "kind": "rss",
+      "title": "BBC Sport",
+      "input": "https://feeds.bbci.co.uk/sport/rss.xml",
+      "preselected": true
+    },
+    {
+      "id": "en-sport-the-guardian-sport",
+      "category": "sport",
+      "lang": "en",
+      "kind": "rss",
+      "title": "The Guardian — Sport",
+      "input": "https://www.theguardian.com/sport/rss",
+      "preselected": false
+    },
+    {
+      "id": "en-sport-espn",
+      "category": "sport",
+      "lang": "en",
+      "kind": "rss",
+      "title": "ESPN",
+      "input": "https://www.espn.com/espn/rss/news",
+      "preselected": false
+    },
+    {
+      "id": "en-sport-chess-com-news",
+      "category": "sport",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Chess.com — News",
+      "input": "https://www.chess.com/rss/news",
+      "preselected": true
+    },
+    {
+      "id": "en-sport-chessbase",
+      "category": "sport",
+      "lang": "en",
+      "kind": "rss",
+      "title": "ChessBase",
+      "input": "https://en.chessbase.com/feed",
+      "preselected": false
+    },
+    {
+      "id": "en-sport-r-chess",
+      "category": "sport",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/chess",
+      "input": "r/chess",
+      "preselected": true
+    },
+    {
+      "id": "fr-culture-telerama",
+      "category": "culture",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Télérama",
+      "input": "https://www.telerama.fr/rss/une.xml",
+      "preselected": true
+    },
+    {
+      "id": "fr-culture-le-monde-culture",
+      "category": "culture",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Le Monde — Culture",
+      "input": "https://www.lemonde.fr/culture/rss_full.xml",
+      "preselected": true
+    },
+    {
+      "id": "fr-culture-les-inrocks",
+      "category": "culture",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Les Inrocks",
+      "input": "https://www.lesinrocks.com/feed/",
+      "preselected": false
+    },
+    {
+      "id": "en-culture-aeon",
+      "category": "culture",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Aeon",
+      "input": "https://aeon.co/feed.rss",
+      "preselected": true
+    },
+    {
+      "id": "en-culture-the-atlantic",
+      "category": "culture",
+      "lang": "en",
+      "kind": "rss",
+      "title": "The Atlantic",
+      "input": "https://www.theatlantic.com/feed/all/",
+      "preselected": true
+    },
+    {
+      "id": "en-culture-the-new-yorker-culture",
+      "category": "culture",
+      "lang": "en",
+      "kind": "rss",
+      "title": "The New Yorker — Culture",
+      "input": "https://www.newyorker.com/feed/culture",
+      "preselected": false
+    },
+    {
+      "id": "en-culture-open-culture",
+      "category": "culture",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Open Culture",
+      "input": "https://www.openculture.com/feed",
+      "preselected": false
+    },
+    {
+      "id": "en-culture-r-books",
+      "category": "culture",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/books",
+      "input": "r/books",
+      "preselected": false
+    },
+    {
+      "id": "fr-sante-le-monde-sante",
+      "category": "sante",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Le Monde — Santé",
+      "input": "https://www.lemonde.fr/sante/rss_full.xml",
+      "preselected": true
+    },
+    {
+      "id": "fr-sante-inserm-presse",
+      "category": "sante",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Inserm — Presse",
+      "input": "https://presse.inserm.fr/feed/",
+      "preselected": true
+    },
+    {
+      "id": "en-sante-stat-news",
+      "category": "sante",
+      "lang": "en",
+      "kind": "rss",
+      "title": "STAT News",
+      "input": "https://www.statnews.com/feed/",
+      "preselected": true
+    },
+    {
+      "id": "en-sante-bbc-health",
+      "category": "sante",
+      "lang": "en",
+      "kind": "rss",
+      "title": "BBC — Health",
+      "input": "https://feeds.bbci.co.uk/news/health/rss.xml",
+      "preselected": true
+    },
+    {
+      "id": "en-sante-the-guardian-health",
+      "category": "sante",
+      "lang": "en",
+      "kind": "rss",
+      "title": "The Guardian — Health",
+      "input": "https://www.theguardian.com/society/health/rss",
+      "preselected": false
+    },
+    {
+      "id": "en-sante-r-health",
+      "category": "sante",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/Health",
+      "input": "r/Health",
+      "preselected": false
+    },
+    {
+      "id": "fr-jeux-jeuxvideo-com",
+      "category": "jeux",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "jeuxvideo.com",
+      "input": "https://www.jeuxvideo.com/rss/rss.xml",
+      "preselected": true
+    },
+    {
+      "id": "fr-jeux-gamekult",
+      "category": "jeux",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Gamekult",
+      "input": "https://www.gamekult.com/feed.xml",
+      "preselected": true
+    },
+    {
+      "id": "fr-jeux-r-jeuxvideo",
+      "category": "jeux",
+      "lang": "fr",
+      "kind": "reddit",
+      "title": "r/jeuxvideo",
+      "input": "r/jeuxvideo",
+      "preselected": false
+    },
+    {
+      "id": "en-jeux-rock-paper-shotgun",
+      "category": "jeux",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Rock Paper Shotgun",
+      "input": "https://www.rockpapershotgun.com/feed",
+      "preselected": true
+    },
+    {
+      "id": "en-jeux-eurogamer",
+      "category": "jeux",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Eurogamer",
+      "input": "https://www.eurogamer.net/feed",
+      "preselected": true
+    },
+    {
+      "id": "en-jeux-polygon",
+      "category": "jeux",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Polygon",
+      "input": "https://www.polygon.com/rss/index.xml",
+      "preselected": false
+    },
+    {
+      "id": "en-jeux-r-games",
+      "category": "jeux",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/Games",
+      "input": "r/Games",
+      "preselected": false
+    }
+  ]
+}

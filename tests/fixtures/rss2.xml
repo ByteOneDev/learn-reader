@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:media="http://search.yahoo.com/mrss/">
+  <channel>
+    <title>Journal &amp; Réseaux</title>
+    <link>https://journal.example/</link>
+    <description>Actualité</description>
+    <item>
+      <title><![CDATA[BGP : le routage d’Internet <em>enfin</em> sécurisé ?]]></title>
+      <link>https://journal.example/bgp</link>
+      <guid isPermaLink="false">bgp-2026</guid>
+      <dc:creator>Claire Martin</dc:creator>
+      <pubDate>Thu, 29 Oct 2026 17:49:00 +0100</pubDate>
+      <description>&lt;p&gt;Un résumé &lt;b&gt;court&lt;/b&gt;.&lt;/p&gt;</description>
+      <content:encoded><![CDATA[<p>Le contenu complet avec <a href="/lien">un lien</a>.</p><img src="/img/bgp.jpg">]]></content:encoded>
+      <media:content url="https://cdn.example/bgp-large.jpg" medium="image" />
+    </item>
+    <item>
+      <title>Deuxième article</title>
+      <link>https://journal.example/deux</link>
+      <pubDate>Wed, 28 Oct 2026 08:00:00 GMT</pubDate>
+      <description>Texte simple &amp;amp; échappé deux fois.</description>
+      <enclosure url="https://cdn.example/deux.png" type="image/png" length="1" />
+    </item>
+  </channel>
+</rss>
