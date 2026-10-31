@@ -96,6 +96,14 @@ export const useApp = create<AppState>((set, get) => ({
     api.onEvent((e) => {
       if (e.type === 'refresh-started') set({ refreshing: true })
       if (e.type === 'refresh-finished') set({ refreshing: false })
+      if (e.type === 'highlights-changed') {
+        const { item } = get()
+        if (item?.id === e.itemId) {
+          void api.listHighlights(e.itemId).then((highlights) => set({ highlights }))
+          void api.getItem(e.itemId).then((it) => it && set((s) => ({ item: s.item?.id === it.id ? { ...it, fullHtml: s.item.fullHtml ?? it.fullHtml } : s.item })))
+        }
+        if (e.message) get().toast(e.message)
+      }
       if (e.type === 'items-changed') {
         void get().reloadMeta()
         void get().loadItems(true)

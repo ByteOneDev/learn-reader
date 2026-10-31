@@ -14,6 +14,18 @@ Direction graphique inspirée de [Reeder](https://reederapp.com) (2024), avec sa
 | Livre EPUB | PDF surligné |
 | ![](docs/screenshots/livre-epub.png) | ![](docs/screenshots/livre-pdf.png) |
 
+## Nouveautés de la v0.3 : synchronisation avec Obsidian
+
+Active **Réglages → Obsidian → Synchroniser automatiquement**. Ensuite :
+
+- **Learn → Obsidian** : chaque surlignage, note, couleur ou tag modifié dans Learn met à jour le fichier du document dans ton coffre, quelques secondes après.
+- **Obsidian → Learn** : Learn surveille le dossier `Learn/` du coffre. Modifie une note sous un passage, change `color=yellow` en `color=pink`, supprime un passage ou change les tags du frontmatter : Learn applique le changement.
+- **Rien ne se perd** : si une même note a été modifiée des deux côtés, les deux versions sont gardées. Un passage modifié dans Learn n'est jamais supprimé parce qu'il a disparu du fichier. Supprimer ou renommer le fichier ne supprime rien dans Learn, et un fichier renommé reste suivi.
+- Au démarrage, Learn rattrape ce que tu as changé dans Obsidian pendant qu'il était fermé.
+- Ce que tu écris sous la ligne `learn:end` reste à toi : Learn n'y touche jamais.
+
+Le texte cité d'un passage ne se modifie pas depuis Obsidian, puisqu'il reproduit le livre ou l'article d'origine.
+
 ## Nouveautés de la v0.2
 
 - **Bibliothèque EPUB et PDF** : import par le bouton « + », par glisser-déposer n'importe où dans la fenêtre, ou depuis la vue Bibliothèque. Couverture, titre et auteur détectés automatiquement (première page pour les PDF).
@@ -88,6 +100,7 @@ src/
     feeds/     Résolution des adresses, téléchargement, analyse RSS/Atom/RDF/JSON Feed
     books/     Lecture des EPUB (zip, OPF, table des matières, chapitres)
     export/    Génération du Markdown Obsidian
+    sync/      Synchronisation bidirectionnelle avec Obsidian (fusion à trois voies)
   preload/     Pont minimal et typé entre l'interface et le système
   renderer/    Interface React (Zustand, Framer Motion, Lucide, pdf.js)
 tests/         Vitest : analyse, résolution, OPML, Markdown, ancrage, catalogue, intégration HTTP
@@ -116,7 +129,7 @@ L'orientation politique (−3 à +3) est une estimation de Learn à partir des l
 ## Feuille de route
 
 - ~~**v0.2** : EPUB et PDF avec surlignage ; bilan de lecture dans l'hémicycle ; propriétaires des médias~~ ✓
-- **v0.3** : synchronisation bidirectionnelle avec Obsidian (surveillance du coffre)
+- ~~**v0.3** : synchronisation bidirectionnelle avec Obsidian (surveillance du coffre)~~ ✓
 - **v0.4** : Boards, des mind maps et canvas où glisser surlignages et extraits, export JSON Canvas (Obsidian Canvas)
 - **v0.5** : Notion (export puis synchro)
 - **Ensuite** : podcasts, vidéos YouTube, extension Obsidian, app native

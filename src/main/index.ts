@@ -5,9 +5,11 @@ import { API_METHODS, type ApiMethod, type LearnEvent } from '@shared/types'
 import { LearnCore } from './core'
 import { openDatabase } from './db'
 import { buildMenu } from './menu'
+import { ObsidianSync } from './sync/obsidianSync'
 
 let win: BrowserWindow | null = null
 let core: LearnCore
+let sync: ObsidianSync
 let refreshTimer: ReturnType<typeof setInterval> | null = null
 
 const isMac = process.platform === 'darwin'
@@ -77,6 +79,7 @@ function registerIpc(): void {
       const s = core.store.updateSettings(patch)
       if ('refreshMinutes' in patch) scheduleRefresh()
       if ('theme' in patch) nativeTheme.themeSource = s.theme
+      if ('obsidianSync' in patch || 'obsidianVault' in patch || 'obsidianFolder' in patch) sync.restart()
       return s
     },
     listSources: () => core.store.listSources(),
@@ -87,16 +90,32 @@ function registerIpc(): void {
     removeSource: (id: string) => core.removeSource(id),
     listItems: (q: Parameters<typeof core.store.listItems>[0]) => core.store.listItems(q),
     getItem: (id: string) => core.store.getItem(id),
-    updateItem: (id: string, patch: Parameters<typeof core.store.updateItem>[1]) => core.store.updateItem(id, patch),
+    updateItem: (id: string, patch: Parameters<typeof core.store.updateItem>[1]) => {
+      const item = core.store.updateItem(id, patch)
+      if (patch.tags) sync.touch(id)
+      return item
+    },
     markAllRead: (view: Parameters<typeof core.store.markAllRead>[0]) => core.store.markAllRead(view),
     extractFullText: (id: string) => core.extractFullText(id),
     saveLink: (url: string) => core.saveLink(url),
     counts: () => core.store.counts(),
     allTags: () => core.store.allTags(),
     listHighlights: (itemId?: string) => core.store.listHighlights(itemId),
-    addHighlight: (h: Parameters<LearnCore['addHighlight']>[0]) => core.addHighlight(h),
-    updateHighlight: (id: string, patch: Parameters<typeof core.store.updateHighlight>[1]) => core.store.updateHighlight(id, patch),
-    removeHighlight: (id: string) => core.store.removeHighlight(id),
+    addHighlight: (h: Parameters<LearnCore['addHighlight']>[0]) => {
+      const created = core.addHighlight(h)
+      sync.touch(h.itemId)
+      return created
+    },
+    updateHighlight: (id: string, patch: Parameters<typeof core.store.updateHighlight>[1]) => {
+      const updated = core.store.updateHighlight(id, patch)
+      sync.touch(updated.itemId)
+      return updated
+    },
+    removeHighlight: (id: string) => {
+      const h = core.store.listHighlights().find((x) => x.id === id)
+      core.store.removeHighlight(id)
+      if (h) sync.touch(h.itemId)
+    },
     refresh: (sourceId?: string) => core.refresh(sourceId),
     importBooks: async (paths?: string[]) => {
       let files = paths
@@ -159,10 +178,16 @@ app.whenReady().then(async () => {
   core = new LearnCore(store, (url, init) => net.fetch(url, init), send, join(app.getPath('userData'), 'library'))
   nativeTheme.themeSource = store.getSettings().theme
 
+  sync = new ObsidianSync(core, send)
   registerIpc()
   Menu.setApplicationMenu(buildMenu(send))
   createWindow()
   scheduleRefresh()
+  try {
+    sync.restart()
+  } catch {
+    /* coffre indisponible au démarrage */
+  }
   if (store.getSettings().onboarded) setTimeout(() => void core.refresh(), 1500)
 
   app.on('activate', () => {
@@ -179,5 +204,6 @@ app.on('window-all-closed', () => {
 })
 
 app.on('before-quit', () => {
+  sync?.stop()
   core?.store.flush()
 })

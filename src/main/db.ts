@@ -44,8 +44,26 @@ const MIGRATIONS = [
    ALTER TABLE items ADD COLUMN read_at INTEGER;
    CREATE INDEX items_read_at ON items (read_at);
    ALTER TABLE sources ADD COLUMN leaning INTEGER;
-   ALTER TABLE sources ADD COLUMN owner TEXT;`
+   ALTER TABLE sources ADD COLUMN owner TEXT;`,
+  // v0.3 : état de la dernière synchronisation avec Obsidian, base de la fusion à trois voies.
+  `CREATE TABLE sync_state (
+     item_id TEXT PRIMARY KEY REFERENCES items(id) ON DELETE CASCADE,
+     path TEXT NOT NULL, hash TEXT NOT NULL, base TEXT NOT NULL, synced_at INTEGER NOT NULL
+   );`
 ]
+
+export interface SyncBase {
+  tags: string[]
+  highlights: Record<string, { note: string; color: string }>
+}
+
+export interface SyncState {
+  itemId: string
+  path: string
+  hash: string
+  base: SyncBase
+  syncedAt: number
+}
 
 type Row = Record<string, SqlValue>
 
@@ -489,6 +507,26 @@ export class Store {
 
   itemsWithHighlights(): string[] {
     return this.all('SELECT DISTINCT item_id FROM highlights').map((r) => r.item_id as string)
+  }
+
+  // ── Synchronisation ───────────────────────────────────────────────────────
+
+  getSyncState(itemId: string): SyncState | undefined {
+    const r = this.one('SELECT * FROM sync_state WHERE item_id = ?', [itemId])
+    if (!r) return undefined
+    return { itemId, path: r.path as string, hash: r.hash as string, base: JSON.parse(r.base as string) as SyncBase, syncedAt: r.synced_at as number }
+  }
+
+  setSyncState(s: SyncState): void {
+    this.run(
+      `INSERT INTO sync_state (item_id, path, hash, base, synced_at) VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(item_id) DO UPDATE SET path = excluded.path, hash = excluded.hash, base = excluded.base, synced_at = excluded.synced_at`,
+      [s.itemId, s.path, s.hash, JSON.stringify(s.base), s.syncedAt]
+    )
+  }
+
+  syncedItems(): string[] {
+    return this.all('SELECT item_id FROM sync_state').map((r) => r.item_id as string)
   }
 
   // ── Surlignages ───────────────────────────────────────────────────────────

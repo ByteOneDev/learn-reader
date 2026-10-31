@@ -1,10 +1,11 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import { basename, extname, join } from 'node:path'
 import type { BookFormat, Highlight, Item, LearnEvent, NewSource, RefreshResult, ResolvedInput, Source, TocEntry } from '@shared/types'
 import { hostOf, uid } from '@shared/util'
 import { fetchArticle } from './article'
 import { Epub } from './books/epub'
-import type { Store } from './db'
+import type { Store, SyncBase } from './db'
 import { buildMarkdown, mergeWithExisting, safeFileName } from './export/markdown'
 import { fetchFeed, fetchIcon, type FetchFn } from './feeds/fetcher'
 import { resolveInput } from './feeds/resolve'
@@ -323,26 +324,49 @@ export class LearnCore {
     return buildMarkdown(item, this.store.getSource(item.sourceId), this.store.listHighlights(itemId), Date.now(), (layer) => this.layerLabel(item, layer))
   }
 
-  /** Écrit (ou met à jour) le fichier Markdown d'un document dans le coffre Obsidian. */
-  exportToObsidian(itemId: string): { path: string } {
-    const settings = this.store.getSettings()
-    if (!settings.obsidianVault) throw new Error('Choisis d’abord ton coffre Obsidian dans les Réglages')
+  obsidianDir(): string | null {
+    const s = this.store.getSettings()
+    return s.obsidianVault ? join(s.obsidianVault, s.obsidianFolder || 'Learn') : null
+  }
+
+  /** État de Learn pour un document, tel qu'il est écrit dans le fichier : base de la prochaine fusion. */
+  syncSnapshot(itemId: string): SyncBase {
+    const item = this.store.getItem(itemId)
+    return {
+      tags: item?.tags ?? [],
+      highlights: Object.fromEntries(this.store.listHighlights(itemId).map((h) => [h.id, { note: h.note.trim(), color: h.color }]))
+    }
+  }
+
+  /**
+   * Écrit (ou met à jour) le fichier Markdown d'un document dans le coffre Obsidian.
+   * Le fichier déjà associé au document est réutilisé, même s'il a été renommé dans Obsidian.
+   */
+  exportToObsidian(itemId: string): { path: string; written: boolean } {
+    const dir = this.obsidianDir()
+    if (!dir) throw new Error('Choisis d’abord ton coffre Obsidian dans les Réglages')
     const item = this.store.getItem(itemId)
     if (!item) throw new Error('Article introuvable')
-    const dir = join(settings.obsidianVault, settings.obsidianFolder || 'Learn')
     mkdirSync(dir, { recursive: true })
     const generated = this.markdownFor(itemId)
+    const owns = (text: string | null): boolean => text !== null && text.includes(`learn_id: ${item.id}\n`)
 
+    const known = this.store.getSyncState(itemId)?.path
     const base = safeFileName(item.title)
-    for (let n = 0; n < 50; n++) {
-      const path = join(dir, `${base}${n ? ` (${n + 1})` : ''}.md`)
+    const candidates = [
+      ...(known && existsSync(known) ? [known] : []),
+      ...Array.from({ length: 50 }, (_, n) => join(dir, `${base}${n ? ` (${n + 1})` : ''}.md`))
+    ]
+    for (const path of candidates) {
       const existing = existsSync(path) ? readFileSync(path, 'utf8') : null
       // Un fichier existant n'est réutilisé que s'il appartient à ce document.
-      if (existing !== null && !existing.includes(`learn_id: ${item.id}\n`)) continue
+      if (existing !== null && !owns(existing)) continue
       const merged = mergeWithExisting(generated, existing)
       if (merged === null) continue
-      writeFileSync(path, merged, 'utf8')
-      return { path }
+      const written = merged !== existing
+      if (written) writeFileSync(path, merged, 'utf8')
+      this.store.setSyncState({ itemId, path, hash: hashText(merged), base: this.syncSnapshot(itemId), syncedAt: Date.now() })
+      return { path, written }
     }
     throw new Error('Impossible de trouver un nom de fichier libre')
   }
@@ -361,6 +385,10 @@ export class LearnCore {
   exportOpml(): string {
     return buildOpml(this.store.listSources())
   }
+}
+
+export function hashText(text: string): string {
+  return createHash('sha1').update(text.replace(/\r\n/g, '\n')).digest('hex')
 }
 
 async function pool<T>(list: T[], size: number, fn: (t: T) => Promise<void>): Promise<void> {

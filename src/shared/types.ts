@@ -149,6 +149,8 @@ export interface Settings {
   readerSize: number
   obsidianVault?: string
   obsidianFolder: string
+  /** Synchronisation automatique dans les deux sens avec le coffre Obsidian. */
+  obsidianSync?: boolean
   /** Modèle d'adresse pour X, ex. `https://rsshub.mondomaine.fr/twitter/user/{user}`. */
   xBridge?: string
 }
@@ -210,6 +212,7 @@ export type LearnEvent =
   | { type: 'refresh-started' }
   | { type: 'refresh-finished'; result: RefreshResult }
   | { type: 'items-changed' }
+  | { type: 'highlights-changed'; itemId: string; message?: string }
   | { type: 'menu'; action: 'add-source' | 'settings' | 'refresh' }
 
 /** API exposée à l'interface par le preload (window.learn). Toutes les méthodes passent par IPC. */

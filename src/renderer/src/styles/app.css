@@ -1977,3 +1977,7 @@ mark.hl.flash {
 .book-article [id] {
   scroll-margin-top: 64px;
 }
+.switch:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

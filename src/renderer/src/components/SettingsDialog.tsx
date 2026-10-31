@@ -105,6 +105,21 @@ export default function SettingsDialog({ onClose }: { onClose(): void }): React.
         </div>
       </div>
 
+      <div className="field row-between" style={{ marginTop: -4 }}>
+        <span>
+          <span style={{ fontSize: 14.5, fontWeight: 600 }}>{t.obsidianSync}</span>
+          <span className="hint" style={{ display: 'block', marginTop: 4 }}>{t.obsidianSyncHint}</span>
+        </span>
+        <button
+          className={`switch${settings.obsidianSync ? ' on' : ''}`}
+          disabled={!settings.obsidianVault}
+          onClick={() => set({ obsidianSync: !settings.obsidianSync })}
+          role="switch"
+          aria-checked={!!settings.obsidianSync}
+          aria-label={t.obsidianSync}
+        />
+      </div>
+
       <div className="field">
         <label>{t.xBridge}</label>
         <input
