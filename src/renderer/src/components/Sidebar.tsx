@@ -114,7 +114,19 @@ export function categoryLabel(id: string, lang: 'fr' | 'en'): string {
 }
 
 /** Groupe de sources d'une même catégorie, repliable, comme un dossier de Reeder. */
-function CategoryGroup({ section, category, label, children }: { section: string; category: string; label: string; children: ReactNode }): React.JSX.Element {
+type SectionId = Extract<View, { type: 'category' }>['section']
+
+/** Types de sources de chaque section de la barre latérale. */
+const SECTION_KINDS: Record<SectionId, SourceKind[]> = {
+  feeds: ['rss'],
+  podcasts: ['podcast'],
+  youtube: ['youtube'],
+  social: ['mastodon', 'bluesky', 'x'],
+  reddit: ['reddit'],
+  forums: ['forum']
+}
+
+function CategoryGroup({ section, kinds, category, label, children }: { section: SectionId; kinds: SourceKind[]; category: string; label: string; children: ReactNode }): React.JSX.Element {
   const key = `group:${section}:${category}`
   const [open, setOpen] = useState(() => {
     try {
@@ -125,7 +137,7 @@ function CategoryGroup({ section, category, label, children }: { section: string
   })
   const view = useApp((s) => s.view)
   const setView = useApp((s) => s.setView)
-  const active = view.type === 'category' && view.category === category
+  const active = view.type === 'category' && view.category === category && view.section === section
   return (
     <div className="cat-group">
       <div className={`cat-head${active ? ' active' : ''}`}>
@@ -144,7 +156,7 @@ function CategoryGroup({ section, category, label, children }: { section: string
         >
           <ChevronDown size={14} />
         </button>
-        <button className="cat-label" onClick={() => setView({ type: 'category', category })}>
+        <button className="cat-label" onClick={() => setView({ type: 'category', category, kinds, section })}>
           <Folder size={14} /> {label}
         </button>
       </div>
@@ -211,7 +223,7 @@ export default function Sidebar(): React.JSX.Element {
     ))
 
   /** Sources regroupées par catégorie dès qu'il y en a plusieurs ; sans catégorie : « Autres », en dernier. */
-  const sourceRows = (list: Source[], section: string): ReactNode => {
+  const sourceRows = (list: Source[], section: SectionId, kinds: SourceKind[]): ReactNode => {
     const groups = new Map<string, Source[]>()
     for (const s of list) groups.set(s.category ?? '', [...(groups.get(s.category ?? '') ?? []), s])
     if (groups.size <= 1) return plainRows(list)
@@ -219,18 +231,18 @@ export default function Sidebar(): React.JSX.Element {
     return [...groups.entries()]
       .sort(([a], [b]) => order(a) - order(b) || a.localeCompare(b))
       .map(([cat, items]) => (
-        <CategoryGroup key={cat || '_'} section={section} category={cat} label={cat ? categoryLabel(cat, lang) : t.otherCategory}>
+        <CategoryGroup key={cat || '_'} section={section} kinds={kinds} category={cat} label={cat ? categoryLabel(cat, lang) : t.otherCategory}>
           {plainRows(items)}
         </CategoryGroup>
       ))
   }
 
-  const social = byKind(['mastodon', 'bluesky', 'x'])
-  const reddit = byKind(['reddit'])
-  const forums = byKind(['forum'])
-  const feeds = byKind(['rss'])
-  const podcasts = byKind(['podcast'])
-  const videos = byKind(['youtube'])
+  const social = byKind(SECTION_KINDS.social)
+  const reddit = byKind(SECTION_KINDS.reddit)
+  const forums = byKind(SECTION_KINDS.forums)
+  const feeds = byKind(SECTION_KINDS.feeds)
+  const podcasts = byKind(SECTION_KINDS.podcasts)
+  const videos = byKind(SECTION_KINDS.youtube)
   const tags = Object.entries(counts?.tags ?? {})
 
   return (
@@ -299,32 +311,32 @@ export default function Sidebar(): React.JSX.Element {
 
         {podcasts.length > 0 && (
           <Section id="podcasts" title={t.podcasts}>
-            {sourceRows(podcasts, 'podcasts')}
+            {sourceRows(podcasts, 'podcasts', SECTION_KINDS.podcasts)}
           </Section>
         )}
         {videos.length > 0 && (
           <Section id="youtube" title={t.youtube}>
-            {sourceRows(videos, 'videos')}
+            {sourceRows(videos, 'youtube', SECTION_KINDS.youtube)}
           </Section>
         )}
         {social.length > 0 && (
           <Section id="social" title={t.social}>
-            {sourceRows(social, 'social')}
+            {sourceRows(social, 'social', SECTION_KINDS.social)}
           </Section>
         )}
         {reddit.length > 0 && (
           <Section id="reddit" title={t.reddit}>
-            {sourceRows(reddit, 'reddit')}
+            {sourceRows(reddit, 'reddit', SECTION_KINDS.reddit)}
           </Section>
         )}
         {forums.length > 0 && (
           <Section id="forums" title={t.forums}>
-            {sourceRows(forums, 'forums')}
+            {sourceRows(forums, 'forums', SECTION_KINDS.forums)}
           </Section>
         )}
         {feeds.length > 0 && (
           <Section id="feeds" title={t.feeds}>
-            {sourceRows(feeds, 'feeds')}
+            {sourceRows(feeds, 'feeds', SECTION_KINDS.feeds)}
           </Section>
         )}
       </nav>

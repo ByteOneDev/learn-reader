@@ -13,6 +13,15 @@ export function useShortcuts(): void {
       if (typing(e) || e.metaKey || e.ctrlKey || e.altKey) return
       const s = useApp.getState()
       if (s.dialog || !s.settings?.onboarded) return
+      // Dans un board, les touches appartiennent à l'éditeur (outils Excalidraw : r, o, l, h…, flèches pour
+      // déplacer, Échap) : seul [ reste à Learn, hors du dessin.
+      if (s.view.type === 'board') {
+        if (e.key === '[' && !(e.target as HTMLElement | null)?.closest?.('.excalidraw')) {
+          s.toggleSidebar()
+          e.preventDefault()
+        }
+        return
+      }
       const item = s.item
       switch (e.key) {
         case 'j':

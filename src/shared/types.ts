@@ -209,7 +209,8 @@ export type View =
   | { type: 'kind'; kind: SourceKind }
   | { type: 'source'; sourceId: string }
   | { type: 'board'; boardId: string }
-  | { type: 'category'; category: string }
+  /** Catégorie au sein d'une section de la barre latérale (flux, Reddit, YouTube…) : `kinds` la délimite. */
+  | { type: 'category'; category: string; kinds: SourceKind[]; section: 'feeds' | 'podcasts' | 'youtube' | 'social' | 'reddit' | 'forums' }
 
 export interface ItemQuery {
   view: View

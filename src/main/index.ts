@@ -1,5 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, net, safeStorage, session, shell } from 'electron'
-import { readFileSync, writeFileSync } from 'node:fs'
+import { readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { API_METHODS, type ApiMethod, type BoardExportFormat, type LearnEvent } from '@shared/types'
 import { LearnCore } from './core'
@@ -100,7 +100,14 @@ async function svgToPdf(svg: string, width: number, height: number): Promise<Buf
   const page = new BrowserWindow({ show: false, webPreferences: { sandbox: true, javascript: false } })
   try {
     const html = `<!doctype html><html><head><meta charset="utf-8"><style>@page{margin:0}html,body{margin:0}</style></head><body>${svg}</body></html>`
-    await page.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`)
+    // Fichier temporaire plutôt qu'une URL data: (limitée à 2 Mo par Chromium, vite atteinte par un gros board).
+    const tmp = join(app.getPath('temp'), `learn-board-${Date.now()}.html`)
+    writeFileSync(tmp, html, 'utf8')
+    try {
+      await page.loadFile(tmp)
+    } finally {
+      rmSync(tmp, { force: true })
+    }
     return await page.webContents.printToPDF({
       printBackground: true,
       pageSize: { width: Math.max(width / 96, 3), height: Math.max(height / 96, 3) },
@@ -149,13 +156,14 @@ function registerIpc(): void {
   const handlers: Record<ApiMethod, (...args: never[]) => unknown> = {
     getSettings: () => core.store.getSettings(),
     updateSettings: (patch: Parameters<typeof core.store.updateSettings>[0]) => {
+      const previousKey = core.store.getSettings().youtubeApiKey
       const s = core.store.updateSettings(patch)
       if ('refreshMinutes' in patch) scheduleRefresh()
       if ('theme' in patch) nativeTheme.themeSource = s.theme
       if ('obsidianSync' in patch || 'obsidianVault' in patch || 'obsidianFolder' in patch) sync.restart()
       if ('notionSync' in patch) notion.restart()
       // Nouvelle clé YouTube : on remonte tout de suite l'année des chaînes suivies.
-      if (patch.youtubeApiKey) {
+      if (patch.youtubeApiKey && patch.youtubeApiKey !== previousKey) {
         for (const src of core.store.listSources().filter((x) => x.kind === 'youtube')) core.store.updateSource(src.id, { backfilledYear: undefined })
         void core.refresh()
       }

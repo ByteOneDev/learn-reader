@@ -158,6 +158,37 @@ describe('boards dans Learn', async () => {
     expect(ids('i22')).toEqual([])
   })
 
+  it('ne purge jamais un document cité dans un board (vieil article lu, vidéo d’une année passée)', () => {
+    const old = Date.now() - 400 * 24 * 3600_000
+    store.insertSource({ id: 'yt', kind: 'youtube', title: 'Chaîne', url: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCx', createdAt: old })
+    store.insertItems([
+      { id: 'v1', sourceId: 'yt', guid: 'v1', title: 'Vidéo citée', publishedAt: old, fetchedAt: old },
+      { id: 'v2', sourceId: 'yt', guid: 'v2', title: 'Vidéo oubliée', publishedAt: old, fetchedAt: old },
+      { id: 'a1', sourceId: 's', guid: 'a1', title: 'Article cité', publishedAt: old, fetchedAt: old },
+      { id: 'a2', sourceId: 's', guid: 'a2', title: 'Article oublié', publishedAt: old, fetchedAt: old }
+    ])
+    store.updateItem('a1', { read: true })
+    store.updateItem('a2', { read: true })
+    const b = core.createBoard('Cite', 'sketch')
+    store.updateBoard(b.id, { data: { nodes: [], edges: [], sketch: { elements: [{ id: 'c', link: learnLink('v1') }] }, pending: [{ kind: 'source', itemId: 'a1' }] } })
+    const cited = store.boardItemIds()
+    store.prune(Date.now() - 30 * 24 * 3600_000, cited)
+    store.pruneYoutubeBefore(Date.now() - 30 * 24 * 3600_000, cited)
+    expect(store.getItem('v1')).toBeTruthy()
+    expect(store.getItem('a1')).toBeTruthy()
+    expect(store.getItem('v2')).toBeNull()
+    expect(store.getItem('a2')).toBeNull()
+  })
+
+  it('limite une vue de catégorie à sa section de la barre latérale', () => {
+    store.updateSource('s', { category: 'tech' })
+    store.updateSource('yt', { category: 'tech' })
+    const titles = (kinds: ('rss' | 'youtube')[], section: 'feeds' | 'youtube'): string[] =>
+      store.listItems({ view: { type: 'category', category: 'tech', kinds, section } }).map((i) => i.sourceId)
+    expect(new Set(titles(['rss'], 'feeds'))).toEqual(new Set(['s']))
+    expect(new Set(titles(['youtube'], 'youtube'))).toEqual(new Set(['yt']))
+  })
+
   it('supprime un board sans toucher aux surlignages', () => {
     for (const b of store.listBoards()) store.deleteBoard(b.id)
     expect(store.listBoards()).toHaveLength(0)

@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from '
 import { dirname } from 'node:path'
 import type { Board, BoardSummary, Counts, Highlight, HighlightWithItem, Item, ItemQuery, ReadingBalance, Settings, Source, View } from '@shared/types'
 import { DEFAULT_SETTINGS } from '@shared/types'
-import { boardSize } from '@shared/boardExport'
+import { boardItemIds, boardSize } from '@shared/boardExport'
 
 // SQLite compilé en WebAssembly (sql.js) : aucun module natif à recompiler pour Mac, Windows et Linux.
 // La base vit en mémoire et est écrite sur disque (écriture atomique) peu après chaque modification.
@@ -430,7 +430,10 @@ export class Store {
       case 'source':
         return { where: 'i.source_id = ?', params: [view.sourceId] }
       case 'category':
-        return { where: "s.category IS ? AND s.kind NOT IN ('links', 'book')", params: [view.category || null] }
+        return {
+          where: `s.category IS ? AND s.kind IN (${view.kinds.map(() => '?').join(', ') || "''"})`,
+          params: [view.category || null, ...view.kinds]
+        }
       default:
         throw new Error('Vue inconnue')
     }
@@ -509,22 +512,33 @@ export class Store {
    * YouTube : on ne garde que les vidéos de l'année en cours. Au changement d'année, tout repart de zéro,
    * sauf les vidéos où l'utilisateur a laissé une trace (marque, tag, surlignage, note horodatée).
    */
-  pruneYoutubeBefore(start: number): number {
+  pruneYoutubeBefore(start: number, keep: Iterable<string> = []): number {
+    const kept = [...keep]
     return this.run(
       `DELETE FROM items WHERE published_at < ? AND later = 0 AND bookmarked = 0 AND favorite = 0
          AND id NOT IN (SELECT item_id FROM highlights) AND id NOT IN (SELECT item_id FROM item_tags)
+         ${kept.length ? `AND id NOT IN (${kept.map(() => '?').join(', ')})` : ''}
          AND source_id IN (SELECT id FROM sources WHERE kind = 'youtube')`,
-      [start]
+      [start, ...kept]
     )
   }
 
+  /** Documents cités dans au moins un board (à ne jamais purger). */
+  boardItemIds(): Set<string> {
+    const ids = new Set<string>()
+    for (const r of this.all('SELECT data FROM boards')) for (const id of boardItemIds(JSON.parse(r.data as string) as Board['data'])) ids.add(id)
+    return ids
+  }
+
   /** Purge les vieux articles lus sans marque ni surlignage, pour garder une base légère. */
-  prune(olderThan: number): number {
+  prune(olderThan: number, keep: Iterable<string> = []): number {
+    const kept = [...keep]
     return this.run(
       `DELETE FROM items WHERE published_at < ? AND read = 1 AND later = 0 AND bookmarked = 0 AND favorite = 0
          AND id NOT IN (SELECT item_id FROM highlights) AND id NOT IN (SELECT item_id FROM item_tags)
+         ${kept.length ? `AND id NOT IN (${kept.map(() => '?').join(', ')})` : ''}
          AND source_id NOT IN (SELECT id FROM sources WHERE kind IN ('links', 'book'))`,
-      [olderThan]
+      [olderThan, ...kept]
     )
   }
 

@@ -1,7 +1,7 @@
 import './excalidrawSetup'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
-import { CaptureUpdateAction, convertToExcalidrawElements, Excalidraw, exportToBlob, FONT_FAMILY, MainMenu, serializeAsJSON } from '@excalidraw/excalidraw'
+import { CaptureUpdateAction, convertToExcalidrawElements, Excalidraw, exportToBlob, FONT_FAMILY, hashElementsVersion, MainMenu, serializeAsJSON } from '@excalidraw/excalidraw'
 import type { ExcalidrawElementSkeleton } from '@excalidraw/excalidraw/data/transform'
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types'
 import '@excalidraw/excalidraw/index.css'
@@ -32,7 +32,8 @@ function keptAppState(a: Record<string, unknown>): Record<string, unknown> {
   return { viewBackgroundColor, gridSize, gridModeEnabled, currentItemFontFamily, currentItemStrokeColor }
 }
 
-const versionOf = (els: Elements): string => `${els.length}:${els.reduce((s, e) => s + e.version, 0)}`
+/** Empreinte des éléments vivants : change à chaque modification, pas quand on fait défiler ou zoome. */
+const versionOf = (els: Elements): number => hashElementsVersion(els.filter((e) => !e.isDeleted) as never)
 
 const CARD_FONT = 16
 
@@ -74,7 +75,7 @@ export default function SketchView({ board }: { board: Board }): React.JSX.Eleme
   const [excalidraw, setExcalidraw] = useState<ExcalidrawImperativeAPI | null>(null)
   const [picker, setPicker] = useState<'highlights' | 'docs' | null>(null)
   const [menu, setMenu] = useState<{ x: number; y: number; bottom: number } | null>(null)
-  const lastVersion = useRef('')
+  const lastVersion = useRef(0)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const ingesting = useRef(false)
 
@@ -117,12 +118,14 @@ export default function SketchView({ board }: { board: Board }): React.JSX.Eleme
     },
     [flush, reloadBoards]
   )
+  // En quittant le board, on enregistre ce qui attendait encore (le compteur de la barre latérale suit).
+  const flushRef = useRef(flush)
+  flushRef.current = flush
   useEffect(
     () => () => {
-      // En quittant le board, on enregistre ce qui attendait encore.
-      if (saveTimer.current) void flush()
+      if (saveTimer.current) void flushRef.current().then(() => useApp.getState().reloadBoards())
     },
-    [flush]
+    []
   )
 
   /** Place des cartes à droite du dessin (ou en haut à gauche s'il est vide) et les montre. */
@@ -150,20 +153,21 @@ export default function SketchView({ board }: { board: Board }): React.JSX.Eleme
   // Ajouts faits depuis le lecteur (« Board » sur un passage) : ils deviennent des cartes à l'ouverture,
   // et aussi pendant que le schéma est ouvert.
   const ingest = useCallback(async () => {
+    // Verrou posé avant toute attente : deux appels rapprochés inséreraient sinon deux fois les mêmes cartes.
     if (!excalidraw || ingesting.current) return
-    const fresh = await api.getBoard(board.id)
-    const pending = fresh?.data.pending ?? []
-    if (!pending.length) return
     ingesting.current = true
     try {
+      const fresh = await api.getBoard(board.id)
+      const pending = fresh?.data.pending ?? []
+      if (!pending.length) return
       await insert(pending)
-      ingesting.current = false
       await flush()
+      void reloadBoards()
       toast(t.sketchInserted(pending.length))
     } finally {
       ingesting.current = false
     }
-  }, [api, board.id, excalidraw, flush, insert, toast, t])
+  }, [api, board.id, excalidraw, flush, insert, reloadBoards, toast, t])
   useEffect(() => {
     void ingest()
   }, [ingest, boards])

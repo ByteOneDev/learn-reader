@@ -1,5 +1,6 @@
 import type { Board, BoardData, BoardNode, HighlightColor } from './types'
 import { childrenMap, findRoot, nodeHeight, NODE_WIDTH } from './boardLayout'
+import { parseLearnLink } from './links'
 
 // Exports d'un board : OPML (importé par MindNode, OmniOutliner…), FreeMind .mm (MindNode, XMind,
 // Freeplane…) et SVG (aussi converti en PDF par l'app). Fonctions pures, testées sans DOM.
@@ -132,12 +133,20 @@ export function boardSize(data: BoardData): number {
   return data.nodes.length + (data.pending?.length ?? 0) + linked
 }
 
-/** Le board cite-t-il ce document ? (nœud, ajout en attente, ou lien learn:// d'un élément de schéma) */
-export function boardCitesItem(data: BoardData, itemId: string): boolean {
-  if (data.nodes.some((n) => n.itemId === itemId) || data.pending?.some((n) => n.itemId === itemId)) return true
-  const needle = `item=${encodeURIComponent(itemId)}`
-  return (data.sketch?.elements ?? []).some((e) => {
+/** Documents cités par un board : nœuds, ajouts en attente, et liens learn:// des éléments d'un schéma. */
+export function boardItemIds(data: BoardData): Set<string> {
+  const ids = new Set<string>()
+  for (const n of [...data.nodes, ...(data.pending ?? [])]) if (n.itemId) ids.add(n.itemId)
+  for (const e of data.sketch?.elements ?? []) {
     const el = e as SketchEl
-    return !el.isDeleted && typeof el.link === 'string' && el.link.startsWith('learn://') && (el.link.includes(`${needle}&`) || el.link.endsWith(needle))
-  })
+    if (el.isDeleted || typeof el.link !== 'string') continue
+    const parsed = parseLearnLink(el.link)
+    if (parsed) ids.add(parsed.itemId)
+  }
+  return ids
+}
+
+/** Le board cite-t-il ce document ? */
+export function boardCitesItem(data: BoardData, itemId: string): boolean {
+  return boardItemIds(data).has(itemId)
 }

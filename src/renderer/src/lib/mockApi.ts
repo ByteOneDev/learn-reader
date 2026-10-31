@@ -348,7 +348,7 @@ function matches(view: View, it: Item): boolean {
     case 'source':
       return it.sourceId === view.sourceId
     case 'category':
-      return (src?.category ?? '') === view.category
+      return (src?.category ?? '') === view.category && !!src && view.kinds.includes(src.kind)
     default:
       return false
   }

@@ -132,7 +132,9 @@ export class LearnCore {
       const added = this.storeItems(source, videos)
       this.store.updateSource(source.id, { backfilledYear: year })
       return added
-    } catch {
+    } catch (e) {
+      // Clé invalide, quota épuisé, hors ligne : le flux RSS suffit, on retentera au prochain rafraîchissement.
+      console.warn(`YouTube (${source.title}) :`, (e as Error).message)
       return 0
     }
   }
@@ -219,8 +221,10 @@ export class LearnCore {
       }
     })
     if (!sourceId) {
-      this.store.prune(Date.now() - PRUNE_AFTER_MS)
-      this.store.pruneYoutubeBefore(startOfYear())
+      // Ce qui est cité dans un board n'est jamais purgé : ses cartes doivent toujours mener quelque part.
+      const cited = this.store.boardItemIds()
+      this.store.prune(Date.now() - PRUNE_AFTER_MS, cited)
+      this.store.pruneYoutubeBefore(startOfYear(), cited)
     }
     this.emit({ type: 'refresh-finished', result })
     this.emit({ type: 'items-changed' })
