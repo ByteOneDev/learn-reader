@@ -130,12 +130,31 @@ describe('Obsidian → Learn', () => {
 })
 
 describe('surveillance du dossier', () => {
+  it('rattrape une modification même sans événement du système (contrôle périodique)', async () => {
+    const { sync, path, store, a } = await setup()
+    sync.restart()
+    try {
+      // On coupe fs.watch pour ne garder que le contrôle périodique.
+      ;(sync as unknown as { watcher: { close(): void } | null }).watcher?.close()
+      ;(sync as unknown as { watcher: null }).watcher = null
+      await new Promise((r) => setTimeout(r, 50))
+      edit(path, (s) => s.replace('Note A', 'Vue par le contrôle périodique'))
+      const deadline = Date.now() + 12000
+      while (Date.now() < deadline && store.listHighlights('i1').find((h) => h.id === a.id)!.note !== 'Vue par le contrôle périodique') {
+        await new Promise((r) => setTimeout(r, 100))
+      }
+      expect(store.listHighlights('i1').find((h) => h.id === a.id)!.note).toBe('Vue par le contrôle périodique')
+    } finally {
+      sync.stop()
+    }
+  }, 20_000)
+
   it('applique une modification faite dans Obsidian sans action de l’utilisateur', async () => {
     const { sync, path, store, a, events } = await setup()
     sync.restart()
     try {
       edit(path, (s) => s.replace('Note A', 'Tapée dans Obsidian'))
-      const deadline = Date.now() + 5000
+      const deadline = Date.now() + 12000
       while (Date.now() < deadline && store.listHighlights('i1').find((h) => h.id === a.id)!.note !== 'Tapée dans Obsidian') {
         await new Promise((r) => setTimeout(r, 100))
       }
@@ -144,7 +163,7 @@ describe('surveillance du dossier', () => {
     } finally {
       sync.stop()
     }
-  })
+  }, 20_000)
 
   it('réécrit le fichier peu après une modification dans Learn', async () => {
     const { sync, path, store, a } = await setup()
@@ -152,11 +171,11 @@ describe('surveillance du dossier', () => {
     try {
       store.updateHighlight(a.id, { note: 'Changée dans Learn' })
       sync.touch('i1')
-      const deadline = Date.now() + 5000
+      const deadline = Date.now() + 12000
       while (Date.now() < deadline && !readFileSync(path, 'utf8').includes('Changée dans Learn')) await new Promise((r) => setTimeout(r, 100))
       expect(readFileSync(path, 'utf8')).toContain('Changée dans Learn')
     } finally {
       sync.stop()
     }
-  })
+  }, 20_000)
 })

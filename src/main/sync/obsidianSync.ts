@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, watch, type FSWatcher } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, watch, type FSWatcher } from 'node:fs'
 import { join } from 'node:path'
 import type { LearnEvent } from '@shared/types'
 import { hashText, type LearnCore } from '../core'
@@ -7,6 +7,8 @@ import { threeWayMerge } from './merge'
 
 const EXPORT_DELAY = 1200
 const FILE_DELAY = 900
+/** Contrôle périodique : fs.watch rate des événements (FSEvents au démarrage, iCloud Drive, disques réseau). */
+const SCAN_INTERVAL = 3000
 
 export interface SyncReport {
   itemId: string
@@ -29,6 +31,8 @@ export interface SyncReport {
  */
 export class ObsidianSync {
   private watcher: FSWatcher | null = null
+  private scanner: ReturnType<typeof setInterval> | null = null
+  private mtimes = new Map<string, number>()
   private dir: string | null = null
   private exportTimers = new Map<string, ReturnType<typeof setTimeout>>()
   private fileTimers = new Map<string, ReturnType<typeof setTimeout>>()
@@ -39,7 +43,7 @@ export class ObsidianSync {
   ) {}
 
   get running(): boolean {
-    return this.watcher !== null
+    return this.scanner !== null
   }
 
   /** Démarre (ou redémarre) selon les réglages ; rattrape d'abord ce qui a changé pendant que l'app était fermée. */
@@ -51,19 +55,43 @@ export class ObsidianSync {
     mkdirSync(dir, { recursive: true })
     this.dir = dir
     this.reconcile()
+    this.scan(false)
     try {
       this.watcher = watch(dir, (_event, name) => {
         if (name && String(name).endsWith('.md')) this.scheduleFile(join(dir, String(name)))
       })
-      this.watcher.on('error', () => this.stop())
+      this.watcher.on('error', () => {
+        this.watcher?.close()
+        this.watcher = null
+      })
     } catch {
       this.watcher = null
+    }
+    this.scanner = setInterval(() => this.scan(true), SCAN_INTERVAL)
+  }
+
+  /** Repère les fichiers dont la date de modification a changé depuis le dernier passage. */
+  private scan(notify: boolean): void {
+    if (!this.dir || !existsSync(this.dir)) return
+    for (const name of readdirSync(this.dir)) {
+      if (!name.endsWith('.md')) continue
+      const path = join(this.dir, name)
+      try {
+        const m = statSync(path).mtimeMs
+        if (notify && this.mtimes.get(path) !== m) this.scheduleFile(path)
+        this.mtimes.set(path, m)
+      } catch {
+        /* fichier supprimé entre-temps */
+      }
     }
   }
 
   stop(): void {
     this.watcher?.close()
     this.watcher = null
+    if (this.scanner) clearInterval(this.scanner)
+    this.scanner = null
+    this.mtimes.clear()
     for (const t of [...this.exportTimers.values(), ...this.fileTimers.values()]) clearTimeout(t)
     this.exportTimers.clear()
     this.fileTimers.clear()
