@@ -98,7 +98,7 @@ jobs:
           codesign --verify --deep --strict --verbose=2 "$app" || echo "::warning::codesign --verify a signalé un problème (voir ci-dessus)."
           codesign -dv "$app" 2>&1 | grep -E 'Authority|Signature|TeamIdentifier' || true
           spctl --assess --type execute -vv "$app" || echo "::notice::Gatekeeper refuse cette app (normal sans notarisation)."
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: learn-${{ matrix.os }}
           path: |
@@ -124,7 +124,7 @@ jobs:
           npm run plugin:build
           cd obsidian-plugin/dist
           zip -r "../../learn-obsidian-${{ needs.check.outputs.tag }}.zip" learn-reader
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: learn-obsidian
           path: learn-obsidian-*.zip
