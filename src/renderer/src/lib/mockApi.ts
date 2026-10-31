@@ -27,6 +27,8 @@ const sources: Source[] = [
   { id: 's6', kind: 'bluesky', title: '@exemple.bsky.social', url: 'https://bsky.app/profile/exemple.bsky.social/rss', createdAt: now },
   { id: 's7', kind: 'forum', title: 'LinuxFr.org', url: 'https://linuxfr.org/news.atom', icon: icon('#2f9e44', 'L'), createdAt: now },
   { id: 'lib', kind: 'book', title: 'Bibliothèque', url: 'learn:library', createdAt: now },
+  { id: 'pod', kind: 'podcast', title: 'Entrez dans l’Histoire', url: 'https://exemple.fr/podcast.xml', icon: icon('#8e4ec6', 'E'), createdAt: now },
+  { id: 'yt', kind: 'youtube', title: 'Tout Simplement — Kurzgesagt', url: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCexemple', icon: icon('#ff0033', 'K'), createdAt: now },
   { id: 'p1', kind: 'rss', title: 'Journal Rouge', url: 'https://exemple.fr/p1.xml', leaning: -2, owner: 'Coopérative', createdAt: now },
   { id: 'p2', kind: 'rss', title: 'Le Quotidien du Centre', url: 'https://exemple.fr/p2.xml', leaning: 0, createdAt: now },
   { id: 'p3', kind: 'rss', title: 'La Gazette Bleue', url: 'https://exemple.fr/p3.xml', leaning: 2, owner: 'Groupe Exemple', createdAt: now },
@@ -136,6 +138,83 @@ const items: Item[] = titles.map(([sourceId, title, hoursAgo, label], i) => {
     highlightCount: 0
   }
 })
+
+/** Petit fichier WAV (silence de 3 minutes, 8 kHz) pour tester le lecteur sans réseau. */
+function silentWav(seconds: number): string {
+  const rate = 8000
+  const n = rate * seconds
+  const buf = new ArrayBuffer(44 + n)
+  const v = new DataView(buf)
+  const w = (o: number, str: string): void => [...str].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)))
+  w(0, 'RIFF')
+  v.setUint32(4, 36 + n, true)
+  w(8, 'WAVEfmt ')
+  v.setUint32(16, 16, true)
+  v.setUint16(20, 1, true)
+  v.setUint16(22, 1, true)
+  v.setUint32(24, rate, true)
+  v.setUint32(28, rate, true)
+  v.setUint16(32, 1, true)
+  v.setUint16(34, 8, true)
+  w(36, 'data')
+  v.setUint32(40, n, true)
+  new Uint8Array(buf, 44).fill(128)
+  return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }))
+}
+
+const demoTranscript = [
+  { start: 0, text: 'Bienvenue dans cet épisode consacré au télégraphe Chappe.', speaker: 'Lorànt' },
+  { start: 32, text: 'En 1794, une première ligne relie Paris à Lille : des tours, des bras articulés, et des opérateurs qui ne comprennent pas ce qu’ils transmettent.', speaker: 'Lorànt' },
+  { start: 75, text: 'C’est déjà une forme de séparation entre le transport et le sens, que l’on retrouve dans les couches des réseaux modernes.', speaker: 'Invitée' },
+  { start: 128, text: 'Le réseau atteindra plus de cinq cents stations avant d’être supplanté par le télégraphe électrique.', speaker: 'Lorànt' }
+]
+
+items.push(
+  {
+    id: 'pod1',
+    sourceId: 'pod',
+    guid: 'pod1',
+    url: 'https://exemple.fr/episodes/chappe',
+    title: 'Le télégraphe Chappe, Internet avant Internet',
+    author: 'Lorànt Deutsch',
+    summary: 'Comment un réseau de tours a transmis des messages à travers la France en quelques minutes.',
+    contentHtml: '<p>Dans cet épisode, nous remontons en 1794 pour découvrir le premier réseau de télécommunications à l’échelle d’un pays.</p><p>Au programme : les codes, les relais, les erreurs de transmission, et ce que tout cela annonce des réseaux modernes.</p>',
+    imageUrl: thumb(280, 'Histoire'),
+    publishedAt: now - 1.5 * H,
+    fetchedAt: now,
+    read: false,
+    later: false,
+    bookmarked: false,
+    favorite: false,
+    tags: [],
+    mediaUrl: silentWav(180),
+    mediaType: 'audio',
+    duration: 180,
+    transcriptUrl: 'https://exemple.fr/episodes/chappe.vtt',
+    progress: 0.2,
+    position: JSON.stringify({ t: 36 })
+  },
+  {
+    id: 'yt1',
+    sourceId: 'yt',
+    guid: 'yt1',
+    url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    title: 'Comment Internet tient debout',
+    summary: 'Une vidéo animée sur les câbles sous-marins, le routage et la confiance.',
+    contentHtml: '<p>Une vidéo animée sur les câbles sous-marins, le routage et la confiance.</p>',
+    imageUrl: thumb(20, 'Vidéo'),
+    publishedAt: now - 2.5 * H,
+    fetchedAt: now,
+    read: false,
+    later: false,
+    bookmarked: false,
+    favorite: false,
+    tags: [],
+    mediaUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    mediaType: 'youtube',
+    duration: 612
+  }
+)
 
 items.push(
   {
@@ -374,6 +453,7 @@ export const mockApi: LearnAPI = {
     Object.assign(it, patch)
     return delay(it)
   },
+  transcript: async (id) => delay(id === 'pod1' ? demoTranscript : null, 300),
   readingBalance: async (days): Promise<ReadingBalance> => {
     const since = Date.now() - days * 24 * H
     const entries = sources

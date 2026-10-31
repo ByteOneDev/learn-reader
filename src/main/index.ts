@@ -152,6 +152,7 @@ function registerIpc(): void {
     savePosition: (itemId: string, position: string, progress: number) => core.store.savePosition(itemId, position, progress),
     updateBook: (itemId: string, patch: { title?: string; author?: string; imageUrl?: string }) => core.store.updateItem(itemId, patch),
     readingBalance: (days: number) => core.store.readingBalance(days),
+    transcript: (itemId: string) => core.transcript(itemId),
     listBoards: () => core.store.listBoards(),
     createBoard: (title: string, mode: Parameters<LearnCore['createBoard']>[1]) => core.createBoard(title, mode),
     getBoard: (id: string) => core.store.getBoard(id),
@@ -216,8 +217,13 @@ function registerIpc(): void {
 }
 
 app.whenReady().then(async () => {
-  // Pas de permissions (caméra, micro, notifications…) pour le contenu affiché.
-  session.defaultSession.setPermissionRequestHandler((_wc, _perm, cb) => cb(false))
+  // Pas de permissions (caméra, micro, notifications…) pour le contenu affiché ; seul le plein écran vidéo est permis.
+  session.defaultSession.setPermissionRequestHandler((_wc, perm, cb) => cb(perm === 'fullscreen'))
+  // Le lecteur YouTube refuse de s'afficher sans Referer (erreur 153), ce qui est le cas d'une page file://.
+  session.defaultSession.webRequest.onBeforeSendHeaders({ urls: ['https://www.youtube-nocookie.com/*'] }, (details, cb) => {
+    details.requestHeaders.Referer = 'https://github.com/ByteOneDev/learn-reader'
+    cb({ requestHeaders: details.requestHeaders })
+  })
 
   const wasm = readFileSync(require.resolve('sql.js/dist/sql-wasm.wasm'))
   const store = await openDatabase(join(app.getPath('userData'), 'learn.sqlite'), wasm.buffer.slice(wasm.byteOffset, wasm.byteOffset + wasm.byteLength) as ArrayBuffer)

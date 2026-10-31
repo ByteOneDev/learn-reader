@@ -1,5 +1,7 @@
 import { XMLParser } from 'fast-xml-parser'
 import { decodeEntities, htmlToText, truncate } from '@shared/util'
+import { parseDuration } from '@shared/media'
+import type { MediaType } from '@shared/types'
 
 export interface ParsedItem {
   guid: string
@@ -10,16 +12,27 @@ export interface ParsedItem {
   contentHtml?: string
   imageUrl?: string
   publishedAt?: number
+  mediaUrl?: string
+  mediaType?: MediaType
+  duration?: number
+  transcriptUrl?: string
 }
 
 export interface ParsedFeed {
   title: string
   siteUrl?: string
   iconUrl?: string
+  /** Flux de podcast (espace de noms iTunes ou épisodes audio). */
+  podcast?: boolean
+  /** Flux d'une chaîne ou d'une playlist YouTube. */
+  youtube?: boolean
   items: ParsedItem[]
 }
 
-const ARRAY_TAGS = new Set(['item', 'entry', 'link', 'media:content', 'media:thumbnail', 'enclosure', 'category', 'author'])
+const ARRAY_TAGS = new Set(['item', 'entry', 'link', 'media:content', 'media:thumbnail', 'enclosure', 'category', 'author', 'podcast:transcript'])
+
+// Formats de transcription, du plus riche au plus pauvre (horodatage d'abord).
+const TRANSCRIPT_TYPES = ['text/vtt', 'application/x-subrip', 'application/srt', 'application/json', 'text/html', 'text/plain']
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -106,6 +119,30 @@ function mediaImage(it: Record<string, unknown>, base?: string): string | undefi
   return undefined
 }
 
+/** Épisode : fichier audio ou vidéo joint, durée iTunes, transcription Podcasting 2.0. */
+function mediaOf(it: Record<string, unknown>, base?: string): Pick<ParsedItem, 'mediaUrl' | 'mediaType' | 'duration' | 'transcriptUrl'> {
+  const out: Pick<ParsedItem, 'mediaUrl' | 'mediaType' | 'duration' | 'transcriptUrl'> = {}
+  const candidates = [...arr(it.enclosure), ...arr(it['media:content'])]
+  for (const e of candidates) {
+    const url = attr(e, 'url')
+    const type = (attr(e, 'type') ?? '').toLowerCase()
+    const kind: MediaType | undefined =
+      type.startsWith('audio/') || /\.(mp3|m4a|aac|ogg|opus|wav)(\?|$)/i.test(url ?? '') ? 'audio' : type.startsWith('video/') || /\.(mp4|m4v|mov|webm)(\?|$)/i.test(url ?? '') ? 'video' : undefined
+    if (url && kind) {
+      out.mediaUrl = absolutize(url, base)
+      out.mediaType = kind
+      break
+    }
+  }
+  out.duration = parseDuration(text(it['itunes:duration']))
+  const transcripts = arr(it['podcast:transcript'])
+    .map((t) => ({ url: attr(t, 'url'), type: (attr(t, 'type') ?? '').toLowerCase() }))
+    .filter((t) => t.url)
+    .sort((a, b) => (TRANSCRIPT_TYPES.indexOf(a.type) + 1 || 99) - (TRANSCRIPT_TYPES.indexOf(b.type) + 1 || 99))
+  if (transcripts[0]) out.transcriptUrl = absolutize(transcripts[0].url, base)
+  return out
+}
+
 function finishItem(p: ParsedItem): ParsedItem {
   const summarySource = p.summary || p.contentHtml || ''
   const plain = htmlToText(summarySource)
@@ -121,11 +158,7 @@ function finishItem(p: ParsedItem): ParsedItem {
 function parseRss(channel: Record<string, unknown>, items: Node[], feedUrl: string): ParsedFeed {
   const siteUrl = absolutize(text(arr(channel.link).find((l) => typeof l === 'string' || !attr(l, 'href')) ?? channel.link), feedUrl)
   const image = channel.image as Record<string, unknown> | undefined
-  return {
-    title: htmlToText(text(channel.title)) || siteUrl || feedUrl,
-    siteUrl,
-    iconUrl: image ? absolutize(text(image.url), feedUrl) : undefined,
-    items: items.map((n) => {
+  const parsed = items.map((n) => {
       const it = (n ?? {}) as Record<string, unknown>
       const link = arr(it.link)
         .map((l) => (typeof l === 'string' ? l : attr(l, 'href') ?? text(l)))
@@ -142,9 +175,18 @@ function parseRss(channel: Record<string, unknown>, items: Node[], feedUrl: stri
         summary: text(it.description) || undefined,
         contentHtml,
         imageUrl: mediaImage(it, url ?? feedUrl),
-        publishedAt: parseDate(text(it.pubDate) || text(it['dc:date']) || text(it.published))
+        publishedAt: parseDate(text(it.pubDate) || text(it['dc:date']) || text(it.published)),
+        ...mediaOf(it, url ?? feedUrl)
       })
     })
+  const audio = parsed.filter((p) => p.mediaType === 'audio').length
+  const itunesImage = attr(channel['itunes:image'], 'href')
+  return {
+    title: htmlToText(text(channel.title)) || siteUrl || feedUrl,
+    siteUrl,
+    iconUrl: absolutize(itunesImage, feedUrl) ?? (image ? absolutize(text(image.url), feedUrl) : undefined),
+    podcast: audio > 0 && (audio >= parsed.length / 2 || !!itunesImage || 'itunes:author' in channel),
+    items: parsed
   }
 }
 
@@ -159,21 +201,35 @@ function parseAtom(feed: Record<string, unknown>, feedUrl: string): ParsedFeed {
   return {
     title: htmlToText(text(feed.title)) || siteUrl || feedUrl,
     siteUrl,
+    youtube: 'yt:channelId' in feed || 'yt:playlistId' in feed || /youtube\.com\/feeds\//.test(feedUrl),
     iconUrl: absolutize(text(feed.icon) || text(feed.logo) || undefined, feedUrl),
     items: arr(feed.entry).map((n) => {
       const it = (n ?? {}) as Record<string, unknown>
       const url = absolutize(atomLink(arr(it.link)), siteUrl ?? feedUrl)
       const contentHtml = text(it.content) || undefined
       const author = arr(it.author).map((a) => text((a as Record<string, unknown>)?.name ?? a)).filter(Boolean).join(', ')
+      // YouTube : identifiant de la vidéo et description dans media:group.
+      const videoId = text(it['yt:videoId'])
+      const group = (it['media:group'] ?? {}) as Record<string, unknown>
+      const description = text(group['media:description'])
+      const youtube = videoId
+        ? {
+            mediaUrl: `https://www.youtube.com/watch?v=${videoId}`,
+            mediaType: 'youtube' as const,
+            contentHtml: description ? `<p>${description.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>')}</p>` : undefined
+          }
+        : {}
       return finishItem({
         guid: text(it.id) || url || '',
         url,
         title: text(it.title),
         author: author || undefined,
-        summary: text(it.summary) || undefined,
+        summary: text(it.summary) || description || undefined,
         contentHtml: contentHtml ?? (text(it.summary) || undefined),
         imageUrl: mediaImage(it, url ?? feedUrl),
-        publishedAt: parseDate(text(it.published) || text(it.updated))
+        publishedAt: parseDate(text(it.published) || text(it.updated)),
+        ...mediaOf(it, url ?? feedUrl),
+        ...youtube
       })
     })
   }

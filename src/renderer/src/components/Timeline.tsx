@@ -1,6 +1,7 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowUp, Bookmark, BookPlus, CheckCheck, Heart, Highlighter, Layers, PanelLeft, RefreshCw, Search, X } from 'lucide-react'
+import { ArrowUp, Bookmark, BookPlus, CheckCheck, Headphones, Heart, Highlighter, Layers, PanelLeft, Play, RefreshCw, Search, Tv, X } from 'lucide-react'
+import { formatTime } from '@shared/media'
 import type { Item, Source, View } from '@shared/types'
 import { useApp } from '../lib/store'
 import { useT, type Dict } from '../lib/i18n'
@@ -28,6 +29,8 @@ function viewTitle(view: View, t: Dict, sources: Source[]): [string, string] {
     case 'tag':
       return [view.tag, t.tagsLabel]
     case 'kind':
+      if (view.kind === 'podcast') return [t.audio, t.podcasts]
+      if (view.kind === 'youtube') return [t.video, t.youtube]
       return [t.kinds[view.kind] ?? view.kind, t.feeds]
     case 'source': {
       const s = sources.find((x) => x.id === view.sourceId)
@@ -125,9 +128,27 @@ const Card = memo(function Card({ item, source, selected, beforeSelected, showUn
             </div>
           )}
           {item.imageUrl && imgOk && (
-            <img className="card-thumb" src={item.imageUrl} alt="" loading="lazy" referrerPolicy="no-referrer" draggable={false} onError={() => setImgOk(false)} />
+            <span className="card-thumb-wrap">
+              <img className="card-thumb" src={item.imageUrl} alt="" loading="lazy" referrerPolicy="no-referrer" draggable={false} onError={() => setImgOk(false)} />
+              {item.mediaType && (
+                <span className="thumb-play">
+                  <Play size={14} fill="currentColor" />
+                </span>
+              )}
+            </span>
           )}
         </div>
+        {item.mediaType && (
+          <div className="card-media">
+            {item.mediaType === 'audio' ? <Headphones size={13} /> : <Tv size={13} />}
+            {item.duration ? formatTime(item.duration) : null}
+            {!!item.progress && item.progress < 0.98 && (
+              <span className="bar">
+                <span style={{ width: `${Math.round(item.progress * 100)}%` }} />
+              </span>
+            )}
+          </div>
+        )}
         {(item.later || item.bookmarked || item.favorite || !!item.highlightCount || item.tags.length > 0) && (
           <div className="card-flags">
             {item.later && <Layers size={13} className="flag-on" />}

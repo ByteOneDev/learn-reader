@@ -22,6 +22,8 @@ export interface Position {
   chapter?: number
   scroll?: number
   page?: number
+  /** Épisodes et vidéos : instant en secondes. */
+  t?: number
 }
 
 export function parsePosition(p?: string): Position {

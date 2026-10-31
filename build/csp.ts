@@ -12,7 +12,8 @@ export const CSP = [
   'media-src * blob:',
   "font-src 'self' data:",
   "connect-src 'self'",
-  "frame-src 'none'",
+  // Seul le lecteur YouTube intégré (version sans cookies) peut s'afficher dans un cadre.
+  'frame-src https://www.youtube-nocookie.com',
   "object-src 'none'",
   "base-uri 'none'",
   "form-action 'none'"

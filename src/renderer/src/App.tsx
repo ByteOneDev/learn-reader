@@ -12,6 +12,7 @@ import Toasts from './components/Toasts'
 import Onboarding from './onboarding/Onboarding'
 import BalanceDialog from './components/BalanceDialog'
 import BoardView from './components/boards/BoardView'
+import PlayerBar from './components/media/PlayerBar'
 import { useT } from './lib/i18n'
 
 export default function App(): React.JSX.Element {
@@ -133,6 +134,7 @@ export default function App(): React.JSX.Element {
         )}
       </AnimatePresence>
 
+      <PlayerBar />
       <Toasts />
     </>
   )

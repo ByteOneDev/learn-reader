@@ -1,7 +1,7 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { basename, extname, join, relative, sep } from 'node:path'
-import type { Board, BoardMode, BookFormat, Highlight, Item, LearnEvent, NewBoardNode, NewSource, RefreshResult, ResolvedInput, Source, TocEntry } from '@shared/types'
+import type { Board, BoardMode, BookFormat, Cue, Highlight, Item, LearnEvent, NewBoardNode, NewSource, RefreshResult, ResolvedInput, Source, TocEntry } from '@shared/types'
 import { findRoot, layoutMindmap, nodeHeight, NODE_WIDTH } from '@shared/boardLayout'
 import { hostOf, uid } from '@shared/util'
 import { fetchArticle } from './article'
@@ -9,7 +9,9 @@ import { Epub } from './books/epub'
 import type { Store, SyncBase } from './db'
 import { buildMarkdown, mergeWithExisting, safeFileName } from './export/markdown'
 import { boardOutline, buildCanvas } from './export/canvas'
-import { fetchFeed, fetchIcon, type FetchFn } from './feeds/fetcher'
+import { fetchFeed, fetchIcon, fetchText, type FetchFn } from './feeds/fetcher'
+import { parseTranscript } from './media/transcript'
+import { formatTime, timeLink } from '@shared/media'
 import { resolveInput } from './feeds/resolve'
 import { buildOpml, parseOpml } from './opml'
 
@@ -54,6 +56,9 @@ export class LearnCore {
     }
 
     const { feed, feedUrl } = await fetchFeed(this.fetchFn, resolved.url)
+    // Le contenu du flux tranche : podcast, chaîne YouTube (aussi quand on a collé l'adresse d'une page).
+    if (feed.youtube) resolved.kind = 'youtube'
+    else if (feed.podcast && (resolved.kind === 'rss' || resolved.kind === 'podcast')) resolved.kind = 'podcast'
     const again = feedUrl !== resolved.url ? this.store.findSourceByUrl(feedUrl) : undefined
     if (again) return again
 
@@ -61,7 +66,7 @@ export class LearnCore {
     const source = this.store.insertSource({
       id: uid('s_'),
       kind: resolved.kind,
-      title: n.title ?? (resolved.kind === 'rss' || resolved.kind === 'forum' ? feed.title : resolved.title ?? feed.title),
+      title: n.title ?? (['rss', 'forum', 'podcast', 'youtube'].includes(resolved.kind) ? feed.title : resolved.title ?? feed.title),
       url: feedUrl,
       siteUrl,
       category: n.category,
@@ -117,6 +122,10 @@ export class LearnCore {
         summary: p.summary,
         contentHtml: p.contentHtml,
         imageUrl: p.imageUrl,
+        mediaUrl: p.mediaUrl,
+        mediaType: p.mediaType,
+        duration: p.duration,
+        transcriptUrl: p.transcriptUrl,
         // Sans date, on garde l'ordre du flux.
         publishedAt: Math.min(p.publishedAt ?? now - i * 1000, now),
         fetchedAt: now
@@ -304,9 +313,26 @@ export class LearnCore {
     return new Uint8Array(readFileSync(path))
   }
 
-  /** Nom lisible d'une « couche » de surlignage : chapitre d'un EPUB, page d'un PDF. */
+  /** Transcription d'un épisode : téléchargée une fois, puis lue depuis la base. */
+  async transcript(itemId: string): Promise<Cue[] | null> {
+    const cached = this.store.getTranscript(itemId)
+    if (cached) return JSON.parse(cached) as Cue[]
+    const item = this.store.getItem(itemId)
+    if (!item?.transcriptUrl) return null
+    const { body, contentType } = await fetchText(this.fetchFn, item.transcriptUrl, { Accept: 'text/vtt, application/x-subrip, application/json, text/html, text/plain' })
+    const cues = parseTranscript(body, contentType)
+    this.store.setTranscript(itemId, JSON.stringify(cues))
+    return cues
+  }
+
+  /** Nom lisible d'une « couche » de surlignage : chapitre d'un EPUB, page d'un PDF, instant d'un épisode. */
   layerLabel(item: Item, layer: string): string | undefined {
     const [kind, n] = layer.split(':')
+    if (kind === 't') {
+      const link = timeLink(item.mediaUrl ?? item.url, Number(n), item.mediaType)
+      return link && item.mediaType === 'youtube' ? `[${formatTime(Number(n))}](${link})` : formatTime(Number(n))
+    }
+    if (layer === 'transcript') return 'Transcription'
     if (kind === 'p') return `Page ${Number(n) + 1}`
     if (kind === 'ch' && item.format === 'epub') {
       try {

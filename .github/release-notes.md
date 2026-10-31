@@ -7,15 +7,11 @@
 | Windows | `Learn Setup ….exe` |
 | Linux | `Learn-….AppImage` (ou `.deb` pour Debian/Ubuntu) |
 
-Les builds ne sont pas encore signés par un certificat officiel.
-
-**Mac** : ouvre le `.dmg`, glisse Learn dans Applications. Si macOS dit que l'app « est endommagée » ou « ne peut pas être ouverte », lance une fois dans le Terminal :
+**Mac** : ouvre le `.dmg` et glisse Learn dans Applications. Si cette version est signée et notarisée par Apple, elle s'ouvre directement. Sinon (signature ad hoc), et si macOS dit que l'app « est endommagée », lance une fois dans le Terminal :
 
 ```
 xattr -cr /Applications/Learn.app
 ```
-
-puis ouvre Learn normalement (ou clic droit → Ouvrir).
 
 **Windows** : si SmartScreen s'affiche, clique sur *Informations complémentaires* puis *Exécuter quand même*.
 

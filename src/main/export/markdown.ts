@@ -25,14 +25,17 @@ function quoteBlock(text: string): string {
 
 /** Ordre de lecture des couches : texte du flux, texte complet, puis chapitres ou pages dans l'ordre. */
 function layerRank(layer: string): number {
-  if (layer === 'feed') return -2
-  if (layer === 'full') return -1
+  if (layer === 'feed') return -3
+  if (layer === 'full') return -2
+  if (layer === 'transcript') return -1
   const n = Number(layer.split(':')[1])
   return Number.isFinite(n) ? n : 1e9
 }
 
 function typeOf(item: Item, source?: Source): string {
   if (item.format) return item.format === 'pdf' ? 'pdf' : 'book'
+  if (item.mediaType === 'youtube' || item.mediaType === 'video') return 'video'
+  if (item.mediaType === 'audio') return 'podcast'
   switch (source?.kind) {
     case 'reddit':
     case 'forum':

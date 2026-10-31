@@ -59,7 +59,13 @@ const MIGRATIONS = [
   `CREATE TABLE notion_state (
      item_id TEXT PRIMARY KEY REFERENCES items(id) ON DELETE CASCADE,
      page_id TEXT NOT NULL, blocks TEXT NOT NULL, base TEXT NOT NULL, synced_at INTEGER NOT NULL
-   );`
+   );`,
+  // v0.6 : podcasts et vidéos (fichier, type, durée, transcription mise en cache).
+  `ALTER TABLE items ADD COLUMN media_url TEXT;
+   ALTER TABLE items ADD COLUMN media_type TEXT;
+   ALTER TABLE items ADD COLUMN duration INTEGER;
+   ALTER TABLE items ADD COLUMN transcript_url TEXT;
+   ALTER TABLE items ADD COLUMN transcript TEXT;`
 ]
 
 export interface NotionState {
@@ -329,7 +335,11 @@ export class Store {
       format: (r.format as Item['format']) ?? undefined,
       position: (r.position as string) ?? undefined,
       progress: (r.progress as number) ?? 0,
-      readAt: (r.read_at as number) ?? undefined
+      readAt: (r.read_at as number) ?? undefined,
+      mediaUrl: (r.media_url as string) ?? undefined,
+      mediaType: (r.media_type as Item['mediaType']) ?? undefined,
+      duration: (r.duration as number) ?? undefined,
+      transcriptUrl: (r.transcript_url as string) ?? undefined
     }
   }
 
@@ -347,8 +357,9 @@ export class Store {
     this.transaction(() => {
       for (const it of items) {
         added += this.run(
-          `INSERT OR IGNORE INTO items (id, source_id, guid, url, title, author, summary, content_html, image_url, published_at, fetched_at, format, file_path)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT OR IGNORE INTO items (id, source_id, guid, url, title, author, summary, content_html, image_url, published_at, fetched_at, format, file_path,
+                                        media_url, media_type, duration, transcript_url)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             it.id,
             it.sourceId,
@@ -362,12 +373,24 @@ export class Store {
             it.publishedAt,
             it.fetchedAt,
             it.format ?? null,
-            it.filePath ?? null
+            it.filePath ?? null,
+            it.mediaUrl ?? null,
+            it.mediaType ?? null,
+            it.duration ?? null,
+            it.transcriptUrl ?? null
           ]
         )
       }
     })
     return added
+  }
+
+  getTranscript(id: string): string | undefined {
+    return (this.one('SELECT transcript FROM items WHERE id = ?', [id])?.transcript as string) ?? undefined
+  }
+
+  setTranscript(id: string, json: string): void {
+    this.run('UPDATE items SET transcript = ? WHERE id = ?', [json, id])
   }
 
   bookFile(id: string): string | undefined {
@@ -419,6 +442,7 @@ export class Store {
     const rows = this.all(
       `SELECT i.id, i.source_id, i.guid, i.url, i.title, i.author, i.summary, i.image_url, i.published_at, i.fetched_at,
               i.read, i.later, i.bookmarked, i.favorite, i.format, i.position, i.progress, i.read_at,
+              i.media_url, i.media_type, i.duration, i.transcript_url,
               (SELECT COUNT(*) FROM highlights h WHERE h.item_id = i.id) AS highlight_count
        FROM items i JOIN sources s ON s.id = i.source_id
        WHERE ${conds.join(' AND ')}

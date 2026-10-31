@@ -136,7 +136,9 @@ export default function Sidebar(): React.JSX.Element {
   const social = byKind(['mastodon', 'bluesky', 'x'])
   const reddit = byKind(['reddit'])
   const forums = byKind(['forum'])
-  const feeds = byKind(['rss', 'youtube', 'podcast'])
+  const feeds = byKind(['rss'])
+  const podcasts = byKind(['podcast'])
+  const videos = byKind(['youtube'])
   const tags = Object.entries(counts?.tags ?? {})
 
   return (
@@ -158,8 +160,8 @@ export default function Sidebar(): React.JSX.Element {
           </span>
           {settings?.showUnread && !!counts?.unreadTotal && <span className="badge" style={{ fontSize: 12, color: 'var(--text-2)' }}>{counts.unreadTotal}</span>}
         </button>
-        <NavRow icon={<Headphones size={19} />} label={t.audio} disabled soon={t.soon} />
-        <NavRow icon={<Tv size={19} />} label={t.video} disabled soon={t.soon} />
+        <NavRow view={{ type: 'kind', kind: 'podcast' }} icon={<Headphones size={19} />} label={t.audio} />
+        <NavRow view={{ type: 'kind', kind: 'youtube' }} icon={<Tv size={19} />} label={t.video} />
         <NavRow view={{ type: 'library' }} icon={<BookOpen size={19} />} label={t.library} badge={counts?.library} />
 
         <Section id="saved" title={t.saved}>
@@ -187,6 +189,16 @@ export default function Sidebar(): React.JSX.Element {
           </button>
         </Section>
 
+        {podcasts.length > 0 && (
+          <Section id="podcasts" title={t.podcasts}>
+            {sourceRows(podcasts)}
+          </Section>
+        )}
+        {videos.length > 0 && (
+          <Section id="youtube" title={t.youtube}>
+            {sourceRows(videos)}
+          </Section>
+        )}
         {social.length > 0 && (
           <Section id="social" title={t.social}>
             {sourceRows(social)}

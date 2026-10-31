@@ -31,12 +31,16 @@ import HighlightsPanel from './HighlightsPanel'
 import { HighlightMenu, type PendingSelection } from './HighlightMenu'
 import ArticleContent from './ArticleContent'
 import EpubView from './books/EpubView'
+import MediaView from './media/MediaView'
+import { formatTime } from '@shared/media'
 import PdfView from './books/PdfView'
 import type { BookNav } from './books/common'
 import type { Dict } from '../lib/i18n'
 
 export function layerLabel(layer: string, t: Dict): string {
   const [kind, n] = layer.split(':')
+  if (kind === 't') return formatTime(Number(n))
+  if (layer === 'transcript') return t.transcriptTab
   if (kind === 'p') return `${t.page} ${Number(n) + 1}`
   if (kind === 'ch') return `${t.chapter} ${Number(n) + 1}`
   return layer === 'full' ? t.fullText : t.feedText
@@ -98,10 +102,10 @@ export default function Reader(): React.JSX.Element {
     let cancelled = false
     void (async () => {
       const deadline = Date.now() + 5000
-      const ready = (): boolean => !item.format || (!!navRef.current && (item.format !== 'pdf' || !!scrollRef.current?.querySelector('.pdf-page')))
+      const ready = (): boolean => (!item.format && !item.mediaType) || (!!navRef.current && (item.format !== 'pdf' || !!scrollRef.current?.querySelector('.pdf-page')))
       while (!ready() && Date.now() < deadline && !cancelled) await new Promise((r) => setTimeout(r, 100))
       if (cancelled) return
-      if (item.format) await navRef.current?.goTo(jumpTo.layer)
+      if (item.format || item.mediaType) await navRef.current?.goTo(jumpTo.layer)
       else if (jumpTo.layer === 'full' || jumpTo.layer === 'feed') await useApp.getState().setMode(jumpTo.layer)
       setTimeout(() => !cancelled && scrollToHighlight(jumpTo.highlightId), 250)
     })()
@@ -261,7 +265,20 @@ export default function Reader(): React.JSX.Element {
         {item.format === 'pdf' && (
           <PdfView key={item.id} item={item} highlights={highlights} scrollRef={scrollRef} navRef={navRef} onOrphans={setOrphans} onMouseUp={onMouseUp} onClick={onClickContent} />
         )}
-        {!item.format && (
+        {item.mediaType && !item.format && (
+          <MediaView
+            key={item.id}
+            item={item}
+            highlights={highlights}
+            scrollRef={scrollRef}
+            navRef={navRef}
+            onOrphans={setOrphans}
+            onMouseUp={onMouseUp}
+            onClick={onClickContent}
+            onMoment={(h, anchor) => setActive({ id: h.id, anchor, edit: true })}
+          />
+        )}
+        {!item.format && !item.mediaType && (
         <motion.article
             key={item.id}
             className="article"
@@ -317,11 +334,12 @@ export default function Reader(): React.JSX.Element {
             key="panel"
             highlights={highlights}
             orphans={orphans}
-            current={item.format ? navRef.current?.current() : layer}
+            current={item.format || item.mediaType ? navRef.current?.current() : layer}
             labelFor={(l) => layerLabel(l, t)}
             onJump={async (h) => {
-              if (item.format) {
+              if (item.format || item.mediaType) {
                 await navRef.current?.goTo(h.layer)
+                if (h.layer.startsWith('t:')) return
                 setTimeout(() => scrollToHighlight(h.id), 120)
                 return
               }

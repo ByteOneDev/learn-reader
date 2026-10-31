@@ -74,6 +74,23 @@ export interface Item {
   /** Avancement de 0 à 1. */
   progress?: number
   readAt?: number
+  /** Épisodes et vidéos : fichier audio/vidéo, ou identifiant YouTube pour `youtube`. */
+  mediaUrl?: string
+  mediaType?: MediaType
+  /** Durée en secondes. */
+  duration?: number
+  /** Transcription annoncée par le flux (balise podcast:transcript). */
+  transcriptUrl?: string
+}
+
+export type MediaType = 'audio' | 'video' | 'youtube'
+
+/** Un segment de transcription, horodaté. */
+export interface Cue {
+  start: number
+  end?: number
+  text: string
+  speaker?: string
 }
 
 export type HighlightColor = 'yellow' | 'green' | 'blue' | 'pink' | 'purple'
@@ -97,7 +114,8 @@ export interface Highlight {
   note: string
   /**
    * Contenu sur lequel le surlignage a été posé : `feed` (texte du flux), `full` (texte complet),
-   * `ch:<n>` (chapitre d'un EPUB) ou `p:<n>` (page d'un PDF, à partir de 0).
+   * `ch:<n>` (chapitre d'un EPUB), `p:<n>` (page d'un PDF, à partir de 0), `transcript` (transcription)
+   * ou `t:<secondes>` (note horodatée dans un épisode ou une vidéo).
    */
   layer: string
   createdAt: number
@@ -328,6 +346,8 @@ export interface LearnAPI {
   savePosition(itemId: string, position: string, progress: number): Promise<void>
   updateBook(itemId: string, patch: Partial<Pick<Item, 'title' | 'author' | 'imageUrl'>>): Promise<Item>
   readingBalance(days: number): Promise<ReadingBalance>
+  /** Transcription d'un épisode (téléchargée puis mise en cache), ou null s'il n'y en a pas. */
+  transcript(itemId: string): Promise<Cue[] | null>
 
   listBoards(): Promise<BoardSummary[]>
   createBoard(title: string, mode: BoardMode): Promise<Board>
@@ -389,6 +409,7 @@ export const API_METHODS = [
   'savePosition',
   'updateBook',
   'readingBalance',
+  'transcript',
   'listBoards',
   'createBoard',
   'getBoard',

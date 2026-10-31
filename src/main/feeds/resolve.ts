@@ -46,11 +46,17 @@ export function resolveInput(raw: string, opts: { xBridge?: string } = {}): Reso
   }
   if (host === 'bsky.app' && parts[0] === 'profile' && parts[1]) return bluesky(parts[1])
   if ((host === 'x.com' || host === 'twitter.com') && parts[0]) return xBridge(parts[0], opts.xBridge)
-  if (host === 'youtube.com') {
+  if (host === 'youtube.com' || host === 'm.youtube.com') {
     if (parts[0] === 'channel' && parts[1]) {
       return { kind: 'youtube', url: `https://www.youtube.com/feeds/videos.xml?channel_id=${parts[1]}`, siteUrl: url.href }
     }
     if (parts[0] === 'feeds') return { kind: 'youtube', url: url.href }
+    const list = url.searchParams.get('list')
+    if (parts[0] === 'playlist' && list) return { kind: 'youtube', url: `https://www.youtube.com/feeds/videos.xml?playlist_id=${list}`, siteUrl: url.href }
+    // @pseudo, /c/…, /user/… : la page de la chaîne annonce son flux, trouvé à la découverte.
+    if (parts[0]?.startsWith('@') || parts[0] === 'c' || parts[0] === 'user') {
+      return { kind: 'youtube', url: `https://www.youtube.com/${parts.slice(0, parts[0].startsWith('@') ? 1 : 2).join('/')}`, siteUrl: url.href }
+    }
   }
   if (parts[0]?.startsWith('@') && parts.length === 1 && !host.includes('youtube')) {
     // Profil Mastodon (ou compatible) : https://instance/@user

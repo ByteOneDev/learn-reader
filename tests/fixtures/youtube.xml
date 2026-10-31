@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
+  <link rel="self" href="http://www.youtube.com/feeds/videos.xml?channel_id=UCsXVk37bltHxD1rDPwtNM8Q"/>
+  <id>yt:channel:sXVk37bltHxD1rDPwtNM8Q</id>
+  <yt:channelId>sXVk37bltHxD1rDPwtNM8Q</yt:channelId>
+  <title>Kurzgesagt – In a Nutshell</title>
+  <link rel="alternate" href="https://www.youtube.com/channel/UCsXVk37bltHxD1rDPwtNM8Q"/>
+  <entry>
+    <id>yt:video:abcdefghijk</id>
+    <yt:videoId>abcdefghijk</yt:videoId>
+    <title>How the Internet Works</title>
+    <link rel="alternate" href="https://www.youtube.com/watch?v=abcdefghijk"/>
+    <author><name>Kurzgesagt</name></author>
+    <published>2026-10-29T15:00:00+00:00</published>
+    <media:group>
+      <media:title>How the Internet Works</media:title>
+      <media:thumbnail url="https://i2.ytimg.com/vi/abcdefghijk/hqdefault.jpg" width="480" height="360"/>
+      <media:description>Cables under the sea &amp; routers.
+
+Second paragraph.</media:description>
+    </media:group>
+  </entry>
+</feed>

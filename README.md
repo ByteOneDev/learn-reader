@@ -14,6 +14,17 @@ Direction graphique inspirée de [Reeder](https://reederapp.com) (2024), avec sa
 | Livre EPUB | PDF surligné |
 | ![](docs/screenshots/livre-epub.png) | ![](docs/screenshots/livre-pdf.png) |
 
+## Nouveautés de la v0.6 : podcasts et vidéos YouTube
+
+- **Audio** et **Vidéo** dans la barre latérale. Abonne-toi à un podcast avec son flux RSS, ou à une chaîne YouTube en collant simplement son adresse (`youtube.com/@chaine`, `/channel/…`, une playlist). Learn reconnaît tout seul les podcasts et les chaînes, et tes abonnements Reeder importés en OPML suivent.
+- **Lecteur audio** avec pochette, ±15 s / 30 s, vitesse (0,8× à 2×) et reprise là où tu t'étais arrêté. Le **mini-lecteur** reste en bas de la barre latérale pendant que tu lis autre chose.
+- **Vidéos YouTube** dans le lecteur intégré (version sans cookies de YouTube), avec reprise de la position.
+- **Noter ce moment** : un clic crée une note horodatée (avec la phrase prononcée à cet instant si une transcription existe). Les moments notés ramènent à l'instant exact. Dans Obsidian et Notion, ils apparaissent sous leur horodatage, avec un lien direct `youtu.be/…?t=…` pour les vidéos.
+- **Transcriptions** des podcasts qui en publient (balise Podcasting 2.0 `podcast:transcript`, aux formats WebVTT, SRT, JSON ou HTML). Elles sont horodatées, cliquables et **surlignables** comme un article.
+- Les vidéos jointes aux flux (podcasts vidéo) se lisent aussi.
+
+**Signature macOS** : le workflow signe désormais avec un certificat Developer ID et fait notariser l'app par Apple, dès que les secrets sont déposés dans le dépôt. Voir **[docs/SIGNATURE-MAC.md](docs/SIGNATURE-MAC.md)**. Sans eux, la signature reste ad hoc.
+
 ## Nouveautés de la v0.5 : Notion
 
 **Mise en route** (une fois) :
@@ -128,6 +139,7 @@ src/
     export/    Génération du Markdown Obsidian
     sync/      Synchronisation bidirectionnelle avec Obsidian, fusion à trois voies commune
     notion/    Client de l'API Notion et synchronisation
+    media/     Transcriptions de podcasts (WebVTT, SRT, JSON, HTML)
   preload/     Pont minimal et typé entre l'interface et le système
   renderer/    Interface React (Zustand, Framer Motion, Lucide, pdf.js, React Flow)
 tests/         Vitest : analyse, résolution, OPML, Markdown, ancrage, catalogue, intégration HTTP
@@ -159,7 +171,8 @@ L'orientation politique (−3 à +3) est une estimation de Learn à partir des l
 - ~~**v0.3** : synchronisation bidirectionnelle avec Obsidian (surveillance du coffre)~~ ✓
 - ~~**v0.4** : Boards, des mind maps et canvas où glisser surlignages et extraits, export JSON Canvas (Obsidian Canvas)~~ ✓
 - ~~**v0.5** : Notion (export puis synchro)~~ ✓
-- **Ensuite** : podcasts, vidéos YouTube, extension Obsidian, app native
+- ~~**v0.6** : podcasts, vidéos YouTube, signature macOS~~ ✓
+- **Ensuite** : extension Obsidian, app native
 
 ## Licence
 
