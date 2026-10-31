@@ -1,6 +1,6 @@
 // API simulée, en mémoire : permet de développer et tester l'interface dans un simple navigateur
 // (npm run web), sans Electron ni réseau. Jamais utilisée dans l'application réelle.
-import type { Board, Counts, Highlight, Item, ItemQuery, LearnAPI, LearnEvent, NewSource, ReadingBalance, Settings, Source, TocEntry, View } from '@shared/types'
+import type { Board, NotionStatus, Counts, Highlight, Item, ItemQuery, LearnAPI, LearnEvent, NewSource, ReadingBalance, Settings, Source, TocEntry, View } from '@shared/types'
 import { layoutMindmap } from '@shared/boardLayout'
 import { DEFAULT_SETTINGS } from '@shared/types'
 import { uid } from '@shared/util'
@@ -197,6 +197,7 @@ items.push(
 )
 
 let highlights: Highlight[] = []
+let notion: NotionStatus = { connected: false }
 
 const boards: Board[] = [
   {
@@ -411,6 +412,21 @@ export const mockApi: LearnAPI = {
   allHighlights: async () => delay(highlights.map((h) => ({ ...h, itemTitle: items.find((i) => i.id === h.itemId)?.title ?? '' }))),
   exportBoardToObsidian: async (id) => delay({ path: `/Users/moi/Obsidian/Learn/Boards/${boards.find((b) => b.id === id)?.title}.canvas` }),
   boardMarkdown: async (id) => delay(`# ${boards.find((b) => b.id === id)?.title}\n`),
+  notionStatus: async () => delay(notion),
+  notionConnect: async () => {
+    notion = { connected: true, workspace: 'Espace de démonstration' }
+    return delay(notion)
+  },
+  notionDisconnect: async () => {
+    notion = { connected: false }
+  },
+  notionCreateDatabase: async () => {
+    notion = { ...notion, databaseUrl: 'https://www.notion.so/exemple' }
+    return delay(notion)
+  },
+  notionPush: async () => delay({ url: 'https://www.notion.so/exemple' }, 400),
+  notionPushAll: async () => delay(new Set(highlights.map((h) => h.itemId)).size, 600),
+  notionSyncNow: async () => delay({ pushed: 1, updated: 0 }, 600),
   refresh: async () => {
     emit({ type: 'refresh-started' })
     await delay(null, 800)

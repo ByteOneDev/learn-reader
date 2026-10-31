@@ -13,6 +13,7 @@ import {
   Link as LinkIcon,
   Maximize2,
   Minimize2,
+  Send,
   Share,
   Tag
 } from 'lucide-react'
@@ -366,6 +367,19 @@ export default function Reader(): React.JSX.Element {
               }}
             >
               <Copy size={15} /> {t.copyMarkdown}
+            </button>
+            <button
+              onClick={async () => {
+                setShareAnchor(null)
+                try {
+                  await api.notionPush(item.id)
+                  toast(t.notionSent)
+                } catch (e) {
+                  toast((e as Error).message, 'error')
+                }
+              }}
+            >
+              <Send size={15} /> {t.sendToNotion}
             </button>
             {item.url && (
               <>

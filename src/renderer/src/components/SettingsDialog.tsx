@@ -4,6 +4,7 @@ import type { Settings } from '@shared/types'
 import { useApp } from '../lib/store'
 import { useT } from '../lib/i18n'
 import Dialog from './Dialog'
+import NotionSettings from './NotionSettings'
 
 export default function SettingsDialog({ onClose }: { onClose(): void }): React.JSX.Element {
   const t = useT()
@@ -119,6 +120,8 @@ export default function SettingsDialog({ onClose }: { onClose(): void }): React.
           aria-label={t.obsidianSync}
         />
       </div>
+
+      <NotionSettings />
 
       <div className="field">
         <label>{t.xBridge}</label>

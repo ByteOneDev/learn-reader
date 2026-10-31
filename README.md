@@ -14,6 +14,20 @@ Direction graphique inspirée de [Reeder](https://reederapp.com) (2024), avec sa
 | Livre EPUB | PDF surligné |
 | ![](docs/screenshots/livre-epub.png) | ![](docs/screenshots/livre-pdf.png) |
 
+## Nouveautés de la v0.5 : Notion
+
+**Mise en route** (une fois) :
+1. Sur [notion.so/my-integrations](https://www.notion.so/my-integrations), crée une intégration **interne** et copie son jeton secret.
+2. Dans Notion, ouvre la page qui accueillera tes lectures, menu **⋯ → Connexions**, et ajoute ton intégration.
+3. Dans Learn, **Réglages → Notion** : colle le jeton, puis le lien de cette page, et clique sur **Créer la base « Learn »**.
+
+Ensuite :
+- **Une page par document** dans la base Learn (titre, auteur, type, source, URL, tags), **une citation par surlignage**, colorée comme dans Learn, avec ta note en dessous. Les liens, le gras et l'italique sont conservés.
+- **Envoyer vers Notion** depuis le menu de partage d'un document, ou **Tout envoyer** depuis les Réglages.
+- **Synchronisation automatique dans les deux sens** (à activer) : chaque modification dans Learn est envoyée quelques secondes après. Toutes les 5 minutes, Learn récupère ce que tu as changé dans Notion : notes, couleurs, citations supprimées, tags. Même fusion qu'avec Obsidian : en cas de conflit, les deux versions sont gardées.
+- Seul ce qui a changé est envoyé (Notion limite à environ 3 requêtes par seconde). Une page supprimée dans Notion est recréée au prochain envoi.
+- Le jeton est chiffré par le trousseau de ton système (Keychain, DPAPI, libsecret) et ne quitte jamais le processus principal de l'app.
+
 ## Nouveautés de la v0.4 : Boards (mind maps et canvas)
 
 ![Un board](docs/screenshots/board.png)
@@ -112,7 +126,8 @@ src/
     feeds/     Résolution des adresses, téléchargement, analyse RSS/Atom/RDF/JSON Feed
     books/     Lecture des EPUB (zip, OPF, table des matières, chapitres)
     export/    Génération du Markdown Obsidian
-    sync/      Synchronisation bidirectionnelle avec Obsidian (fusion à trois voies)
+    sync/      Synchronisation bidirectionnelle avec Obsidian, fusion à trois voies commune
+    notion/    Client de l'API Notion et synchronisation
   preload/     Pont minimal et typé entre l'interface et le système
   renderer/    Interface React (Zustand, Framer Motion, Lucide, pdf.js, React Flow)
 tests/         Vitest : analyse, résolution, OPML, Markdown, ancrage, catalogue, intégration HTTP
@@ -143,7 +158,7 @@ L'orientation politique (−3 à +3) est une estimation de Learn à partir des l
 - ~~**v0.2** : EPUB et PDF avec surlignage ; bilan de lecture dans l'hémicycle ; propriétaires des médias~~ ✓
 - ~~**v0.3** : synchronisation bidirectionnelle avec Obsidian (surveillance du coffre)~~ ✓
 - ~~**v0.4** : Boards, des mind maps et canvas où glisser surlignages et extraits, export JSON Canvas (Obsidian Canvas)~~ ✓
-- **v0.5** : Notion (export puis synchro)
+- ~~**v0.5** : Notion (export puis synchro)~~ ✓
 - **Ensuite** : podcasts, vidéos YouTube, extension Obsidian, app native
 
 ## Licence

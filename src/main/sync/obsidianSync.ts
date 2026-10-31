@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import type { LearnEvent } from '@shared/types'
 import { hashText, type LearnCore } from '../core'
 import { parseLearnFile } from './obsidianParse'
+import { threeWayMerge } from './merge'
 
 const EXPORT_DELAY = 1200
 const FILE_DELAY = 900
@@ -139,54 +140,26 @@ export class ObsidianSync {
     if (state?.hash === hash && state.path === path) return null // notre propre écriture, ou rien de neuf
 
     const base = state?.base ?? { tags: item.tags, highlights: {} }
-    const report: SyncReport = { itemId, updated: 0, removed: 0, conflicts: 0, tagsChanged: false }
+    const merge = threeWayMerge(
+      store.listHighlights(itemId),
+      parsed.highlights,
+      base,
+      { learn: item.tags, remote: parsed.tags, known: store.allTags() },
+      'Version modifiée dans Obsidian :'
+    )
+    for (const id of merge.removals) store.removeHighlight(id)
+    for (const { id, ...patch } of merge.patches) store.updateHighlight(id, patch)
+    if (merge.tags) store.updateItem(itemId, { tags: merge.tags })
+    const report: SyncReport = {
+      itemId,
+      updated: merge.patches.length,
+      removed: merge.removals.length,
+      conflicts: merge.conflicts,
+      tagsChanged: !!merge.tags
+    }
     // Le fichier n'est réécrit que si Learn détient quelque chose qu'il ne contient pas : on évite ainsi
     // de recharger le fichier sous les doigts de quelqu'un qui tape dans Obsidian.
-    let needsExport = false
-
-    for (const h of store.listHighlights(itemId)) {
-      const inFile = parsed.highlights.get(h.id)
-      const before = base.highlights[h.id]
-      const learnNote = h.note.trim()
-      if (!inFile) {
-        // Présent lors de la dernière synchro, absent du fichier : supprimé dans Obsidian.
-        // Sauf s'il a été modifié dans Learn depuis : dans ce cas Learn l'emporte et le réécrira.
-        if (before && before.note === learnNote && before.color === h.color) {
-          store.removeHighlight(h.id)
-          report.removed++
-        } else needsExport = true
-        continue
-      }
-      const patch: { note?: string; color?: typeof h.color } = {}
-      if (inFile.note !== (before?.note ?? learnNote) && inFile.note !== learnNote) {
-        if (!before || before.note === learnNote) patch.note = inFile.note
-        else {
-          // Modifiée des deux côtés : on garde les deux versions, rien n'est perdu.
-          patch.note = `${learnNote}\n\n---\n*Version modifiée dans Obsidian :*\n\n${inFile.note}`
-          report.conflicts++
-          needsExport = true
-        }
-      }
-      if (inFile.color !== (before?.color ?? h.color) && inFile.color !== h.color) patch.color = inFile.color
-      // Modifié dans Learn depuis la dernière synchro, et pas dans Obsidian : Learn réécrira le fichier.
-      if (patch.note === undefined && inFile.note !== learnNote) needsExport = true
-      if (patch.color === undefined && inFile.color !== h.color) needsExport = true
-      if (patch.note !== undefined || patch.color !== undefined) {
-        store.updateHighlight(h.id, patch)
-        report.updated++
-      }
-    }
-
-    // Tags : on retrouve l'orthographe de Learn quand Obsidian a remplacé les espaces par des tirets.
-    const known = new Set([...store.allTags(), ...item.tags])
-    const fileTags = parsed.tags.map((t) => [...known].find((k) => k === t || k.replace(/\s+/g, '-') === t) ?? t)
-    const same = (a: string[], b: string[]): boolean => a.length === b.length && [...a].sort().join('\u0000') === [...b].sort().join('\u0000')
-    if (!same(fileTags, base.tags) && !same(fileTags, item.tags)) {
-      const merge = !same(item.tags, base.tags)
-      store.updateItem(itemId, { tags: merge ? [...new Set([...item.tags, ...fileTags])] : fileTags })
-      report.tagsChanged = true
-      if (merge) needsExport = true
-    } else if (!same(fileTags, item.tags)) needsExport = true
+    const needsExport = merge.needsPush
 
     if (needsExport) {
       // On mémorise d'abord le chemin (fichier éventuellement renommé), puis Learn réécrit l'état fusionné.

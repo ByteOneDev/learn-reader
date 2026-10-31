@@ -54,8 +54,24 @@ const MIGRATIONS = [
   `CREATE TABLE boards (
      id TEXT PRIMARY KEY, title TEXT NOT NULL, mode TEXT NOT NULL, data TEXT NOT NULL,
      created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+   );`,
+  // v0.5 : correspondance avec Notion (page du document, bloc de chaque surlignage, base de fusion).
+  `CREATE TABLE notion_state (
+     item_id TEXT PRIMARY KEY REFERENCES items(id) ON DELETE CASCADE,
+     page_id TEXT NOT NULL, blocks TEXT NOT NULL, base TEXT NOT NULL, synced_at INTEGER NOT NULL
    );`
 ]
+
+export interface NotionState {
+  itemId: string
+  pageId: string
+  /** id du surlignage → id du bloc citation ; `_intro` pour le paragraphe d'en-tête. */
+  blocks: Record<string, string>
+  base: SyncBase
+  syncedAt: number
+}
+
+const SECRET_PREFIX = 'secret:'
 
 export interface SyncBase {
   tags: string[]
@@ -163,7 +179,8 @@ export class Store {
 
   getSettings(): Settings {
     const out: Record<string, unknown> = { ...DEFAULT_SETTINGS }
-    for (const r of this.all('SELECT key, value FROM settings')) out[r.key as string] = JSON.parse(r.value as string)
+    // Les secrets (jeton Notion…) ne quittent jamais le processus principal.
+    for (const r of this.all('SELECT key, value FROM settings')) if (!(r.key as string).startsWith(SECRET_PREFIX)) out[r.key as string] = JSON.parse(r.value as string)
     return out as unknown as Settings
   }
 
@@ -175,6 +192,16 @@ export class Store {
       }
     })
     return this.getSettings()
+  }
+
+  getSecret(name: string): string | undefined {
+    const r = this.one('SELECT value FROM settings WHERE key = ?', [SECRET_PREFIX + name])
+    return r ? (JSON.parse(r.value as string) as string) : undefined
+  }
+
+  setSecret(name: string, value: string | undefined): void {
+    if (value === undefined) this.run('DELETE FROM settings WHERE key = ?', [SECRET_PREFIX + name])
+    else this.run('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value', [SECRET_PREFIX + name, JSON.stringify(value)])
   }
 
   // ── Sources ───────────────────────────────────────────────────────────────
@@ -581,6 +608,28 @@ export class Store {
        ON CONFLICT(item_id) DO UPDATE SET path = excluded.path, hash = excluded.hash, base = excluded.base, synced_at = excluded.synced_at`,
       [s.itemId, s.path, s.hash, JSON.stringify(s.base), s.syncedAt]
     )
+  }
+
+  getNotionState(itemId: string): NotionState | undefined {
+    const r = this.one('SELECT * FROM notion_state WHERE item_id = ?', [itemId])
+    if (!r) return undefined
+    return { itemId, pageId: r.page_id as string, blocks: JSON.parse(r.blocks as string), base: JSON.parse(r.base as string), syncedAt: r.synced_at as number }
+  }
+
+  setNotionState(s: NotionState): void {
+    this.run(
+      `INSERT INTO notion_state (item_id, page_id, blocks, base, synced_at) VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(item_id) DO UPDATE SET page_id = excluded.page_id, blocks = excluded.blocks, base = excluded.base, synced_at = excluded.synced_at`,
+      [s.itemId, s.pageId, JSON.stringify(s.blocks), JSON.stringify(s.base), s.syncedAt]
+    )
+  }
+
+  deleteNotionState(itemId: string): void {
+    this.run('DELETE FROM notion_state WHERE item_id = ?', [itemId])
+  }
+
+  notionItems(): string[] {
+    return this.all('SELECT item_id FROM notion_state').map((r) => r.item_id as string)
   }
 
   syncedItems(): string[] {

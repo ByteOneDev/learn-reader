@@ -211,6 +211,12 @@ export interface Settings {
   obsidianFolder: string
   /** Synchronisation automatique dans les deux sens avec le coffre Obsidian. */
   obsidianSync?: boolean
+  notionWorkspace?: string
+  notionDatabaseId?: string
+  notionDatabaseUrl?: string
+  /** Synchronisation automatique avec Notion (relève toutes les 5 minutes, envoi après chaque modification). */
+  notionSync?: boolean
+  notionLastPull?: number
   /** Modèle d'adresse pour X, ex. `https://rsshub.mondomaine.fr/twitter/user/{user}`. */
   xBridge?: string
 }
@@ -262,6 +268,13 @@ export interface RefreshResult {
   sources: number
   newItems: number
   errors: { sourceId: string; title: string; error: string }[]
+}
+
+export interface NotionStatus {
+  connected: boolean
+  workspace?: string
+  databaseUrl?: string
+  lastPull?: number
 }
 
 export interface ExportResult {
@@ -327,6 +340,14 @@ export interface LearnAPI {
   exportBoardToObsidian(id: string): Promise<{ path: string }>
   boardMarkdown(id: string): Promise<string>
 
+  notionStatus(): Promise<NotionStatus>
+  notionConnect(token: string): Promise<NotionStatus>
+  notionDisconnect(): Promise<void>
+  notionCreateDatabase(parentPageUrl: string): Promise<NotionStatus>
+  notionPush(itemId: string): Promise<{ url: string }>
+  notionPushAll(): Promise<number>
+  notionSyncNow(): Promise<{ pushed: number; updated: number }>
+
   chooseFolder(): Promise<string | null>
   exportToObsidian(itemId: string): Promise<ExportResult>
   exportAllToObsidian(): Promise<{ count: number; folder: string }>
@@ -377,6 +398,13 @@ export const API_METHODS = [
   'allHighlights',
   'exportBoardToObsidian',
   'boardMarkdown',
+  'notionStatus',
+  'notionConnect',
+  'notionDisconnect',
+  'notionCreateDatabase',
+  'notionPush',
+  'notionPushAll',
+  'notionSyncNow',
   'chooseFolder',
   'exportToObsidian',
   'exportAllToObsidian',

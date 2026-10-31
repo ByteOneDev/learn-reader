@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, net, session, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, net, safeStorage, session, shell } from 'electron'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { API_METHODS, type ApiMethod, type LearnEvent } from '@shared/types'
@@ -6,10 +6,19 @@ import { LearnCore } from './core'
 import { openDatabase } from './db'
 import { buildMenu } from './menu'
 import { ObsidianSync } from './sync/obsidianSync'
+import { NotionSync, type SecretBox } from './notion/notionSync'
 
 let win: BrowserWindow | null = null
 let core: LearnCore
 let sync: ObsidianSync
+let notion: NotionSync
+
+/** Le jeton Notion est chiffré par le trousseau du système (Keychain, DPAPI, libsecret) quand il est disponible. */
+const secretBox: SecretBox = {
+  encrypt: (plain) => (safeStorage.isEncryptionAvailable() ? 'enc:' + safeStorage.encryptString(plain).toString('base64') : 'b64:' + Buffer.from(plain).toString('base64')),
+  decrypt: (sealed) =>
+    sealed.startsWith('enc:') ? safeStorage.decryptString(Buffer.from(sealed.slice(4), 'base64')) : Buffer.from(sealed.slice(4), 'base64').toString('utf8')
+}
 let refreshTimer: ReturnType<typeof setInterval> | null = null
 
 const isMac = process.platform === 'darwin'
@@ -72,6 +81,12 @@ function scheduleRefresh(): void {
   refreshTimer = setInterval(() => void core.refresh(), minutes * 60_000)
 }
 
+/** Toute modification d'un document est propagée aux synchronisations actives. */
+function touch(itemId: string): void {
+  sync.touch(itemId)
+  notion.touch(itemId)
+}
+
 function registerIpc(): void {
   const handlers: Record<ApiMethod, (...args: never[]) => unknown> = {
     getSettings: () => core.store.getSettings(),
@@ -80,6 +95,7 @@ function registerIpc(): void {
       if ('refreshMinutes' in patch) scheduleRefresh()
       if ('theme' in patch) nativeTheme.themeSource = s.theme
       if ('obsidianSync' in patch || 'obsidianVault' in patch || 'obsidianFolder' in patch) sync.restart()
+      if ('notionSync' in patch) notion.restart()
       return s
     },
     listSources: () => core.store.listSources(),
@@ -92,7 +108,7 @@ function registerIpc(): void {
     getItem: (id: string) => core.store.getItem(id),
     updateItem: (id: string, patch: Parameters<typeof core.store.updateItem>[1]) => {
       const item = core.store.updateItem(id, patch)
-      if (patch.tags) sync.touch(id)
+      if (patch.tags) touch(id)
       return item
     },
     markAllRead: (view: Parameters<typeof core.store.markAllRead>[0]) => core.store.markAllRead(view),
@@ -103,18 +119,18 @@ function registerIpc(): void {
     listHighlights: (itemId?: string) => core.store.listHighlights(itemId),
     addHighlight: (h: Parameters<LearnCore['addHighlight']>[0]) => {
       const created = core.addHighlight(h)
-      sync.touch(h.itemId)
+      touch(h.itemId)
       return created
     },
     updateHighlight: (id: string, patch: Parameters<typeof core.store.updateHighlight>[1]) => {
       const updated = core.store.updateHighlight(id, patch)
-      sync.touch(updated.itemId)
+      touch(updated.itemId)
       return updated
     },
     removeHighlight: (id: string) => {
       const h = core.store.listHighlights().find((x) => x.id === id)
       core.store.removeHighlight(id)
-      if (h) sync.touch(h.itemId)
+      if (h) touch(h.itemId)
     },
     refresh: (sourceId?: string) => core.refresh(sourceId),
     importBooks: async (paths?: string[]) => {
@@ -145,6 +161,27 @@ function registerIpc(): void {
     allHighlights: () => core.store.allHighlights(),
     exportBoardToObsidian: (id: string) => core.exportBoardToObsidian(id),
     boardMarkdown: (id: string) => core.boardMarkdown(id),
+    notionStatus: () => notion.status(),
+    notionConnect: async (token: string) => {
+      await notion.connect(token)
+      return notion.status()
+    },
+    notionDisconnect: () => notion.disconnect(),
+    notionCreateDatabase: async (parent: string) => {
+      await notion.createDatabase(parent)
+      notion.restart()
+      return notion.status()
+    },
+    notionPush: async (itemId: string) => {
+      const { pageId } = await notion.pushItem(itemId)
+      return { url: `https://www.notion.so/${pageId.replace(/-/g, '')}` }
+    },
+    notionPushAll: () => notion.pushAll(),
+    notionSyncNow: async () => {
+      const reports = await notion.pull()
+      const pushed = await notion.pushAll()
+      return { pushed, updated: reports.reduce((a, r) => a + r.updated + r.removed, 0) }
+    },
     chooseFolder: async () => {
       const r = await dialog.showOpenDialog(win!, { properties: ['openDirectory', 'createDirectory'], title: 'Choisir le coffre Obsidian' })
       return r.canceled ? null : r.filePaths[0]
@@ -188,6 +225,7 @@ app.whenReady().then(async () => {
   nativeTheme.themeSource = store.getSettings().theme
 
   sync = new ObsidianSync(core, send)
+  notion = new NotionSync(core, (url, init) => net.fetch(url, init), secretBox, send)
   registerIpc()
   Menu.setApplicationMenu(buildMenu(send))
   createWindow()
@@ -197,6 +235,7 @@ app.whenReady().then(async () => {
   } catch {
     /* coffre indisponible au démarrage */
   }
+  notion.restart()
   if (store.getSettings().onboarded) setTimeout(() => void core.refresh(), 1500)
 
   app.on('activate', () => {
@@ -214,5 +253,6 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', () => {
   sync?.stop()
+  notion?.stop()
   core?.store.flush()
 })
