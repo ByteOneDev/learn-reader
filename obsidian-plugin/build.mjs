@@ -2,27 +2,30 @@
 // le dossier à copier dans <coffre>/.obsidian/plugins/. La version suit celle de l'app.
 import { build } from 'esbuild'
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const here = new URL('.', import.meta.url).pathname
-const out = `${here}dist/learn-reader`
+// fileURLToPath et non URL.pathname : sous Windows, pathname donne « /D:/… ».
+const here = fileURLToPath(new URL('.', import.meta.url))
+const out = join(here, 'dist', 'learn-reader')
 mkdirSync(out, { recursive: true })
 
 await build({
-  entryPoints: [`${here}src/main.ts`],
+  entryPoints: [join(here, 'src', 'main.ts')],
   bundle: true,
   format: 'cjs',
   platform: 'browser',
   target: 'es2022',
   external: ['obsidian', 'electron', '@codemirror/*', '@lezer/*'],
-  outfile: `${out}/main.js`,
+  outfile: join(out, 'main.js'),
   logLevel: 'warning',
   banner: { js: '/* Learn — extension Obsidian. https://github.com/ByteOneDev/learn-reader */' }
 })
 
-const version = JSON.parse(readFileSync(`${here}../package.json`, 'utf8')).version
-const manifest = JSON.parse(readFileSync(`${here}manifest.json`, 'utf8'))
+const version = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8')).version
+const manifest = JSON.parse(readFileSync(join(here, 'manifest.json'), 'utf8'))
 manifest.version = version
-writeFileSync(`${here}manifest.json`, JSON.stringify(manifest, null, 2) + '\n')
-writeFileSync(`${out}/manifest.json`, JSON.stringify(manifest, null, 2) + '\n')
-copyFileSync(`${here}styles.css`, `${out}/styles.css`)
+writeFileSync(join(here, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n')
+writeFileSync(join(out, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n')
+copyFileSync(join(here, 'styles.css'), join(out, 'styles.css'))
 console.log(`Extension Obsidian ${version} → ${out}`)
