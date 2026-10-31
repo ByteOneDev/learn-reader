@@ -12,7 +12,8 @@ import {
   useNodesState,
   useReactFlow,
   type Connection,
-  type Edge
+  type Edge,
+  type OnConnectEnd
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { FileDown, Highlighter, LayoutGrid, MoreHorizontal, Copy, Plus, Trash2, Wand2 } from 'lucide-react'
@@ -195,6 +196,28 @@ function Canvas({ board }: { board: Board }): React.JSX.Element {
 
   const onConnect = useCallback((c: Connection) => setEdges((es) => addEdge({ ...c, id: uid('e_'), ...EDGE_STYLE }, es)), [setEdges])
 
+  /** Lien tiré depuis un point et relâché dans le vide : nouvelle note à cet endroit, déjà reliée. */
+  const onConnectEnd = useCallback<OnConnectEnd>(
+    (event, state) => {
+      if (state.isValid || state.toNode || !state.fromNode) return
+      const point = 'changedTouches' in event ? event.changedTouches[0] : event
+      const fromTarget = state.fromHandle?.type === 'target'
+      const from = state.fromNode.id
+      // Relâché sur le corps d'une autre carte : on relie simplement les deux.
+      const onto = (document.elementFromPoint(point.clientX, point.clientY)?.closest('.react-flow__node') as HTMLElement | null)?.dataset.id
+      if (onto && onto !== from) {
+        setEdges((es) => addEdge({ id: uid('e_'), source: fromTarget ? onto : from, target: fromTarget ? from : onto, ...EDGE_STYLE }, es))
+        return
+      }
+      const pos = flow.screenToFlowPosition({ x: point.clientX, y: point.clientY })
+      const id = uid('n_')
+      const node: BoardNode = { id, kind: 'note', text: '', x: Math.round(fromTarget ? pos.x - NODE_WIDTH : pos.x), y: Math.round(pos.y - 26) }
+      setNodes((ns) => [...ns.map((n) => ({ ...n, selected: false })), { id, type: 'note', position: { x: node.x, y: node.y }, data: { node }, selected: true }])
+      setEdges((es) => [...es, { id: uid('e_'), source: fromTarget ? id : from, target: fromTarget ? from : id, ...EDGE_STYLE }])
+    },
+    [flow, setNodes, setEdges]
+  )
+
   const switchMode = (m: BoardMode): void => {
     setMode(m)
     save({ mode: m })
@@ -260,6 +283,7 @@ function Canvas({ board }: { board: Board }): React.JSX.Element {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onConnectEnd={onConnectEnd}
             onEdgeClick={(e, edge) => setEdgeMenu({ id: edge.id, x: e.clientX, y: e.clientY })}
             colorMode={colorMode}
             deleteKeyCode={['Backspace', 'Delete']}

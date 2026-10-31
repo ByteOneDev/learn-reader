@@ -1,4 +1,5 @@
 import DOMPurify from 'dompurify'
+import { fixLazyImages } from '@shared/lazyImages'
 
 // Le HTML des flux et des pages vient d'Internet : on ne garde que la mise en forme de lecture.
 const purify = DOMPurify()
@@ -16,8 +17,16 @@ purify.addHook('afterSanitizeAttributes', (node) => {
   }
 })
 
-export function sanitize(html: string): string {
-  return purify.sanitize(html, {
+/**
+ * Nettoie le HTML d'un article. Avant DOMPurify, on remplace les images en chargement différé par les
+ * vraies (dans un <template> : rien n'y est chargé ni exécuté) et on rend les adresses absolues par
+ * rapport à l'article (`base`), sinon elles pointeraient vers l'app.
+ */
+export function sanitize(html: string, base?: string): string {
+  const tpl = document.createElement('template')
+  tpl.innerHTML = html
+  fixLazyImages(tpl.content, base)
+  return purify.sanitize(tpl.innerHTML, {
     FORBID_TAGS: ['style', 'script', 'iframe', 'form', 'input', 'button', 'object', 'embed', 'link', 'meta', 'svg', 'math', 'video', 'audio', 'source'],
     FORBID_ATTR: ['style', 'class', 'id'],
     ALLOW_DATA_ATTR: false

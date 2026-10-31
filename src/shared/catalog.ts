@@ -21,6 +21,8 @@ export interface CatalogEntry {
   leaning?: number
   /** Propriétaire connu lors de la constitution du catalogue (2025), à vérifier. */
   owner?: string
+  /** Source plus pointue (blog spécialisé, newsletter, podcast, chaîne). */
+  niche?: boolean
 }
 
 export const catalog = raw as { version: number; note: string; categories: CatalogCategory[]; entries: CatalogEntry[] }

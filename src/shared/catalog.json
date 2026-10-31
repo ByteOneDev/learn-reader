@@ -1404,6 +1404,820 @@
       "title": "r/Games",
       "input": "r/Games",
       "preselected": false
+    },
+    {
+      "id": "fr-tech-stephane-bortzmeyer-reseaux-dns",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Stéphane Bortzmeyer (réseaux, DNS)",
+      "input": "https://www.bortzmeyer.org/feed-full.atom",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-cert-fr-alertes-et-avis",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "CERT-FR — Alertes et avis",
+      "input": "https://www.cert.ssi.gouv.fr/feed/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-la-quadrature-du-net",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "La Quadrature du Net",
+      "input": "https://www.laquadrature.net/feed/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-framablog",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Framablog",
+      "input": "https://framablog.org/feed/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-journal-du-hacker",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "forum",
+      "title": "Journal du hacker",
+      "input": "https://www.journalduhacker.net/rss",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-les-cast-codeurs",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "podcast",
+      "title": "Les Cast Codeurs",
+      "input": "https://lescastcodeurs.libsyn.com/rss",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-underscore",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Underscore_",
+      "input": "https://www.youtube.com/@Underscore_",
+      "preselected": true,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-micode",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Micode",
+      "input": "https://www.youtube.com/@Micode",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-cocadmin-sysadmin-reseaux",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Cocadmin (sysadmin, réseaux)",
+      "input": "https://www.youtube.com/@cocadmin",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-grafikart",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Grafikart",
+      "input": "https://www.youtube.com/@grafikart",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-julia-evans",
+      "category": "tech",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Julia Evans",
+      "input": "https://jvns.ca/atom.xml",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-cloudflare-blog",
+      "category": "tech",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Cloudflare Blog",
+      "input": "https://blog.cloudflare.com/rss/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-apnic-blog-internet-routage",
+      "category": "tech",
+      "lang": "en",
+      "kind": "rss",
+      "title": "APNIC Blog (Internet, routage)",
+      "input": "https://blog.apnic.net/feed/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-ipspace-net-reseaux",
+      "category": "tech",
+      "lang": "en",
+      "kind": "rss",
+      "title": "ipSpace.net (réseaux)",
+      "input": "https://blog.ipspace.net/atom.xml",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-schneier-on-security",
+      "category": "tech",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Schneier on Security",
+      "input": "https://www.schneier.com/feed/atom/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-dan-luu",
+      "category": "tech",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Dan Luu",
+      "input": "https://danluu.com/atom.xml",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-simon-willison",
+      "category": "tech",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Simon Willison",
+      "input": "https://simonwillison.net/atom/everything/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-hacker-news-best",
+      "category": "tech",
+      "lang": "en",
+      "kind": "forum",
+      "title": "Hacker News — Best",
+      "input": "https://hnrss.org/best",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-darknet-diaries",
+      "category": "tech",
+      "lang": "en",
+      "kind": "podcast",
+      "title": "Darknet Diaries",
+      "input": "https://feeds.megaphone.fm/darknetdiaries",
+      "preselected": true,
+      "niche": true
+    },
+    {
+      "id": "en-tech-security-now",
+      "category": "tech",
+      "lang": "en",
+      "kind": "podcast",
+      "title": "Security Now",
+      "input": "https://feeds.twit.tv/sn.xml",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-the-changelog",
+      "category": "tech",
+      "lang": "en",
+      "kind": "podcast",
+      "title": "The Changelog",
+      "input": "https://changelog.com/podcast/feed",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-hard-fork",
+      "category": "tech",
+      "lang": "en",
+      "kind": "podcast",
+      "title": "Hard Fork",
+      "input": "https://feeds.simplecast.com/l2i9YnTd",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-networkchuck",
+      "category": "tech",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "NetworkChuck",
+      "input": "https://www.youtube.com/@NetworkChuck",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-computerphile",
+      "category": "tech",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "Computerphile",
+      "input": "https://www.youtube.com/@Computerphile",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-ben-eater",
+      "category": "tech",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "Ben Eater",
+      "input": "https://www.youtube.com/@BenEater",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-low-level",
+      "category": "tech",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "Low Level",
+      "input": "https://www.youtube.com/@LowLevelTV",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-fireship",
+      "category": "tech",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "Fireship",
+      "input": "https://www.youtube.com/@Fireship",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-politique-le-vent-se-leve",
+      "category": "politique",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Le Vent Se Lève",
+      "input": "https://lvsl.fr/feed/",
+      "preselected": false,
+      "leaning": -2,
+      "niche": true
+    },
+    {
+      "id": "fr-politique-l-incorrect",
+      "category": "politique",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "L'Incorrect",
+      "input": "https://lincorrect.org/feed/",
+      "preselected": false,
+      "leaning": 2,
+      "niche": true
+    },
+    {
+      "id": "fr-politique-hugodecrypte",
+      "category": "politique",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "HugoDécrypte",
+      "input": "https://www.youtube.com/@HugoDecrypte",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-politique-slow-boring",
+      "category": "politique",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Slow Boring",
+      "input": "https://www.slowboring.com/feed",
+      "preselected": false,
+      "leaning": -1,
+      "niche": true
+    },
+    {
+      "id": "en-politique-the-free-press",
+      "category": "politique",
+      "lang": "en",
+      "kind": "rss",
+      "title": "The Free Press",
+      "input": "https://www.thefp.com/feed",
+      "preselected": false,
+      "leaning": 1,
+      "niche": true
+    },
+    {
+      "id": "en-politique-the-daily-nyt",
+      "category": "politique",
+      "lang": "en",
+      "kind": "podcast",
+      "title": "The Daily (NYT)",
+      "input": "https://feeds.simplecast.com/54nAGcIl",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-politique-johnny-harris",
+      "category": "politique",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "Johnny Harris",
+      "input": "https://www.youtube.com/@johnnyharris",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-sciences-science-etonnante-blog",
+      "category": "sciences",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Science étonnante (blog)",
+      "input": "https://scienceetonnante.com/feed/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-sciences-science-etonnante",
+      "category": "sciences",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Science Étonnante",
+      "input": "https://www.youtube.com/@ScienceEtonnante",
+      "preselected": true,
+      "niche": true
+    },
+    {
+      "id": "fr-sciences-dirtybiology",
+      "category": "sciences",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "DirtyBiology",
+      "input": "https://www.youtube.com/@DirtyBiology",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-sciences-le-reveilleur",
+      "category": "sciences",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Le Réveilleur",
+      "input": "https://www.youtube.com/@LeReveilleur",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-sciences-monsieur-phi",
+      "category": "sciences",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Monsieur Phi",
+      "input": "https://www.youtube.com/@MonsieurPhi",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-sciences-fouloscopie",
+      "category": "sciences",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Fouloscopie",
+      "input": "https://www.youtube.com/@Fouloscopie",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-astral-codex-ten",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Astral Codex Ten",
+      "input": "https://www.astralcodexten.com/feed",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-nautilus",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Nautilus",
+      "input": "https://nautil.us/feed/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-retraction-watch",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Retraction Watch",
+      "input": "https://retractionwatch.com/feed/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-terence-tao",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Terence Tao",
+      "input": "https://terrytao.wordpress.com/feed/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-radiolab",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "podcast",
+      "title": "Radiolab",
+      "input": "https://feeds.simplecast.com/EmVW7VGp",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-kurzgesagt",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "Kurzgesagt",
+      "input": "https://www.youtube.com/@kurzgesagt",
+      "preselected": true,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-veritasium",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "Veritasium",
+      "input": "https://www.youtube.com/@veritasium",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-3blue1brown",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "3Blue1Brown",
+      "input": "https://www.youtube.com/@3blue1brown",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-numberphile",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "Numberphile",
+      "input": "https://www.youtube.com/@numberphile",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-economie-gaspard-g",
+      "category": "economie",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Gaspard G",
+      "input": "https://www.youtube.com/@GaspardG",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-economie-noahpinion",
+      "category": "economie",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Noahpinion",
+      "input": "https://www.noahpinion.blog/feed",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-economie-planet-money",
+      "category": "economie",
+      "lang": "en",
+      "kind": "podcast",
+      "title": "Planet Money",
+      "input": "https://feeds.npr.org/510289/podcast.xml",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-economie-freakonomics-radio",
+      "category": "economie",
+      "lang": "en",
+      "kind": "podcast",
+      "title": "Freakonomics Radio",
+      "input": "https://feeds.simplecast.com/Y8lFbOT4",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-economie-polymatter",
+      "category": "economie",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "PolyMatter",
+      "input": "https://www.youtube.com/@PolyMatter",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-economie-wendover-productions",
+      "category": "economie",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "Wendover Productions",
+      "input": "https://www.youtube.com/@Wendoverproductions",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-geopolitique-mister-geopolitix",
+      "category": "geopolitique",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Mister Geopolitix",
+      "input": "https://www.youtube.com/@MisterGeopolitix",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-geopolitique-caspianreport",
+      "category": "geopolitique",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "CaspianReport",
+      "input": "https://www.youtube.com/@CaspianReport",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-geopolitique-reallifelore",
+      "category": "geopolitique",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "RealLifeLore",
+      "input": "https://www.youtube.com/@RealLifeLore",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-histoire-actuel-moyen-age",
+      "category": "histoire",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Actuel Moyen Âge",
+      "input": "https://actuelmoyenage.wordpress.com/feed/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-histoire-nota-bene",
+      "category": "histoire",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Nota Bene",
+      "input": "https://www.youtube.com/@NotaBeneMovies",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-histoire-histony",
+      "category": "histoire",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Histony",
+      "input": "https://www.youtube.com/@Histony",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-histoire-a-collection-of-unmitigated-pedantry",
+      "category": "histoire",
+      "lang": "en",
+      "kind": "rss",
+      "title": "A Collection of Unmitigated Pedantry",
+      "input": "https://acoup.blog/feed/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-histoire-the-public-domain-review",
+      "category": "histoire",
+      "lang": "en",
+      "kind": "rss",
+      "title": "The Public Domain Review",
+      "input": "https://publicdomainreview.org/rss.xml",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-histoire-in-our-time-bbc",
+      "category": "histoire",
+      "lang": "en",
+      "kind": "podcast",
+      "title": "In Our Time (BBC)",
+      "input": "https://podcasts.files.bbci.co.uk/b006qykl.rss",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-histoire-oversimplified",
+      "category": "histoire",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "OverSimplified",
+      "input": "https://www.youtube.com/@OverSimplified",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-histoire-kings-and-generals",
+      "category": "histoire",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "Kings and Generals",
+      "input": "https://www.youtube.com/@KingsandGenerals",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-sport-blitzstream",
+      "category": "sport",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Blitzstream",
+      "input": "https://www.youtube.com/@Blitzstream",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sport-lichess-blog",
+      "category": "sport",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Lichess Blog",
+      "input": "https://lichess.org/blog.atom",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sport-gothamchess",
+      "category": "sport",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "GothamChess",
+      "input": "https://www.youtube.com/@GothamChess",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sport-agadmator",
+      "category": "sport",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "agadmator",
+      "input": "https://www.youtube.com/@agadmator",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-culture-les-pieds-sur-terre-france-culture",
+      "category": "culture",
+      "lang": "fr",
+      "kind": "podcast",
+      "title": "Les Pieds sur terre (France Culture)",
+      "input": "https://radiofrance-podcast.net/podcast09/rss_10078.xml",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-culture-linguisticae",
+      "category": "culture",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Linguisticae",
+      "input": "https://www.youtube.com/@Linguisticae",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-culture-the-marginalian",
+      "category": "culture",
+      "lang": "en",
+      "kind": "rss",
+      "title": "The Marginalian",
+      "input": "https://www.themarginalian.org/feed/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-culture-kottke",
+      "category": "culture",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Kottke",
+      "input": "https://feeds.kottke.org/main",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-culture-99-invisible",
+      "category": "culture",
+      "lang": "en",
+      "kind": "podcast",
+      "title": "99% Invisible",
+      "input": "https://feeds.simplecast.com/BqbsxVfO",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-culture-nerdwriter",
+      "category": "culture",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "Nerdwriter",
+      "input": "https://www.youtube.com/@Nerdwriter1",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sante-science-based-medicine",
+      "category": "sante",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Science-Based Medicine",
+      "input": "https://sciencebasedmedicine.org/feed/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-jeux-joueur-du-grenier",
+      "category": "jeux",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Joueur du Grenier",
+      "input": "https://www.youtube.com/@joueurdugrenier",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-jeux-game-developer",
+      "category": "jeux",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Game Developer",
+      "input": "https://www.gamedeveloper.com/rss.xml",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-jeux-game-maker-s-toolkit",
+      "category": "jeux",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "Game Maker's Toolkit",
+      "input": "https://www.youtube.com/@GMTK",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-jeux-noclip",
+      "category": "jeux",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "Noclip",
+      "input": "https://www.youtube.com/@NoclipDocs",
+      "preselected": false,
+      "niche": true
     }
   ]
 }

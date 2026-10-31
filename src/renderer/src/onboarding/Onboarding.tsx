@@ -109,10 +109,11 @@ export default function Onboarding({ mode, onClose }: { mode: 'first' | 'catalog
   const sourceOption = (e: CatalogEntry): React.JSX.Element => {
     const on = selected.has(e.id)
     return (
-      <button key={e.id} className={`src-option${on ? ' on' : ''}`} onClick={() => toggle(e.id)} role="checkbox" aria-checked={on}>
+      <button key={e.id} className={`src-option${on ? ' on' : ''}`} onClick={() => toggle(e.id)} role="checkbox" aria-checked={on} title={e.title}>
         <span className={`checkbox${on ? ' on' : ''}`}>{on && <Check size={14} strokeWidth={3} />}</span>
         {e.leaning !== undefined && <i className="lean-dot" style={{ background: LEAN_COLORS[e.leaning] }} />}
         <span className="t">{e.title}</span>
+        {e.niche && <span className="niche">{t.niche}</span>}
         <span className="k">{t.kinds[e.kind]}</span>
       </button>
     )

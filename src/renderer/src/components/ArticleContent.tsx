@@ -18,6 +18,24 @@ export default function ArticleContent({ contentRef, html, layer, highlights, se
     if (!el) return
     el.innerHTML = html // déjà nettoyé par DOMPurify (lib/sanitize)
     onOrphans(applyHighlights(el, highlights))
+    // Image introuvable : on la masque (et sa figure si elle était seule) plutôt qu'un cadre vide.
+    // Petite image (icône, logo) : affichée à sa taille, sans le débordement réservé aux photos.
+    for (const img of Array.from(el.querySelectorAll('img'))) {
+      const settle = (): void => {
+        if (img.naturalWidth && img.naturalWidth < 360) img.classList.add('small')
+      }
+      if (img.complete) settle()
+      img.addEventListener('load', settle, { once: true })
+      img.addEventListener(
+        'error',
+        () => {
+          const fig = img.closest('figure')
+          if (fig && fig.querySelectorAll('img').length === 1) fig.style.display = 'none'
+          else img.style.display = 'none'
+        },
+        { once: true }
+      )
+    }
   }, [contentRef, html, highlights, onOrphans])
   return <div ref={contentRef} data-layer={layer} className={`content${serif ? ' serif' : ''}`} onMouseUp={onMouseUp} onClick={onClick} />
 }

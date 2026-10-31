@@ -119,8 +119,8 @@ export default function MediaView({ item, highlights, navRef, onOrphans, onMouse
   const moments = useMemo(() => highlights.filter((h) => h.layer.startsWith('t:')).sort((a, b) => a.start - b.start), [highlights])
   const layer = tab
   const html = useMemo(
-    () => (tab === 'transcript' ? (cues?.length ? transcriptHtml(cues) : '') : sanitize(item.contentHtml ?? (item.summary ? `<p>${esc(item.summary)}</p>` : ''))),
-    [tab, cues, item.contentHtml, item.summary]
+    () => (tab === 'transcript' ? (cues?.length ? transcriptHtml(cues) : '') : sanitize(item.contentHtml ?? (item.summary ? `<p>${esc(item.summary)}</p>` : ''), item.url)),
+    [tab, cues, item.contentHtml, item.summary, item.url]
   )
   const layerHighlights = useMemo(() => highlights.filter((h) => h.layer === layer), [highlights, layer])
 

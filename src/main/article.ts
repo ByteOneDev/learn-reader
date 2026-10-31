@@ -2,6 +2,7 @@ import { Readability } from '@mozilla/readability'
 import { parseHTML } from 'linkedom'
 import { fetchText, type FetchFn } from './feeds/fetcher'
 import { firstImage } from './feeds/parse'
+import { fixLazyImages } from '@shared/lazyImages'
 
 export interface Extracted {
   title?: string
@@ -15,6 +16,8 @@ export interface Extracted {
 /** Extrait l'article principal d'une page HTML (mode lecture), avec des liens et images absolus. */
 export function extractArticle(html: string, pageUrl: string): Extracted | null {
   const { document } = parseHTML(html)
+  // Avant Readability : sinon les images en chargement différé restent des cadres vides.
+  fixLazyImages(document, pageUrl)
   const ogImage = document.querySelector('meta[property="og:image"]')?.getAttribute('content') ?? undefined
 
   const reader = new Readability(document as unknown as Document, { charThreshold: 300, keepClasses: false })

@@ -16,9 +16,17 @@ async function check(entry) {
     const timer = setTimeout(() => ctrl.abort(), 20_000)
     const res = await fetch(url, { headers: { 'User-Agent': UA }, signal: ctrl.signal, redirect: 'follow' }).finally(() => clearTimeout(timer))
     if (!res.ok) return { entry, url, ok: false, error: `HTTP ${res.status}` }
-    const body = (await res.text()).slice(0, 4000)
-    const looksLikeFeed = /<rss\b|<feed\b|<rdf:RDF\b|"version"\s*:\s*"https:\/\/jsonfeed/i.test(body)
-    return looksLikeFeed ? { entry, url, ok: true } : { entry, url, ok: false, error: 'Réponse qui ne ressemble pas à un flux' }
+    const full = await res.text()
+    const looksLikeFeed = (b) => /<rss\b|<feed\b|<rdf:RDF\b|"version"\s*:\s*"https:\/\/jsonfeed/i.test(b.slice(0, 4000))
+    if (looksLikeFeed(full)) return { entry, url, ok: true }
+    // Page HTML (chaîne YouTube…) : le flux est annoncé par <link rel="alternate">, comme le fait l'app.
+    const tag = (full.match(/<link\b[^>]*>/gi) ?? []).find((t) => /rel=["']?alternate/i.test(t) && /application\/(rss|atom)\+xml/i.test(t))
+    const href = tag?.match(/href=["']([^"']+)["']/i)?.[1]
+    if (!href) return { entry, url, ok: false, error: 'Page sans flux annoncé' }
+    const feedUrl = new URL(href.replace(/&amp;/g, '&'), url).href
+    const r2 = await fetch(feedUrl, { headers: { 'User-Agent': UA }, redirect: 'follow' })
+    if (!r2.ok) return { entry, url: feedUrl, ok: false, error: `HTTP ${r2.status}` }
+    return looksLikeFeed(await r2.text()) ? { entry, url: feedUrl, ok: true } : { entry, url: feedUrl, ok: false, error: 'Réponse qui ne ressemble pas à un flux' }
   } catch (e) {
     return { entry, url, ok: false, error: e.name === 'AbortError' ? 'Délai dépassé' : e.message }
   }

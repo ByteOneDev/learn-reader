@@ -14,6 +14,12 @@ Direction graphique inspirée de [Reeder](https://reederapp.com) (2024), avec sa
 | Livre EPUB | PDF surligné |
 | ![](docs/screenshots/livre-epub.png) | ![](docs/screenshots/livre-pdf.png) |
 
+## Nouveautés de la v0.7
+
+- **Images réparées** : les sites qui chargent leurs images en différé (WordPress et bien d'autres) n'affichent plus de cadres blancs. Learn récupère la vraie image, que ce soit dans le texte du flux ou dans le texte complet. Une image introuvable est masquée, et les petites images ne sont plus agrandies.
+- **Recommandations élargies** : 225 sources au premier lancement (et dans *Réglages → Parcourir le catalogue*), dont des sources **pointues** (Bortzmeyer, CERT-FR, APNIC, Cloudflare, ipSpace pour les réseaux ; Astral Codex Ten, ACOUP, Lichess…), **12 podcasts** et **38 chaînes YouTube**, en français et en anglais.
+- **Boards** : tire le point d'une carte et relâche-le dans le vide pour créer une nouvelle carte à cet endroit, déjà reliée et prête à écrire. Relâché sur une autre carte, il la relie.
+
 ## Nouveautés de la v0.6 : podcasts et vidéos YouTube
 
 - **Audio** et **Vidéo** dans la barre latérale. Abonne-toi à un podcast avec son flux RSS, ou à une chaîne YouTube en collant simplement son adresse (`youtube.com/@chaine`, `/channel/…`, une playlist). Learn reconnaît tout seul les podcasts et les chaînes, et tes abonnements Reeder importés en OPML suivent.

@@ -206,6 +206,111 @@ const owners = {
   Reason: 'Reason Foundation (non lucratif)'
 }
 
+// Sources plus pointues, podcasts et chaînes YouTube (marquées « niche » à l'affichage).
+// Même format que `rows`. Les chaînes YouTube sont données par leur @pseudo : Learn trouve leur flux.
+const nicheRows = [
+  // ── Tech
+  ['tech', 'fr', 'rss', 'Stéphane Bortzmeyer (réseaux, DNS)', 'https://www.bortzmeyer.org/feed-full.atom', 0],
+  ['tech', 'fr', 'rss', 'CERT-FR — Alertes et avis', 'https://www.cert.ssi.gouv.fr/feed/', 0],
+  ['tech', 'fr', 'rss', 'La Quadrature du Net', 'https://www.laquadrature.net/feed/', 0],
+  ['tech', 'fr', 'rss', 'Framablog', 'https://framablog.org/feed/', 0],
+  ['tech', 'fr', 'forum', 'Journal du hacker', 'https://www.journalduhacker.net/rss', 0],
+  ['tech', 'fr', 'podcast', 'Les Cast Codeurs', 'https://lescastcodeurs.libsyn.com/rss', 0],
+  ['tech', 'fr', 'youtube', 'Underscore_', 'https://www.youtube.com/@Underscore_', 1],
+  ['tech', 'fr', 'youtube', 'Micode', 'https://www.youtube.com/@Micode', 0],
+  ['tech', 'fr', 'youtube', 'Cocadmin (sysadmin, réseaux)', 'https://www.youtube.com/@cocadmin', 0],
+  ['tech', 'fr', 'youtube', 'Grafikart', 'https://www.youtube.com/@grafikart', 0],
+  ['tech', 'en', 'rss', 'Julia Evans', 'https://jvns.ca/atom.xml', 0],
+  ['tech', 'en', 'rss', 'Cloudflare Blog', 'https://blog.cloudflare.com/rss/', 0],
+  ['tech', 'en', 'rss', 'APNIC Blog (Internet, routage)', 'https://blog.apnic.net/feed/', 0],
+  ['tech', 'en', 'rss', 'ipSpace.net (réseaux)', 'https://blog.ipspace.net/atom.xml', 0],
+  ['tech', 'en', 'rss', 'Schneier on Security', 'https://www.schneier.com/feed/atom/', 0],
+  ['tech', 'en', 'rss', 'Dan Luu', 'https://danluu.com/atom.xml', 0],
+  ['tech', 'en', 'rss', 'Simon Willison', 'https://simonwillison.net/atom/everything/', 0],
+  ['tech', 'en', 'forum', 'Hacker News — Best', 'https://hnrss.org/best', 0],
+  ['tech', 'en', 'podcast', 'Darknet Diaries', 'https://feeds.megaphone.fm/darknetdiaries', 1],
+  ['tech', 'en', 'podcast', 'Security Now', 'https://feeds.twit.tv/sn.xml', 0],
+  ['tech', 'en', 'podcast', 'The Changelog', 'https://changelog.com/podcast/feed', 0],
+  ['tech', 'en', 'podcast', 'Hard Fork', 'https://feeds.simplecast.com/l2i9YnTd', 0],
+  ['tech', 'en', 'youtube', 'NetworkChuck', 'https://www.youtube.com/@NetworkChuck', 0],
+  ['tech', 'en', 'youtube', 'Computerphile', 'https://www.youtube.com/@Computerphile', 0],
+  ['tech', 'en', 'youtube', 'Ben Eater', 'https://www.youtube.com/@BenEater', 0],
+  ['tech', 'en', 'youtube', 'Low Level', 'https://www.youtube.com/@LowLevelTV', 0],
+  ['tech', 'en', 'youtube', 'Fireship', 'https://www.youtube.com/@Fireship', 0],
+
+  // ── Politique
+  ['politique', 'fr', 'rss', 'Le Vent Se Lève', 'https://lvsl.fr/feed/', 0, -2],
+  ['politique', 'fr', 'rss', "L'Incorrect", 'https://lincorrect.org/feed/', 0, 2],
+  ['politique', 'fr', 'youtube', 'HugoDécrypte', 'https://www.youtube.com/@HugoDecrypte', 0],
+  ['politique', 'en', 'rss', 'Slow Boring', 'https://www.slowboring.com/feed', 0, -1],
+  ['politique', 'en', 'rss', 'The Free Press', 'https://www.thefp.com/feed', 0, 1],
+  ['politique', 'en', 'podcast', 'The Daily (NYT)', 'https://feeds.simplecast.com/54nAGcIl', 0],
+  ['politique', 'en', 'youtube', 'Johnny Harris', 'https://www.youtube.com/@johnnyharris', 0],
+
+  // ── Sciences
+  ['sciences', 'fr', 'rss', 'Science étonnante (blog)', 'https://scienceetonnante.com/feed/', 0],
+  ['sciences', 'fr', 'youtube', 'Science Étonnante', 'https://www.youtube.com/@ScienceEtonnante', 1],
+  ['sciences', 'fr', 'youtube', 'DirtyBiology', 'https://www.youtube.com/@DirtyBiology', 0],
+  ['sciences', 'fr', 'youtube', 'Le Réveilleur', 'https://www.youtube.com/@LeReveilleur', 0],
+  ['sciences', 'fr', 'youtube', 'Monsieur Phi', 'https://www.youtube.com/@MonsieurPhi', 0],
+  ['sciences', 'fr', 'youtube', 'Fouloscopie', 'https://www.youtube.com/@Fouloscopie', 0],
+  ['sciences', 'en', 'rss', 'Astral Codex Ten', 'https://www.astralcodexten.com/feed', 0],
+  ['sciences', 'en', 'rss', 'Nautilus', 'https://nautil.us/feed/', 0],
+  ['sciences', 'en', 'rss', 'Retraction Watch', 'https://retractionwatch.com/feed/', 0],
+  ['sciences', 'en', 'rss', 'Terence Tao', 'https://terrytao.wordpress.com/feed/', 0],
+  ['sciences', 'en', 'podcast', 'Radiolab', 'https://feeds.simplecast.com/EmVW7VGp', 0],
+  ['sciences', 'en', 'youtube', 'Kurzgesagt', 'https://www.youtube.com/@kurzgesagt', 1],
+  ['sciences', 'en', 'youtube', 'Veritasium', 'https://www.youtube.com/@veritasium', 0],
+  ['sciences', 'en', 'youtube', '3Blue1Brown', 'https://www.youtube.com/@3blue1brown', 0],
+  ['sciences', 'en', 'youtube', 'Numberphile', 'https://www.youtube.com/@numberphile', 0],
+
+  // ── Économie
+  ['economie', 'fr', 'youtube', 'Gaspard G', 'https://www.youtube.com/@GaspardG', 0],
+  ['economie', 'en', 'rss', 'Noahpinion', 'https://www.noahpinion.blog/feed', 0],
+  ['economie', 'en', 'podcast', 'Planet Money', 'https://feeds.npr.org/510289/podcast.xml', 0],
+  ['economie', 'en', 'podcast', 'Freakonomics Radio', 'https://feeds.simplecast.com/Y8lFbOT4', 0],
+  ['economie', 'en', 'youtube', 'PolyMatter', 'https://www.youtube.com/@PolyMatter', 0],
+  ['economie', 'en', 'youtube', 'Wendover Productions', 'https://www.youtube.com/@Wendoverproductions', 0],
+
+  // ── Géopolitique
+  ['geopolitique', 'fr', 'youtube', 'Mister Geopolitix', 'https://www.youtube.com/@MisterGeopolitix', 0],
+  ['geopolitique', 'en', 'youtube', 'CaspianReport', 'https://www.youtube.com/@CaspianReport', 0],
+  ['geopolitique', 'en', 'youtube', 'RealLifeLore', 'https://www.youtube.com/@RealLifeLore', 0],
+
+  // ── Histoire
+  ['histoire', 'fr', 'rss', 'Actuel Moyen Âge', 'https://actuelmoyenage.wordpress.com/feed/', 0],
+  ['histoire', 'fr', 'youtube', 'Nota Bene', 'https://www.youtube.com/@NotaBeneMovies', 0],
+  ['histoire', 'fr', 'youtube', 'Histony', 'https://www.youtube.com/@Histony', 0],
+  ['histoire', 'en', 'rss', 'A Collection of Unmitigated Pedantry', 'https://acoup.blog/feed/', 0],
+  ['histoire', 'en', 'rss', 'The Public Domain Review', 'https://publicdomainreview.org/rss.xml', 0],
+  ['histoire', 'en', 'podcast', 'In Our Time (BBC)', 'https://podcasts.files.bbci.co.uk/b006qykl.rss', 0],
+  ['histoire', 'en', 'youtube', 'OverSimplified', 'https://www.youtube.com/@OverSimplified', 0],
+  ['histoire', 'en', 'youtube', 'Kings and Generals', 'https://www.youtube.com/@KingsandGenerals', 0],
+
+  // ── Sport & échecs
+  ['sport', 'fr', 'youtube', 'Blitzstream', 'https://www.youtube.com/@Blitzstream', 0],
+  ['sport', 'en', 'rss', 'Lichess Blog', 'https://lichess.org/blog.atom', 0],
+  ['sport', 'en', 'youtube', 'GothamChess', 'https://www.youtube.com/@GothamChess', 0],
+  ['sport', 'en', 'youtube', 'agadmator', 'https://www.youtube.com/@agadmator', 0],
+
+  // ── Culture & idées
+  ['culture', 'fr', 'podcast', 'Les Pieds sur terre (France Culture)', 'https://radiofrance-podcast.net/podcast09/rss_10078.xml', 0],
+  ['culture', 'fr', 'youtube', 'Linguisticae', 'https://www.youtube.com/@Linguisticae', 0],
+  ['culture', 'en', 'rss', 'The Marginalian', 'https://www.themarginalian.org/feed/', 0],
+  ['culture', 'en', 'rss', 'Kottke', 'https://feeds.kottke.org/main', 0],
+  ['culture', 'en', 'podcast', '99% Invisible', 'https://feeds.simplecast.com/BqbsxVfO', 0],
+  ['culture', 'en', 'youtube', 'Nerdwriter', 'https://www.youtube.com/@Nerdwriter1', 0],
+
+  // ── Santé
+  ['sante', 'en', 'rss', 'Science-Based Medicine', 'https://sciencebasedmedicine.org/feed/', 0],
+
+  // ── Jeux vidéo
+  ['jeux', 'fr', 'youtube', 'Joueur du Grenier', 'https://www.youtube.com/@joueurdugrenier', 0],
+  ['jeux', 'en', 'rss', 'Game Developer', 'https://www.gamedeveloper.com/rss.xml', 0],
+  ['jeux', 'en', 'youtube', "Game Maker's Toolkit", 'https://www.youtube.com/@GMTK', 0],
+  ['jeux', 'en', 'youtube', 'Noclip', 'https://www.youtube.com/@NoclipDocs', 0]
+]
+
 const slug = (s) =>
   s
     .normalize('NFD')
@@ -215,13 +320,14 @@ const slug = (s) =>
     .replace(/^-|-$/g, '')
 
 const ids = new Set()
-const entries = rows.map(([category, lang, kind, title, input, preselected, leaning]) => {
+const entries = [...rows.map((r) => [...r.slice(0, 6), r[6], false]), ...nicheRows.map((r) => [...r.slice(0, 6), r[6], true])].map(([category, lang, kind, title, input, preselected, leaning, niche]) => {
   let id = `${lang}-${category}-${slug(title)}`
   while (ids.has(id)) id += '-2'
   ids.add(id)
   const e = { id, category, lang, kind, title, input, preselected: !!preselected }
   if (leaning !== undefined) e.leaning = leaning
   if (owners[title]) e.owner = owners[title]
+  if (niche) e.niche = true
   return e
 })
 

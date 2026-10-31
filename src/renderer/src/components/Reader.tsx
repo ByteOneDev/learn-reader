@@ -83,7 +83,7 @@ export default function Reader(): React.JSX.Element {
   const source = sources.find((s) => s.id === item?.sourceId)
   const layer = mode === 'full' && item?.fullHtml ? 'full' : 'feed'
   const rawHtml = layer === 'full' ? item?.fullHtml : item?.contentHtml
-  const html = useMemo(() => sanitize(rawHtml ?? (item?.summary ? `<p>${item.summary}</p>` : '')), [rawHtml, item?.summary])
+  const html = useMemo(() => sanitize(rawHtml ?? (item?.summary ? `<p>${item.summary}</p>` : ''), item?.url), [rawHtml, item?.summary, item?.url])
   const layerHighlights = useMemo(() => highlights.filter((h) => h.layer === layer), [highlights, layer])
   const showHero = !!item?.imageUrl && heroOk && !html.includes(item.imageUrl.split('?')[0])
 
