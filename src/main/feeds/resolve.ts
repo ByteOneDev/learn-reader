@@ -13,6 +13,13 @@ export function resolveInput(raw: string, opts: { xBridge?: string } = {}): Reso
   const input = raw.trim()
   if (!input) throw new Error('Adresse vide')
 
+  // « podcast:Nom du podcast » : le flux est trouvé par recherche dans l'annuaire Apple Podcasts.
+  if (/^podcast:/i.test(input)) {
+    const name = input.slice(8).trim()
+    if (!name) throw new Error('Nom de podcast vide')
+    return { kind: 'podcast', url: `podcast:${name}`, title: name }
+  }
+
   // Reddit : r/sub ou u/user
   let m = input.match(/^\/?(r|u|user)\/([\w-]+)\/?$/i)
   if (m) return reddit(m[1].toLowerCase() === 'r' ? 'r' : 'user', m[2])

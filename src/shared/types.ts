@@ -305,6 +305,7 @@ export type LearnEvent =
   | { type: 'items-changed' }
   | { type: 'highlights-changed'; itemId: string; message?: string }
   | { type: 'boards-changed' }
+  | { type: 'open-link'; itemId: string; highlightId?: string }
   | { type: 'menu'; action: 'add-source' | 'settings' | 'refresh' }
 
 /** API exposée à l'interface par le preload (window.learn). Toutes les méthodes passent par IPC. */
@@ -346,6 +347,8 @@ export interface LearnAPI {
   savePosition(itemId: string, position: string, progress: number): Promise<void>
   updateBook(itemId: string, patch: Partial<Pick<Item, 'title' | 'author' | 'imageUrl'>>): Promise<Item>
   readingBalance(days: number): Promise<ReadingBalance>
+  /** Recherche de podcasts par nom (annuaire Apple Podcasts). */
+  searchPodcasts(term: string): Promise<{ title: string; author?: string; feedUrl: string; artwork?: string }[]>
   /** Transcription d'un épisode (téléchargée puis mise en cache), ou null s'il n'y en a pas. */
   transcript(itemId: string): Promise<Cue[] | null>
 
@@ -410,6 +413,7 @@ export const API_METHODS = [
   'updateBook',
   'readingBalance',
   'transcript',
+  'searchPodcasts',
   'listBoards',
   'createBoard',
   'getBoard',

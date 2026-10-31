@@ -62,6 +62,8 @@ interface AppState {
   reloadBoards(): Promise<void>
   createBoard(): Promise<void>
   openHighlight(itemId: string, highlightId: string, layer: string): Promise<void>
+  /** Lien learn:// : ouvre le document dans sa vue (bibliothèque, audio, vidéo, accueil), ou le passage. */
+  openLink(itemId: string, highlightId?: string): Promise<void>
   importBooks(paths?: string[]): Promise<void>
   togglePanel(open?: boolean): void
   toast(text: string, tone?: Toast['tone']): void
@@ -113,6 +115,7 @@ export const useApp = create<AppState>((set, get) => ({
         if (e.message) get().toast(e.message)
       }
       if (e.type === 'boards-changed') void get().reloadBoards()
+      if (e.type === 'open-link') void get().openLink(e.itemId, e.highlightId)
       if (e.type === 'items-changed') {
         void get().reloadMeta()
         void get().loadItems(true)
@@ -265,6 +268,32 @@ export const useApp = create<AppState>((set, get) => ({
     const board = await api.createBoard(dictionaries[settings?.language ?? 'fr'].boardUntitled, 'mindmap')
     await get().reloadBoards()
     get().setView({ type: 'board', boardId: board.id })
+  },
+  async openLink(itemId, highlightId) {
+    const { api } = get()
+    const item = await api.getItem(itemId)
+    if (!item) {
+      get().toast(dictionaries[get().settings?.language ?? 'fr'].linkNotFound, 'error')
+      return
+    }
+    set({ focusMode: false })
+    if (highlightId) {
+      const h = (await api.listHighlights(itemId)).find((x) => x.id === highlightId)
+      if (h) return get().openHighlight(itemId, h.id, h.layer)
+    }
+    const source = get().sources.find((s) => s.id === item.sourceId)
+    get().setView(
+      item.format
+        ? { type: 'library' }
+        : item.mediaType === 'audio'
+          ? { type: 'kind', kind: 'podcast' }
+          : item.mediaType === 'youtube'
+            ? { type: 'kind', kind: 'youtube' }
+            : source?.kind === 'links'
+              ? { type: 'links' }
+              : { type: 'source', sourceId: item.sourceId }
+    )
+    await get().select(itemId)
   },
   async openHighlight(itemId, highlightId, layer) {
     set({ jumpTo: { itemId, highlightId, layer } })

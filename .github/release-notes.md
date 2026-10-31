@@ -16,3 +16,5 @@ xattr -cr /Applications/Learn.app
 **Windows** : si SmartScreen s'affiche, clique sur *Informations complémentaires* puis *Exécuter quand même*.
 
 **Linux** : `chmod +x Learn-*.AppImage` puis lance-le.
+
+**Extension Obsidian** : télécharge `learn-obsidian-….zip`, décompresse-le dans `<ton coffre>/.obsidian/plugins/` (tu obtiens un dossier `learn-reader`), puis active « Learn » dans *Réglages → Modules complémentaires de la communauté*.

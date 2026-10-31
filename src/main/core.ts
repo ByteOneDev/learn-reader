@@ -11,6 +11,7 @@ import { buildMarkdown, mergeWithExisting, safeFileName } from './export/markdow
 import { boardOutline, buildCanvas } from './export/canvas'
 import { fetchFeed, fetchIcon, fetchText, type FetchFn } from './feeds/fetcher'
 import { parseTranscript } from './media/transcript'
+import { pickPodcast, searchPodcasts, type PodcastResult } from './feeds/podcastSearch'
 import { formatTime, timeLink } from '@shared/media'
 import { resolveInput } from './feeds/resolve'
 import { buildOpml, parseOpml } from './opml'
@@ -55,6 +56,14 @@ export class LearnCore {
       return existing
     }
 
+    if (resolved.url.startsWith('podcast:')) {
+      const name = resolved.url.slice(8)
+      const found = pickPodcast(await searchPodcasts(this.fetchFn, name), name)
+      if (!found) throw new Error(`Podcast introuvable : ${name}`)
+      resolved.url = found.feedUrl
+      const known = this.store.findSourceByUrl(found.feedUrl)
+      if (known) return known
+    }
     const { feed, feedUrl } = await fetchFeed(this.fetchFn, resolved.url)
     // Le contenu du flux tranche : podcast, chaîne YouTube (aussi quand on a collé l'adresse d'une page).
     if (feed.youtube) resolved.kind = 'youtube'
@@ -311,6 +320,10 @@ export class LearnCore {
     const path = this.store.bookFile(itemId)
     if (!path || !existsSync(path)) throw new Error('Fichier du livre introuvable')
     return new Uint8Array(readFileSync(path))
+  }
+
+  searchPodcasts(term: string): Promise<PodcastResult[]> {
+    return searchPodcasts(this.fetchFn, term, this.store.getSettings().language === 'en' ? 'US' : 'FR')
   }
 
   /** Transcription d'un épisode : téléchargée une fois, puis lue depuis la base. */

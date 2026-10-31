@@ -8,6 +8,10 @@ files:
   - out/**
   - package.json
   - '!**/*.map'
+# Liens learn:// (extension Obsidian, liens « Ouvrir dans Learn » des notes exportées).
+protocols:
+  - name: Learn
+    schemes: [learn]
 mac:
   category: public.app-category.news
   target:
@@ -32,5 +36,6 @@ nsis:
 linux:
   target: [AppImage, deb]
   category: Network;News;Office
+  mimeTypes: [x-scheme-handler/learn]
   icon: resources/icon.png
   maintainer: ByteOneDev

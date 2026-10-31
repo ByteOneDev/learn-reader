@@ -453,6 +453,14 @@ export const mockApi: LearnAPI = {
     Object.assign(it, patch)
     return delay(it)
   },
+  searchPodcasts: async (term) =>
+    delay(
+      [
+        { title: term, author: 'Studio exemple', feedUrl: 'https://exemple.fr/p1.xml' },
+        { title: `${term} — Hors-série`, author: 'Studio exemple', feedUrl: 'https://exemple.fr/p2.xml' }
+      ],
+      300
+    ),
   transcript: async (id) => delay(id === 'pod1' ? demoTranscript : null, 300),
   readingBalance: async (days): Promise<ReadingBalance> => {
     const since = Date.now() - days * 24 * H

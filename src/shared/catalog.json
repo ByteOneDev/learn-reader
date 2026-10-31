@@ -2218,6 +2218,316 @@
       "input": "https://www.youtube.com/@NoclipDocs",
       "preselected": false,
       "niche": true
+    },
+    {
+      "id": "fr-tech-bdm-blog-du-moderateur",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "BDM (Blog du Modérateur)",
+      "input": "https://www.blogdumoderateur.com/feed/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-phonandroid",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "PhonAndroid",
+      "input": "https://www.phonandroid.com/feed",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-choses-a-savoir-tech",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "podcast",
+      "title": "Choses à Savoir TECH",
+      "input": "podcast:Choses à Savoir TECH",
+      "preselected": true,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-de-quoi-jme-mail",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "podcast",
+      "title": "De quoi jme mail",
+      "input": "podcast:De quoi jme mail",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-memoire-vive",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "podcast",
+      "title": "Mémoire vive",
+      "input": "podcast:Mémoire vive",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-tech-sama-show",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "podcast",
+      "title": "Tech_Sama Show",
+      "input": "podcast:Tech_Sama Show",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-speakeasy-influx",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "podcast",
+      "title": "Speakeasy (Influx)",
+      "input": "podcast:Speakeasy Influx",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-le-podcast-de-robin",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "podcast",
+      "title": "Le podcast de Robin",
+      "input": "podcast:Le podcast de Robin",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-underscore-podcast",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "podcast",
+      "title": "Underscore_ (podcast)",
+      "input": "podcast:Underscore_",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-leo-duff",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Léo Duff",
+      "input": "https://www.youtube.com/@LeoDuff",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-nightech",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Nightech",
+      "input": "https://www.youtube.com/@Nightech",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-numerama-videos",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Numerama (vidéos)",
+      "input": "https://www.youtube.com/@Numerama",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-v2f",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "V2F",
+      "input": "https://www.youtube.com/@V2F",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-millomaker",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Millomaker",
+      "input": "https://www.youtube.com/@Millomaker",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-paulygones",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Paulygones",
+      "input": "https://www.youtube.com/@Paulygones",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-robin-tyonnel",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Robin Tyonnel",
+      "input": "https://www.youtube.com/@RobinTyonnel",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-tech-charlie-haid",
+      "category": "tech",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Charlie Haid",
+      "input": "https://www.youtube.com/@CharlieHaid",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-waveform-the-mkbhd-podcast",
+      "category": "tech",
+      "lang": "en",
+      "kind": "podcast",
+      "title": "Waveform: The MKBHD Podcast",
+      "input": "podcast:Waveform: The MKBHD Podcast",
+      "preselected": true,
+      "niche": true
+    },
+    {
+      "id": "en-tech-marques-brownlee-mkbhd",
+      "category": "tech",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "Marques Brownlee (MKBHD)",
+      "input": "https://www.youtube.com/@mkbhd",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-linus-tech-tips",
+      "category": "tech",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "Linus Tech Tips",
+      "input": "https://www.youtube.com/@LinusTechTips",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-dave2d",
+      "category": "tech",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "Dave2D",
+      "input": "https://www.youtube.com/@Dave2D",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-snazzy-labs",
+      "category": "tech",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "Snazzy Labs",
+      "input": "https://www.youtube.com/@SnazzyLabs",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-r-macapps",
+      "category": "tech",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/macapps",
+      "input": "r/macapps",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-r-apple",
+      "category": "tech",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/apple",
+      "input": "r/apple",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-politique-hugodecrypte-actus-du-jour",
+      "category": "politique",
+      "lang": "fr",
+      "kind": "podcast",
+      "title": "HugoDécrypte — Actus du jour",
+      "input": "podcast:HugoDécrypte Actus du jour",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-histoire-entrez-dans-l-histoire",
+      "category": "histoire",
+      "lang": "fr",
+      "kind": "podcast",
+      "title": "Entrez dans l'Histoire",
+      "input": "podcast:Entrez dans l'Histoire",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-histoire-la-folle-histoire",
+      "category": "histoire",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "La Folle Histoire",
+      "input": "https://www.youtube.com/@LaFolleHistoire",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-culture-etre-etudiant-le-podcast",
+      "category": "culture",
+      "lang": "fr",
+      "kind": "podcast",
+      "title": "ÊTRE ÉTUDIANT — Le Podcast",
+      "input": "podcast:ÊTRE ÉTUDIANT Le Podcast",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-culture-fabien-olicard",
+      "category": "culture",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Fabien Olicard",
+      "input": "https://www.youtube.com/@FabienOlicard",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-culture-abrege",
+      "category": "culture",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Abrège",
+      "input": "https://www.youtube.com/@Abrege",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-culture-adrien-boulisset",
+      "category": "culture",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Adrien Boulisset",
+      "input": "https://www.youtube.com/@AdrienBoulisset",
+      "preselected": false,
+      "niche": true
     }
   ]
 }

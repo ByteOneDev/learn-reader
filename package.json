@@ -1,7 +1,7 @@
 {
   "name": "learn-reader",
   "productName": "Learn",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Lecteur RSS, articles, livres et notes — inspiré de Reeder, pensé pour la recherche.",
   "main": "./out/main/index.js",
   "author": "ByteOneDev",
@@ -12,13 +12,14 @@
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "web": "vite --config vite.web.config.ts",
-    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json && tsc --noEmit -p obsidian-plugin/tsconfig.json",
     "test": "vitest run",
     "check-feeds": "node --no-warnings --experimental-strip-types scripts/check-feeds.mjs",
     "dist": "electron-vite build && electron-builder --publish never",
     "dist:mac": "electron-vite build && electron-builder --mac --publish never",
     "dist:win": "electron-vite build && electron-builder --win --publish never",
-    "dist:linux": "electron-vite build && electron-builder --linux --publish never"
+    "dist:linux": "electron-vite build && electron-builder --linux --publish never",
+    "plugin:build": "node obsidian-plugin/build.mjs"
   },
   "dependencies": {
     "@mozilla/readability": "0.6.0",
@@ -28,6 +29,8 @@
     "sql.js": "1.15.2"
   },
   "devDependencies": {
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.13",
     "@types/node": "26.6.5",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
@@ -38,8 +41,10 @@
     "electron": "45.0.0",
     "electron-builder": "26.18.0",
     "electron-vite": "6.0.0",
+    "esbuild": "^0.28.2",
     "framer-motion": "14.7.1",
     "lucide-react": "1.62.0",
+    "obsidian": "^1.14.4",
     "pdfjs-dist": "6.4.299",
     "react": "19.3.1",
     "react-dom": "19.3.1",

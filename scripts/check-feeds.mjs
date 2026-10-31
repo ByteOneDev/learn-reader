@@ -12,6 +12,14 @@ async function check(entry) {
   let url
   try {
     url = resolveInput(entry.input).url
+    // Podcast donné par son nom : on fait la même recherche que l'app (Apple Podcasts).
+    if (url.startsWith('podcast:')) {
+      const name = url.slice(8)
+      const r = await fetch(`https://itunes.apple.com/search?media=podcast&entity=podcast&limit=10&country=${entry.lang === 'en' ? 'US' : 'FR'}&term=${encodeURIComponent(name)}`)
+      const found = ((await r.json()).results ?? []).find((x) => x.feedUrl)
+      if (!found) return { entry, url, ok: false, error: 'Podcast introuvable dans Apple Podcasts' }
+      url = found.feedUrl
+    }
     const ctrl = new AbortController()
     const timer = setTimeout(() => ctrl.abort(), 20_000)
     const res = await fetch(url, { headers: { 'User-Agent': UA }, signal: ctrl.signal, redirect: 'follow' }).finally(() => clearTimeout(timer))

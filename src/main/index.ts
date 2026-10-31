@@ -5,6 +5,7 @@ import { API_METHODS, type ApiMethod, type LearnEvent } from '@shared/types'
 import { LearnCore } from './core'
 import { openDatabase } from './db'
 import { buildMenu } from './menu'
+import { parseLearnLink } from '@shared/links'
 import { ObsidianSync } from './sync/obsidianSync'
 import { NotionSync, type SecretBox } from './notion/notionSync'
 
@@ -59,6 +60,13 @@ function createWindow(): void {
   })
 
   win.once('ready-to-show', () => win?.show())
+  win.webContents.on('did-finish-load', () => {
+    if (!pendingLink) return
+    const link = pendingLink
+    pendingLink = null
+    // Laisse le temps à l'interface de charger la bibliothèque avant d'ouvrir le document.
+    setTimeout(() => handleLink(link), 600)
+  })
 
   // Les liens s'ouvrent dans le navigateur, jamais dans l'app.
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -153,6 +161,7 @@ function registerIpc(): void {
     updateBook: (itemId: string, patch: { title?: string; author?: string; imageUrl?: string }) => core.store.updateItem(itemId, patch),
     readingBalance: (days: number) => core.store.readingBalance(days),
     transcript: (itemId: string) => core.transcript(itemId),
+    searchPodcasts: (term: string) => core.searchPodcasts(term),
     listBoards: () => core.store.listBoards(),
     createBoard: (title: string, mode: Parameters<LearnCore['createBoard']>[1]) => core.createBoard(title, mode),
     getBoard: (id: string) => core.store.getBoard(id),
@@ -215,6 +224,47 @@ function registerIpc(): void {
     })
   }
 }
+
+// ── Liens learn:// (extension Obsidian, export Markdown) ──────────────────────
+// learn://open?item=<id>[&highlight=<id>] ouvre le document, ou le passage, dans Learn.
+
+let pendingLink: string | null = null
+
+function handleLink(url: string): void {
+  const link = parseLearnLink(url)
+  if (!link) return
+  if (!win || win.webContents.isLoading()) {
+    pendingLink = url
+    return
+  }
+  if (win.isMinimized()) win.restore()
+  win.show()
+  win.focus()
+  send({ type: 'open-link', ...link })
+}
+
+const linkFromArgv = (argv: string[]): string | undefined => argv.find((a) => a.startsWith('learn://'))
+
+if (process.defaultApp && process.argv.length >= 2) app.setAsDefaultProtocolClient('learn', process.execPath, [process.argv[1]])
+else app.setAsDefaultProtocolClient('learn')
+
+// Une seule fenêtre Learn : un lien ouvert alors que l'app tourne est transmis à l'instance existante.
+if (!app.requestSingleInstanceLock()) app.exit(0)
+app.on('second-instance', (_e, argv) => {
+  const link = linkFromArgv(argv)
+  if (link) handleLink(link)
+  else if (win) {
+    if (win.isMinimized()) win.restore()
+    win.focus()
+  }
+})
+// macOS transmet les liens par cet événement, parfois avant que l'app soit prête.
+app.on('open-url', (e, url) => {
+  e.preventDefault()
+  if (app.isReady()) handleLink(url)
+  else pendingLink = url
+})
+pendingLink = linkFromArgv(process.argv) ?? null
 
 app.whenReady().then(async () => {
   // Pas de permissions (caméra, micro, notifications…) pour le contenu affiché ; seul le plein écran vidéo est permis.

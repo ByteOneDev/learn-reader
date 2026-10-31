@@ -308,7 +308,41 @@ const nicheRows = [
   ['jeux', 'fr', 'youtube', 'Joueur du Grenier', 'https://www.youtube.com/@joueurdugrenier', 0],
   ['jeux', 'en', 'rss', 'Game Developer', 'https://www.gamedeveloper.com/rss.xml', 0],
   ['jeux', 'en', 'youtube', "Game Maker's Toolkit", 'https://www.youtube.com/@GMTK', 0],
-  ['jeux', 'en', 'youtube', 'Noclip', 'https://www.youtube.com/@NoclipDocs', 0]
+  ['jeux', 'en', 'youtube', 'Noclip', 'https://www.youtube.com/@NoclipDocs', 0],
+
+  // ── Dans l'esprit de tes abonnements Reeder : tech et vulgarisation francophones.
+  // Les podcasts sont donnés par leur nom (« podcast:… ») : Learn trouve le flux dans Apple Podcasts.
+  ['tech', 'fr', 'rss', 'BDM (Blog du Modérateur)', 'https://www.blogdumoderateur.com/feed/', 0],
+  ['tech', 'fr', 'rss', 'PhonAndroid', 'https://www.phonandroid.com/feed', 0],
+  ['tech', 'fr', 'podcast', 'Choses à Savoir TECH', 'podcast:Choses à Savoir TECH', 1],
+  ['tech', 'fr', 'podcast', 'De quoi jme mail', 'podcast:De quoi jme mail', 0],
+  ['tech', 'fr', 'podcast', 'Mémoire vive', 'podcast:Mémoire vive', 0],
+  ['tech', 'fr', 'podcast', 'Tech_Sama Show', 'podcast:Tech_Sama Show', 0],
+  ['tech', 'fr', 'podcast', 'Speakeasy (Influx)', 'podcast:Speakeasy Influx', 0],
+  ['tech', 'fr', 'podcast', 'Le podcast de Robin', 'podcast:Le podcast de Robin', 0],
+  ['tech', 'fr', 'podcast', 'Underscore_ (podcast)', 'podcast:Underscore_', 0],
+  ['tech', 'fr', 'youtube', 'Léo Duff', 'https://www.youtube.com/@LeoDuff', 0],
+  ['tech', 'fr', 'youtube', 'Nightech', 'https://www.youtube.com/@Nightech', 0],
+  ['tech', 'fr', 'youtube', 'Numerama (vidéos)', 'https://www.youtube.com/@Numerama', 0],
+  ['tech', 'fr', 'youtube', 'V2F', 'https://www.youtube.com/@V2F', 0],
+  ['tech', 'fr', 'youtube', 'Millomaker', 'https://www.youtube.com/@Millomaker', 0],
+  ['tech', 'fr', 'youtube', 'Paulygones', 'https://www.youtube.com/@Paulygones', 0],
+  ['tech', 'fr', 'youtube', 'Robin Tyonnel', 'https://www.youtube.com/@RobinTyonnel', 0],
+  ['tech', 'fr', 'youtube', 'Charlie Haid', 'https://www.youtube.com/@CharlieHaid', 0],
+  ['tech', 'en', 'podcast', 'Waveform: The MKBHD Podcast', 'podcast:Waveform: The MKBHD Podcast', 1],
+  ['tech', 'en', 'youtube', 'Marques Brownlee (MKBHD)', 'https://www.youtube.com/@mkbhd', 0],
+  ['tech', 'en', 'youtube', 'Linus Tech Tips', 'https://www.youtube.com/@LinusTechTips', 0],
+  ['tech', 'en', 'youtube', 'Dave2D', 'https://www.youtube.com/@Dave2D', 0],
+  ['tech', 'en', 'youtube', 'Snazzy Labs', 'https://www.youtube.com/@SnazzyLabs', 0],
+  ['tech', 'en', 'reddit', 'r/macapps', 'r/macapps', 0],
+  ['tech', 'en', 'reddit', 'r/apple', 'r/apple', 0],
+  ['politique', 'fr', 'podcast', 'HugoDécrypte — Actus du jour', 'podcast:HugoDécrypte Actus du jour', 0],
+  ['histoire', 'fr', 'podcast', "Entrez dans l'Histoire", "podcast:Entrez dans l'Histoire", 0],
+  ['histoire', 'fr', 'youtube', 'La Folle Histoire', 'https://www.youtube.com/@LaFolleHistoire', 0],
+  ['culture', 'fr', 'podcast', 'ÊTRE ÉTUDIANT — Le Podcast', 'podcast:ÊTRE ÉTUDIANT Le Podcast', 0],
+  ['culture', 'fr', 'youtube', 'Fabien Olicard', 'https://www.youtube.com/@FabienOlicard', 0],
+  ['culture', 'fr', 'youtube', 'Abrège', 'https://www.youtube.com/@Abrege', 0],
+  ['culture', 'fr', 'youtube', 'Adrien Boulisset', 'https://www.youtube.com/@AdrienBoulisset', 0]
 ]
 
 const slug = (s) =>

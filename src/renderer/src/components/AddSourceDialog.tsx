@@ -16,19 +16,46 @@ export default function AddSourceDialog({ onClose }: { onClose(): void }): React
   const [detected, setDetected] = useState<ResolvedInput | null>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [podcasts, setPodcasts] = useState<{ title: string; author?: string; feedUrl: string; artwork?: string }[] | null>(null)
+
+  // Ni adresse, ni r/…, ni @… (« Choses à Savoir TECH ») : on le cherche parmi les podcasts.
+  const looksLikeName = (v: string): boolean => !/[./:@]/.test(v.trim())
 
   useEffect(() => {
     setError('')
     setDetected(null)
+    setPodcasts(null)
     if (tab !== 'feed' || !input.trim()) return
     const h = setTimeout(() => {
+      if (looksLikeName(input)) {
+        api
+          .searchPodcasts(input)
+          .then(setPodcasts)
+          .catch((e: Error) => setError(e.message))
+        return
+      }
       api
         .resolveInput(input)
         .then(setDetected)
         .catch((e: Error) => setError(e.message))
-    }, 250)
+    }, 350)
     return () => clearTimeout(h)
   }, [input, tab, api])
+
+  const subscribePodcast = async (feedUrl: string, title: string): Promise<void> => {
+    setBusy(true)
+    try {
+      const s = await api.addSource({ input: feedUrl, kind: 'podcast', title })
+      await reloadMeta()
+      setView({ type: 'source', sourceId: s.id })
+      toast(`${t.add} : ${s.title}`)
+      onClose()
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
 
   const submit = async (): Promise<void> => {
     if (!input.trim() || busy) return
@@ -101,6 +128,23 @@ export default function AddSourceDialog({ onClose }: { onClose(): void }): React
           <div className="detected">
             {t.detected} <span className="chip">{t.kinds[detected.kind]}</span>
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{detected.title ?? detected.url}</span>
+          </div>
+        )}
+        {podcasts && (
+          <div className="podcast-results">
+            <div className="hint" style={{ margin: '10px 0 6px' }}>{podcasts.length ? t.podcastResults : t.noPodcastFound}</div>
+            {podcasts.slice(0, 6).map((p) => (
+              <div key={p.feedUrl} className="podcast-result">
+                {p.artwork ? <img src={p.artwork} alt="" /> : <span className="player-art" />}
+                <span className="podcast-text">
+                  <span className="t">{p.title}</span>
+                  {p.author && <span className="a">{p.author}</span>}
+                </span>
+                <button type="button" className="btn" disabled={busy} onClick={() => void subscribePodcast(p.feedUrl, p.title)}>
+                  {t.add}
+                </button>
+              </div>
+            ))}
           </div>
         )}
         {error && <div className="error-text">{error}</div>}

@@ -108,8 +108,30 @@ jobs:
             release/*.deb
           if-no-files-found: error
 
+  plugin:
+    needs: check
+    if: needs.check.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Extension Obsidian
+        run: |
+          npm run plugin:build
+          cd obsidian-plugin/dist
+          zip -r "../../learn-obsidian-${{ needs.check.outputs.tag }}.zip" learn-reader
+      - uses: actions/upload-artifact@v4
+        with:
+          name: learn-obsidian
+          path: learn-obsidian-*.zip
+          if-no-files-found: error
+
   release:
-    needs: [check, build]
+    needs: [check, build, plugin]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

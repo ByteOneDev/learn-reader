@@ -1,0 +1,116 @@
+/* Panneau Learn : suit le thème d'Obsidian (variables CSS natives). */
+.learn-view {
+  padding: 12px 12px 40px;
+}
+.learn-head {
+  margin-bottom: 12px;
+}
+.learn-type {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+.learn-title {
+  font-size: 1.15em;
+  font-weight: 800;
+  line-height: 1.25;
+  margin: 4px 0 10px;
+}
+.learn-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.learn-count,
+.learn-label {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  margin: 14px 2px 6px;
+  font-weight: 600;
+}
+.learn-label {
+  color: var(--text-accent);
+}
+.learn-empty {
+  color: var(--text-faint);
+  font-size: var(--font-ui-small);
+  padding: 10px 2px;
+}
+.learn-hl {
+  position: relative;
+  padding: 10px 10px 8px 14px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  cursor: pointer;
+  overflow: hidden;
+}
+.learn-hl:hover {
+  background: var(--background-modifier-hover);
+}
+.learn-hl::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--learn-c, #facc15);
+}
+.learn-yellow { --learn-c: #facc15; }
+.learn-green { --learn-c: #34d399; }
+.learn-blue { --learn-c: #60a5fa; }
+.learn-pink { --learn-c: #f472b6; }
+.learn-purple { --learn-c: #a78bfa; }
+.learn-quote {
+  font-size: var(--font-ui-small);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.learn-note {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--background-modifier-border);
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+  white-space: pre-wrap;
+}
+.learn-hl-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
+  margin-top: 6px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.learn-hl:hover .learn-hl-actions {
+  opacity: 1;
+}
+.learn-hl-actions button {
+  padding: 2px 6px;
+  height: auto;
+  background: transparent;
+  box-shadow: none;
+}
+.learn-doc {
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.learn-doc:hover {
+  background: var(--background-modifier-hover);
+}
+.learn-doc-title {
+  font-weight: 600;
+  font-size: var(--font-ui-small);
+}
+.learn-doc-meta {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}

@@ -14,6 +14,17 @@ Direction graphique inspirée de [Reeder](https://reederapp.com) (2024), avec sa
 | Livre EPUB | PDF surligné |
 | ![](docs/screenshots/livre-epub.png) | ![](docs/screenshots/livre-pdf.png) |
 
+## Nouveautés de la v0.8 : extension Obsidian
+
+**Installer** : sur la page de la release, télécharge `learn-obsidian-vX.Y.Z.zip`. Décompresse-le dans `<ton coffre>/.obsidian/plugins/` (tu obtiens un dossier `learn-reader`), puis active **Learn** dans *Réglages → Modules complémentaires de la communauté*.
+
+- **Panneau Learn** (icône surligneur, ou commande *Learn : afficher le panneau des surlignages*). Pour la note ouverte, il montre le type, l'auteur et les surlignages, regroupés par chapitre, page ou instant, avec leur couleur et ta note. Un clic t'emmène au passage dans la note ; le bouton ↗ l'ouvre **dans Learn, au bon endroit** (bon chapitre, bonne page, bon instant).
+- Sans document Learn ouvert, le panneau liste ta **bibliothèque Learn** (dossier `Learn/`), du plus récent au plus ancien, avec le nombre de surlignages.
+- **Commandes** : *Ouvrir ce document dans Learn*, *Ouvrir le passage sous le curseur dans Learn*.
+- Chaque note exportée contient aussi un lien **Ouvrir dans Learn**, qui marche même sans l'extension. Learn gère désormais les liens `learn://`, et une seule fenêtre de l'app est ouverte à la fois.
+
+**Recommandations** : les sources de tes abonnements Reeder et d'autres du même genre ont rejoint le catalogue (BDM, PhonAndroid, Choses à Savoir TECH, Waveform, Léo Duff, V2F, Nightech, La Folle Histoire…). Ça fait 256 sources, dont 23 podcasts et 54 chaînes YouTube. Les podcasts peuvent maintenant être ajoutés **par leur nom** : tape « Choses à Savoir TECH » dans *Ajouter une source*, Learn le trouve dans l'annuaire Apple Podcasts.
+
 ## Nouveautés de la v0.7
 
 - **Images réparées** : les sites qui chargent leurs images en différé (WordPress et bien d'autres) n'affichent plus de cadres blancs. Learn récupère la vraie image, que ce soit dans le texte du flux ou dans le texte complet. Une image introuvable est masquée, et les petites images ne sont plus agrandies.
@@ -148,6 +159,7 @@ src/
     media/     Transcriptions de podcasts (WebVTT, SRT, JSON, HTML)
   preload/     Pont minimal et typé entre l'interface et le système
   renderer/    Interface React (Zustand, Framer Motion, Lucide, pdf.js, React Flow)
+obsidian-plugin/ Extension Obsidian (panneau des surlignages, liens learn://)
 tests/         Vitest : analyse, résolution, OPML, Markdown, ancrage, catalogue, intégration HTTP
 ```
 
@@ -178,7 +190,8 @@ L'orientation politique (−3 à +3) est une estimation de Learn à partir des l
 - ~~**v0.4** : Boards, des mind maps et canvas où glisser surlignages et extraits, export JSON Canvas (Obsidian Canvas)~~ ✓
 - ~~**v0.5** : Notion (export puis synchro)~~ ✓
 - ~~**v0.6** : podcasts, vidéos YouTube, signature macOS~~ ✓
-- **Ensuite** : extension Obsidian, app native
+- ~~**v0.8** : extension Obsidian~~ ✓
+- **Ensuite** : app native
 
 ## Licence
 

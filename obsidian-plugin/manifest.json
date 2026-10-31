@@ -1,0 +1,10 @@
+{
+  "id": "learn-reader",
+  "name": "Learn",
+  "version": "0.8.0",
+  "minAppVersion": "1.5.0",
+  "description": "Panneau des surlignages et notes exportés par Learn, et liens vers l'app Learn.",
+  "author": "ByteOneDev",
+  "authorUrl": "https://github.com/ByteOneDev/learn-reader",
+  "isDesktopOnly": true
+}

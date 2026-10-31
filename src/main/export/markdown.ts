@@ -1,5 +1,6 @@
 import type { Highlight, Item, Source } from '@shared/types'
 import { blockId, hostOf } from '@shared/util'
+import { learnLink } from '@shared/links'
 
 // Un document = un fichier Markdown. Tout ce qui précède le marqueur END est régénéré par Learn ;
 // tout ce que l'utilisateur écrit après est conservé d'un export à l'autre.
@@ -80,7 +81,7 @@ export function buildMarkdown(
     .filter(Boolean)
     .join(' · ')
 
-  const body: string[] = [`# ${item.title}`, '', item.url ? `[${meta}](${item.url})` : meta, '']
+  const body: string[] = [`# ${item.title}`, '', `${item.url ? `[${meta}](${item.url})` : meta} · [Ouvrir dans Learn](${learnLink(item.id)})`, '']
 
   const sorted = [...highlights].sort((a, b) => layerRank(a.layer) - layerRank(b.layer) || a.start - b.start)
   body.push('## Surlignages', '')
