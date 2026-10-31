@@ -9,7 +9,7 @@ import { Epub } from './books/epub'
 import type { Store, SyncBase } from './db'
 import { buildMarkdown, mergeWithExisting, safeFileName } from './export/markdown'
 import { boardOutline, buildCanvas } from './export/canvas'
-import { fetchFeed, fetchIcon, fetchText, type FetchFn } from './feeds/fetcher'
+import { fetchFeed, fetchIcon, fetchText, HttpError, type FetchFn } from './feeds/fetcher'
 import { parseTranscript } from './media/transcript'
 import { pickPodcast, searchPodcasts, type PodcastResult } from './feeds/podcastSearch'
 import { formatTime, timeLink } from '@shared/media'
@@ -64,7 +64,31 @@ export class LearnCore {
       const known = this.store.findSourceByUrl(found.feedUrl)
       if (known) return known
     }
-    const { feed, feedUrl } = await fetchFeed(this.fetchFn, resolved.url)
+    let fetched: Awaited<ReturnType<typeof fetchFeed>>
+    try {
+      fetched = await fetchFeed(this.fetchFn, resolved.url)
+    } catch (e) {
+      // Limite de débit (Reddit surtout) : on s'abonne quand même, les articles viendront à la prochaine actualisation.
+      if (e instanceof HttpError && e.status === 429 && resolved.kind !== 'rss') {
+        const source = this.store.insertSource({
+          id: uid('s_'),
+          kind: resolved.kind,
+          title: n.title ?? resolved.title ?? resolved.url,
+          url: resolved.url,
+          siteUrl: resolved.siteUrl,
+          category: n.category,
+          lang: n.lang,
+          leaning: n.leaning,
+          owner: n.owner,
+          createdAt: Date.now(),
+          error: 'Limite de requêtes atteinte : nouvel essai à la prochaine actualisation'
+        })
+        this.emit({ type: 'items-changed' })
+        return source
+      }
+      throw e
+    }
+    const { feed, feedUrl } = fetched
     // Le contenu du flux tranche : podcast, chaîne YouTube (aussi quand on a collé l'adresse d'une page).
     if (feed.youtube) resolved.kind = 'youtube'
     else if (feed.podcast && (resolved.kind === 'rss' || resolved.kind === 'podcast')) resolved.kind = 'podcast'

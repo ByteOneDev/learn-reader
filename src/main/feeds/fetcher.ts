@@ -3,29 +3,84 @@ import { discoverFeeds, discoverIcons, NotAFeedError, parseFeed, type ParsedFeed
 export type FetchFn = (url: string, init?: RequestInit) => Promise<Response>
 
 export const USER_AGENT = 'Mozilla/5.0 (compatible; Learn/0.1; +https://github.com/ByteOneDev/learn-reader)'
+// Reddit exige un User-Agent descriptif et limite fortement les clients anonymes ou génériques.
+export const REDDIT_USER_AGENT = 'desktop:dev.byteone.learn:v0.10 (RSS reader; +https://github.com/ByteOneDev/learn-reader)'
 const TIMEOUT_MS = 20_000
 const MAX_BYTES = 8 * 1024 * 1024
 
-export async function fetchText(fetchFn: FetchFn, url: string, headers: Record<string, string> = {}): Promise<{ body: string; contentType: string; url: string }> {
-  const ctrl = new AbortController()
-  const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS)
+/** Erreur HTTP avec son statut, pour réagir finement (429, 404…). */
+export class HttpError extends Error {
+  constructor(
+    readonly status: number,
+    message = `HTTP ${status}`
+  ) {
+    super(message)
+  }
+}
+
+function isReddit(url: string): boolean {
   try {
-    const res = await fetchFn(url, {
-      headers: { 'User-Agent': USER_AGENT, Accept: 'application/rss+xml, application/atom+xml, application/feed+json, application/xml, text/xml, text/html;q=0.8, */*;q=0.5', ...headers },
-      signal: ctrl.signal,
-      redirect: 'follow'
-    })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const len = Number(res.headers.get('content-length') ?? 0)
-    if (len > MAX_BYTES) throw new Error('Réponse trop volumineuse')
-    const body = await res.text()
-    if (body.length > MAX_BYTES) throw new Error('Réponse trop volumineuse')
-    return { body, contentType: res.headers.get('content-type') ?? '', url: res.url || url }
-  } catch (e) {
-    if ((e as Error).name === 'AbortError') throw new Error('Délai dépassé')
-    throw e
-  } finally {
-    clearTimeout(timer)
+    return /(^|\.)reddit\.com$/.test(new URL(url).hostname)
+  } catch {
+    return false
+  }
+}
+
+// Requêtes vers Reddit espacées (au plus une toutes les 2 s), même pendant une actualisation en parallèle.
+let redditQueue: Promise<void> = Promise.resolve()
+const REDDIT_SPACING = 2000
+function redditSlot(): Promise<void> {
+  const slot = redditQueue.then(() => new Promise<void>((r) => setTimeout(r, REDDIT_SPACING)))
+  const mine = redditQueue
+  redditQueue = slot
+  return mine
+}
+
+const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms))
+
+/** Délai demandé par le serveur (Retry-After, ou x-ratelimit-reset de Reddit), borné. */
+function retryDelay(res: Response, attempt: number): number {
+  const ra = Number(res.headers.get('retry-after'))
+  const reset = Number(res.headers.get('x-ratelimit-reset'))
+  const s = Number.isFinite(ra) && ra > 0 ? ra : Number.isFinite(reset) && reset > 0 ? reset : 2 * (attempt + 1)
+  return Math.min(s, 12) * 1000
+}
+
+export async function fetchText(fetchFn: FetchFn, url: string, headers: Record<string, string> = {}): Promise<{ body: string; contentType: string; url: string }> {
+  const reddit = isReddit(url)
+  for (let attempt = 0; ; attempt++) {
+    if (reddit) await redditSlot()
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS)
+    try {
+      const res = await fetchFn(url, {
+        headers: {
+          'User-Agent': reddit ? REDDIT_USER_AGENT : USER_AGENT,
+          Accept: 'application/rss+xml, application/atom+xml, application/feed+json, application/xml, text/xml, text/html;q=0.8, */*;q=0.5',
+          ...headers
+        },
+        signal: ctrl.signal,
+        redirect: 'follow'
+      })
+      // Trop de requêtes : on attend le délai demandé, deux fois au plus.
+      if ((res.status === 429 || res.status === 503) && attempt < 2) {
+        const wait = retryDelay(res, attempt)
+        clearTimeout(timer)
+        await sleep(wait)
+        continue
+      }
+      if (!res.ok) throw new HttpError(res.status)
+      const len = Number(res.headers.get('content-length') ?? 0)
+      if (len > MAX_BYTES) throw new Error('Réponse trop volumineuse')
+      const body = await res.text()
+      if (body.length > MAX_BYTES) throw new Error('Réponse trop volumineuse')
+      return { body, contentType: res.headers.get('content-type') ?? '', url: res.url || url }
+    } catch (e) {
+      if ((e as Error).name === 'AbortError') throw new Error('Délai dépassé')
+      throw e
+    } finally {
+      clearTimeout(timer)
+    }
   }
 }
 

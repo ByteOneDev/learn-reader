@@ -16,5 +16,5 @@
     "noEmit": true,
     "paths": { "@shared/*": ["./src/shared/*"] }
   },
-  "include": ["build/**/*", "electron.vite.config.ts", "vite.web.config.ts", "vitest.config.mts", "src/main/**/*", "src/preload/**/*", "src/shared/**/*", "src/renderer/src/onboarding/hemicycleLayout.ts", "obsidian-plugin/src/parse.ts", "tests/**/*"]
+  "include": ["build/**/*", "electron.vite.config.ts", "vite.web.config.ts", "vitest.config.mts", "src/main/**/*", "src/preload/**/*", "src/shared/**/*", "src/renderer/src/onboarding/hemicycleLayout.ts", "obsidian-plugin/src/parse.ts", "src/renderer/src/lib/errors.ts", "tests/**/*"]
 }
