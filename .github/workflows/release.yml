@@ -2,19 +2,54 @@ name: Build desktop apps
 
 # Produit les installeurs Mac (.dmg), Windows (.exe) et Linux (.AppImage, .deb)
 # et les publie dans une release GitHub (onglet « Releases » du dépôt).
-# - Pousser un tag vX.Y.Z publie la release vX.Y.Z.
-# - Le lancer à la main (Actions → Build desktop apps → Run workflow) publie la release
-#   correspondant à la version de package.json (et la met à jour si elle existe déjà).
+# - Chaque push sur main dont la version (package.json) n'a pas encore de release
+#   construit et publie automatiquement la release vX.Y.Z (le tag est créé par GitHub).
+#   Publier une nouvelle version = incrémenter "version" dans package.json.
+# - Un tag vX.Y.Z poussé à la main publie aussi la release correspondante.
+# - Le lancer à la main (Actions → Build desktop apps → Run workflow) reconstruit
+#   et met à jour la release de la version courante.
 on:
   push:
+    branches: [main]
     tags: ['v*']
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.v.outputs.tag }}
+      publish: ${{ steps.v.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: v
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            tag="${GITHUB_REF#refs/tags/}"
+          else
+            tag="v$(node -p 'require("./package.json").version')"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == refs/heads/* ]] && gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "La release $tag existe déjà : rien à publier."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
   build:
+    needs: check
+    if: needs.check.outputs.publish == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -44,19 +79,10 @@ jobs:
           if-no-files-found: error
 
   release:
-    needs: build
+    needs: [check, build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Version
-        id: v
-        shell: bash
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
-          else
-            echo "tag=v$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
-          fi
       - uses: actions/download-artifact@v4
         with:
           path: dist
@@ -64,9 +90,9 @@ jobs:
       - run: ls -la dist
       - uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.v.outputs.tag }}
+          tag_name: ${{ needs.check.outputs.tag }}
           target_commitish: ${{ github.sha }}
-          name: Learn ${{ steps.v.outputs.tag }}
+          name: Learn ${{ needs.check.outputs.tag }}
           draft: false
           prerelease: false
           make_latest: true
