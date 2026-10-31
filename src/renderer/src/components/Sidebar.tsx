@@ -12,6 +12,7 @@ import {
   Network,
   Plus,
   RefreshCw,
+  Scale,
   Settings as SettingsIcon,
   Tag,
   Trash2,
@@ -157,7 +158,7 @@ export default function Sidebar(): React.JSX.Element {
         </button>
         <NavRow icon={<Headphones size={19} />} label={t.audio} disabled soon={t.soon} />
         <NavRow icon={<Tv size={19} />} label={t.video} disabled soon={t.soon} />
-        <NavRow icon={<BookOpen size={19} />} label={t.library} disabled soon={t.soon} />
+        <NavRow view={{ type: 'library' }} icon={<BookOpen size={19} />} label={t.library} badge={counts?.library} />
         <NavRow icon={<Network size={19} />} label={t.boards} disabled soon={t.soon} />
 
         <Section id="saved" title={t.saved}>
@@ -169,6 +170,10 @@ export default function Sidebar(): React.JSX.Element {
           {tags.map(([tag, n]) => (
             <NavRow key={tag} view={{ type: 'tag', tag }} icon={<Tag size={19} />} label={tag} badge={n} />
           ))}
+          <button className="nav-row" onClick={() => setDialog('balance')}>
+            <Scale size={19} />
+            <span className="label">{t.balanceNav}</span>
+          </button>
         </Section>
 
         {social.length > 0 && (

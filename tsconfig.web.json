@@ -14,8 +14,7 @@
     "composite": true,
     "noEmit": true,
     "types": [],
-    "baseUrl": ".",
-    "paths": { "@shared/*": ["src/shared/*"] }
+    "paths": { "@shared/*": ["./src/shared/*"] }
   },
   "include": ["src/renderer/src/**/*", "src/shared/**/*"]
 }

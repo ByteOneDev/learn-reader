@@ -1,7 +1,7 @@
 {
   "name": "learn-reader",
   "productName": "Learn",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Lecteur RSS, articles, livres et notes — inspiré de Reeder, pensé pour la recherche.",
   "main": "./out/main/index.js",
   "author": "ByteOneDev",
@@ -23,6 +23,7 @@
   "dependencies": {
     "@mozilla/readability": "0.6.0",
     "fast-xml-parser": "5.11.2",
+    "fflate": "0.8.3",
     "linkedom": "0.18.14",
     "sql.js": "1.15.2"
   },
@@ -38,15 +39,12 @@
     "electron-vite": "6.0.0",
     "framer-motion": "14.7.1",
     "lucide-react": "1.62.0",
+    "pdfjs-dist": "6.4.299",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "typescript": "7.0.2",
     "vite": "8.3.5",
     "vitest": "5.0.5",
     "zustand": "5.0.16"
-  },
-  "overrides": {
-    "motion-dom": "12.23.23",
-    "motion-utils": "12.23.6"
   }
 }

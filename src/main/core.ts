@@ -1,8 +1,9 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
-import type { Highlight, Item, LearnEvent, NewSource, RefreshResult, ResolvedInput, Source } from '@shared/types'
+import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
+import { basename, extname, join } from 'node:path'
+import type { BookFormat, Highlight, Item, LearnEvent, NewSource, RefreshResult, ResolvedInput, Source, TocEntry } from '@shared/types'
 import { hostOf, uid } from '@shared/util'
 import { fetchArticle } from './article'
+import { Epub } from './books/epub'
 import type { Store } from './db'
 import { buildMarkdown, mergeWithExisting, safeFileName } from './export/markdown'
 import { fetchFeed, fetchIcon, type FetchFn } from './feeds/fetcher'
@@ -10,6 +11,8 @@ import { resolveInput } from './feeds/resolve'
 import { buildOpml, parseOpml } from './opml'
 
 export const LINKS_SOURCE_URL = 'learn:links'
+export const LIBRARY_SOURCE_URL = 'learn:library'
+const MAX_BOOK_BYTES = 500 * 1024 * 1024
 const MAX_ITEMS_PER_FETCH = 200
 const CONCURRENCY = 6
 const PRUNE_AFTER_MS = 60 * 24 * 3600 * 1000
@@ -20,11 +23,14 @@ const PRUNE_AFTER_MS = 60 * 24 * 3600 * 1000
  */
 export class LearnCore {
   private refreshing: Promise<RefreshResult> | null = null
+  private epubs = new Map<string, Epub>()
 
   constructor(
     readonly store: Store,
     private fetchFn: FetchFn,
-    private emit: (e: LearnEvent) => void = () => {}
+    private emit: (e: LearnEvent) => void = () => {},
+    /** Dossier où sont copiés les livres importés. */
+    private libraryDir = ''
   ) {}
 
   // ── Sources ───────────────────────────────────────────────────────────────
@@ -38,7 +44,11 @@ export class LearnCore {
     // Le catalogue peut préciser le type (ex. un forum servi en Atom classique).
     if (n.kind && resolved.kind === 'rss') resolved.kind = n.kind
     const existing = this.store.findSourceByUrl(resolved.url)
-    if (existing) return existing
+    if (existing) {
+      // Abonnement déjà présent (ex. import OPML) : on complète l'orientation venue du catalogue.
+      if (n.leaning !== undefined && existing.leaning === undefined) return this.store.updateSource(existing.id, { leaning: n.leaning, owner: n.owner })
+      return existing
+    }
 
     const { feed, feedUrl } = await fetchFeed(this.fetchFn, resolved.url)
     const again = feedUrl !== resolved.url ? this.store.findSourceByUrl(feedUrl) : undefined
@@ -53,6 +63,8 @@ export class LearnCore {
       siteUrl,
       category: n.category,
       lang: n.lang,
+      leaning: n.leaning,
+      owner: n.owner,
       createdAt: Date.now(),
       lastFetchedAt: Date.now()
     })
@@ -190,7 +202,7 @@ export class LearnCore {
   removeSource(id: string): void {
     const source = this.store.getSource(id)
     if (!source) return
-    this.store.removeSource(id, source.kind === 'links' ? undefined : this.linksSource().id)
+    this.store.removeSource(id, source.kind === 'links' || source.kind === 'book' ? undefined : this.linksSource().id)
     this.emit({ type: 'items-changed' })
   }
 
@@ -199,12 +211,116 @@ export class LearnCore {
     return this.store.insertHighlight({ ...h, id: uid('h_'), createdAt: now, updatedAt: now })
   }
 
+  // ── Bibliothèque ──────────────────────────────────────────────────────────
+
+  private librarySource(): Source {
+    return (
+      this.store.findSourceByUrl(LIBRARY_SOURCE_URL) ??
+      this.store.insertSource({ id: uid('s_'), kind: 'book', title: 'Bibliothèque', url: LIBRARY_SOURCE_URL, createdAt: Date.now() })
+    )
+  }
+
+  /** Copie un EPUB ou un PDF dans la bibliothèque et l'ajoute à la liste. */
+  importBook(file: string): Item {
+    const ext = extname(file).toLowerCase().slice(1)
+    if (ext !== 'epub' && ext !== 'pdf') throw new Error('Formats acceptés : EPUB et PDF')
+    if (!this.libraryDir) throw new Error('Bibliothèque indisponible')
+    const size = statSync(file).size
+    if (size > MAX_BOOK_BYTES) throw new Error('Fichier trop volumineux (500 Mo maximum)')
+    const format = ext as BookFormat
+    const data = readFileSync(file)
+    const guid = `${basename(file)}|${size}`
+    const source = this.librarySource()
+    const already = this.store.listItems({ view: { type: 'library' }, limit: 10_000 }).find((i) => i.guid === guid)
+    if (already) return already
+
+    let title = basename(file, extname(file)).replace(/[_]+/g, ' ').trim()
+    let author: string | undefined
+    let imageUrl: string | undefined
+    let summary: string | undefined
+    if (format === 'epub') {
+      const epub = new Epub(new Uint8Array(data))
+      title = epub.meta.title || title
+      author = epub.meta.author
+      imageUrl = epub.meta.cover
+      summary = `${epub.meta.spine.length} chapitres`
+    }
+
+    const id = uid('i_')
+    mkdirSync(this.libraryDir, { recursive: true })
+    const dest = join(this.libraryDir, `${id}.${ext}`)
+    copyFileSync(file, dest)
+    const now = Date.now()
+    this.store.insertItems([{ id, sourceId: source.id, guid, title, author, summary, imageUrl, publishedAt: now, fetchedAt: now, format, filePath: dest }])
+    this.emit({ type: 'items-changed' })
+    return this.store.getItem(id)!
+  }
+
+  importBooks(files: string[]): { added: Item[]; failed: { file: string; error: string }[] } {
+    const added: Item[] = []
+    const failed: { file: string; error: string }[] = []
+    for (const f of files) {
+      try {
+        added.push(this.importBook(f))
+      } catch (e) {
+        failed.push({ file: basename(f), error: (e as Error).message })
+      }
+    }
+    return { added, failed }
+  }
+
+  private epub(itemId: string): Epub {
+    let e = this.epubs.get(itemId)
+    if (!e) {
+      const path = this.store.bookFile(itemId)
+      if (!path || !existsSync(path)) throw new Error('Fichier du livre introuvable')
+      e = new Epub(new Uint8Array(readFileSync(path)))
+      // On garde les trois derniers livres ouverts en mémoire.
+      if (this.epubs.size >= 3) this.epubs.delete(this.epubs.keys().next().value!)
+      this.epubs.set(itemId, e)
+    }
+    return e
+  }
+
+  bookToc(itemId: string): TocEntry[] {
+    const item = this.store.getItem(itemId)
+    if (item?.format !== 'epub') return []
+    const epub = this.epub(itemId)
+    if (epub.meta.toc.length) return epub.meta.toc
+    return epub.meta.spine.map((s, i) => ({ title: s.title ?? `Chapitre ${i + 1}`, chapter: i, depth: 0 }))
+  }
+
+  bookChapter(itemId: string, index: number): { html: string; title?: string; count: number } {
+    const epub = this.epub(itemId)
+    return { ...epub.chapter(index), count: epub.meta.spine.length }
+  }
+
+  readBookFile(itemId: string): Uint8Array {
+    const path = this.store.bookFile(itemId)
+    if (!path || !existsSync(path)) throw new Error('Fichier du livre introuvable')
+    return new Uint8Array(readFileSync(path))
+  }
+
+  /** Nom lisible d'une « couche » de surlignage : chapitre d'un EPUB, page d'un PDF. */
+  layerLabel(item: Item, layer: string): string | undefined {
+    const [kind, n] = layer.split(':')
+    if (kind === 'p') return `Page ${Number(n) + 1}`
+    if (kind === 'ch' && item.format === 'epub') {
+      try {
+        return this.epub(item.id).chapterTitle(Number(n))
+      } catch {
+        return `Chapitre ${Number(n) + 1}`
+      }
+    }
+    return undefined
+  }
+
   // ── Export ────────────────────────────────────────────────────────────────
 
   markdownFor(itemId: string): string {
     const item = this.store.getItem(itemId)
     if (!item) throw new Error('Article introuvable')
-    return buildMarkdown(item, this.store.getSource(item.sourceId), this.store.listHighlights(itemId))
+    return buildMarkdown(item, this.store.getSource(item.sourceId), this.store.listHighlights(itemId), Date.now(), (layer) => this.layerLabel(item, layer))
   }
 
   /** Écrit (ou met à jour) le fichier Markdown d'un document dans le coffre Obsidian. */

@@ -1,6 +1,8 @@
 # Learn
 
-**Lire, surligner, réfléchir.** Learn réunit tes flux RSS, Reddit, Mastodon, Bluesky, forums et articles web dans un lecteur pensé pour la recherche : surlignages, notes en Markdown, export vers Obsidian. Les livres EPUB/PDF et les mind maps arrivent dans les prochaines versions.
+**Lire, surligner, réfléchir.** Learn réunit tes flux RSS, Reddit, Mastodon, Bluesky, forums, articles web, livres EPUB et PDF dans un lecteur pensé pour la recherche : surlignages, notes en Markdown, export vers Obsidian.
+
+**[⬇ Télécharger la dernière version](https://github.com/ByteOneDev/learn-reader/releases/latest)** (Mac, Windows, Linux)
 
 Direction graphique inspirée de [Reeder](https://reederapp.com) (2024), avec sa propre identité.
 
@@ -9,6 +11,17 @@ Direction graphique inspirée de [Reeder](https://reederapp.com) (2024), avec sa
 | Thème clair | Hémicycle des médias au premier lancement |
 |---|---|
 | ![](docs/screenshots/lecture-clair.png) | ![](docs/screenshots/hemicycle.png) |
+| Livre EPUB | PDF surligné |
+| ![](docs/screenshots/livre-epub.png) | ![](docs/screenshots/livre-pdf.png) |
+
+## Nouveautés de la v0.2
+
+- **Bibliothèque EPUB et PDF** : import par le bouton « + », par glisser-déposer n'importe où dans la fenêtre, ou depuis la vue Bibliothèque. Couverture, titre et auteur détectés automatiquement (première page pour les PDF).
+- **Lecteur EPUB** dans la typographie de Learn : table des matières, chapitres précédent/suivant (← →), renvois internes, reprise exacte de la lecture.
+- **Lecteur PDF** (pdf.js) : pages rendues à la demande, zoom (⌘/Ctrl +/−), plan du document, texte sélectionnable.
+- **Surlignages et notes dans les livres**, par chapitre ou par page, avec saut direct depuis le panneau. L'export Obsidian les regroupe par chapitre ou par page.
+- **Progression de lecture** sur chaque livre, **mode lecture** (`z`) qui masque les colonnes.
+- **Mon équilibre** : l'hémicycle rempli par ce que tu as réellement lu sur 7, 30 ou 90 jours (gauche / centre / droite), et le **propriétaire** des médias quand il est connu.
 
 ## Ce que fait la v0.1
 
@@ -24,7 +37,7 @@ Direction graphique inspirée de [Reeder](https://reederapp.com) (2024), avec sa
 
 ## Installer
 
-Les installeurs sont produits par GitHub Actions (onglet **Actions → Build desktop apps**, ou la page **Releases** pour une version taguée) :
+Télécharge l'installeur de ton système sur la page **[Releases](https://github.com/ByteOneDev/learn-reader/releases/latest)** :
 
 | Système | Fichier |
 |---|---|
@@ -32,7 +45,7 @@ Les installeurs sont produits par GitHub Actions (onglet **Actions → Build des
 | Windows | `Learn Setup x.y.z.exe` |
 | Linux | `Learn-x.y.z.AppImage` ou `.deb` |
 
-Les builds ne sont **pas encore signés**. Sur macOS : clic droit sur l'app → *Ouvrir* la première fois. Sur Windows : *Informations complémentaires → Exécuter quand même*.
+Les builds ne sont **pas encore signés** par un certificat officiel. Sur macOS, si l'app est dite « endommagée », lance une fois `xattr -cr /Applications/Learn.app` dans le Terminal. Sur Windows : *Informations complémentaires → Exécuter quand même*.
 
 ## Développer
 
@@ -62,7 +75,7 @@ npm run typecheck && npm run build
 npm run dist       # installeur pour le système courant, dans release/
 ```
 
-Pour publier une version : créer un tag `v0.1.0` et le pousser, le workflow produit les trois installeurs et prépare une release en brouillon.
+Pour publier une version : incrémenter `version` dans `package.json` et pousser sur `main`. Le workflow **Build desktop apps** construit les installeurs Mac, Windows et Linux et publie la release `vX.Y.Z` correspondante.
 
 ## Architecture
 
@@ -73,9 +86,10 @@ src/
     core.ts    Logique métier sans dépendance à Electron (testée avec Node seul)
     db.ts      SQLite en WebAssembly (sql.js) : aucun module natif à recompiler
     feeds/     Résolution des adresses, téléchargement, analyse RSS/Atom/RDF/JSON Feed
+    books/     Lecture des EPUB (zip, OPF, table des matières, chapitres)
     export/    Génération du Markdown Obsidian
   preload/     Pont minimal et typé entre l'interface et le système
-  renderer/    Interface React (Zustand, Framer Motion, Lucide)
+  renderer/    Interface React (Zustand, Framer Motion, Lucide, pdf.js)
 tests/         Vitest : analyse, résolution, OPML, Markdown, ancrage, catalogue, intégration HTTP
 ```
 
@@ -101,7 +115,7 @@ L'orientation politique (−3 à +3) est une estimation de Learn à partir des l
 
 ## Feuille de route
 
-- **v0.2** : EPUB et PDF avec surlignage ; bilan de lecture dans l'hémicycle ; propriétaires des médias
+- ~~**v0.2** : EPUB et PDF avec surlignage ; bilan de lecture dans l'hémicycle ; propriétaires des médias~~ ✓
 - **v0.3** : synchronisation bidirectionnelle avec Obsidian (surveillance du coffre)
 - **v0.4** : Boards, des mind maps et canvas où glisser surlignages et extraits, export JSON Canvas (Obsidian Canvas)
 - **v0.5** : Notion (export puis synchro)

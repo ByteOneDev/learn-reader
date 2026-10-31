@@ -12,7 +12,7 @@ export default function Dialog({ title, onClose, children, width }: { title: str
   }, [onClose])
 
   return (
-    <motion.div className="scrim" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={onClose}>
+    <motion.div className="scrim" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.15 } }} onMouseDown={onClose}>
       <motion.div
         className="dialog"
         role="dialog"
@@ -21,7 +21,7 @@ export default function Dialog({ title, onClose, children, width }: { title: str
         style={width ? { width: `min(${width}px, 100%)` } : undefined}
         initial={{ opacity: 0, scale: 0.94, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.97, y: 6 }}
+        exit={{ opacity: 0, scale: 0.97, y: 6, transition: { duration: 0.15 } }}
         transition={{ type: 'spring', stiffness: 460, damping: 34 }}
         onMouseDown={(e) => e.stopPropagation()}
       >

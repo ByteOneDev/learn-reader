@@ -4,7 +4,9 @@ import type { Plugin } from 'vite'
 // Le contenu des articles vient d'Internet : aucun script distant ni inline ne doit pouvoir s'exécuter.
 export const CSP = [
   "default-src 'self'",
-  "script-src 'self'",
+  // pdf.js décode certaines images (JPEG 2000, JBIG2) en WebAssembly.
+  "script-src 'self' 'wasm-unsafe-eval'",
+  "worker-src 'self' blob:",
   "style-src 'self' 'unsafe-inline'",
   'img-src * data: blob:',
   'media-src * blob:',

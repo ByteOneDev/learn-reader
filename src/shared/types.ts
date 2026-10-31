@@ -13,6 +13,7 @@ export type SourceKind =
   | 'youtube' // emplacement prévu
   | 'podcast' // emplacement prévu
   | 'links' // articles enregistrés à la main
+  | 'book' // bibliothèque : EPUB et PDF importés
 
 export interface Source {
   id: string
@@ -28,6 +29,20 @@ export interface Source {
   createdAt: number
   lastFetchedAt?: number
   error?: string
+  /** Orientation politique indicative héritée du catalogue (−3 … +3). */
+  leaning?: number
+  /** Propriétaire du média, tel que connu lors de la constitution du catalogue. */
+  owner?: string
+}
+
+export type BookFormat = 'epub' | 'pdf'
+
+export interface TocEntry {
+  title: string
+  /** Index du chapitre (EPUB) ou numéro de page à partir de 0 (PDF). */
+  chapter: number
+  anchor?: string
+  depth: number
 }
 
 export interface Item {
@@ -52,6 +67,13 @@ export interface Item {
   favorite: boolean
   tags: string[]
   highlightCount?: number
+  /** Livres uniquement. */
+  format?: BookFormat
+  /** Position de lecture, ex. `{"chapter":3,"scroll":0.42}` (EPUB) ou `{"page":12}` (PDF). */
+  position?: string
+  /** Avancement de 0 à 1. */
+  progress?: number
+  readAt?: number
 }
 
 export type HighlightColor = 'yellow' | 'green' | 'blue' | 'pink' | 'purple'
@@ -73,8 +95,11 @@ export interface Highlight {
   end: number
   /** Note en Markdown. */
   note: string
-  /** Contenu sur lequel le surlignage a été posé : résumé du flux ou texte complet. */
-  layer: 'feed' | 'full'
+  /**
+   * Contenu sur lequel le surlignage a été posé : `feed` (texte du flux), `full` (texte complet),
+   * `ch:<n>` (chapitre d'un EPUB) ou `p:<n>` (page d'un PDF, à partir de 0).
+   */
+  layer: string
   createdAt: number
   updatedAt: number
 }
@@ -85,6 +110,7 @@ export type View =
   | { type: 'bookmarks' }
   | { type: 'favorites' }
   | { type: 'links' }
+  | { type: 'library' }
   | { type: 'highlights' }
   | { type: 'tag'; tag: string }
   | { type: 'kind'; kind: SourceKind }
@@ -103,6 +129,7 @@ export interface Counts {
   bookmarks: number
   favorites: number
   links: number
+  library: number
   highlights: number
   tags: Record<string, number>
   unreadBySource: Record<string, number>
@@ -143,6 +170,23 @@ export interface NewSource {
   title?: string
   category?: string
   lang?: Lang
+  leaning?: number
+  owner?: string
+}
+
+export interface BalanceEntry {
+  sourceId: string
+  title: string
+  leaning: number
+  owner?: string
+  reads: number
+}
+
+export interface ReadingBalance {
+  days: number
+  entries: BalanceEntry[]
+  /** Articles lus dans des sources sans orientation (hors politique). */
+  otherReads: number
 }
 
 export interface ResolvedInput {
@@ -197,6 +241,17 @@ export interface LearnAPI {
 
   refresh(sourceId?: string): Promise<RefreshResult>
 
+  /** Ouvre le sélecteur de fichiers (paths absent) ou importe les fichiers donnés. */
+  importBooks(paths?: string[]): Promise<{ added: Item[]; failed: { file: string; error: string }[] }>
+  /** Chemin d'un fichier déposé par glisser-déposer (Electron uniquement). */
+  pathForFile?(file: File): string
+  bookToc(itemId: string): Promise<TocEntry[]>
+  bookChapter(itemId: string, index: number): Promise<{ html: string; title?: string; count: number }>
+  readBookFile(itemId: string): Promise<Uint8Array>
+  savePosition(itemId: string, position: string, progress: number): Promise<void>
+  updateBook(itemId: string, patch: Partial<Pick<Item, 'title' | 'author' | 'imageUrl'>>): Promise<Item>
+  readingBalance(days: number): Promise<ReadingBalance>
+
   chooseFolder(): Promise<string | null>
   exportToObsidian(itemId: string): Promise<ExportResult>
   exportAllToObsidian(): Promise<{ count: number; folder: string }>
@@ -231,6 +286,13 @@ export const API_METHODS = [
   'updateHighlight',
   'removeHighlight',
   'refresh',
+  'importBooks',
+  'bookToc',
+  'bookChapter',
+  'readBookFile',
+  'savePosition',
+  'updateBook',
+  'readingBalance',
   'chooseFolder',
   'exportToObsidian',
   'exportAllToObsidian',
@@ -238,6 +300,6 @@ export const API_METHODS = [
   'importOpml',
   'exportOpml',
   'openExternal'
-] as const satisfies readonly Exclude<keyof LearnAPI, 'platform' | 'onEvent'>[]
+] as const satisfies readonly Exclude<keyof LearnAPI, 'platform' | 'onEvent' | 'pathForFile'>[]
 
 export type ApiMethod = (typeof API_METHODS)[number]

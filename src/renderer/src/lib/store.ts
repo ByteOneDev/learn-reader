@@ -4,7 +4,7 @@ import { dictionaries } from './strings'
 
 export const PAGE = 80
 
-type Dialog = null | 'add' | 'settings' | 'catalog'
+type Dialog = null | 'add' | 'settings' | 'catalog' | 'balance'
 
 interface Toast {
   id: number
@@ -32,6 +32,8 @@ interface AppState {
   extracting: boolean
 
   sidebarOpen: boolean
+  /** Mode lecture : barre latérale et liste masquées (pratique pour les livres). */
+  focusMode: boolean
   panelOpen: boolean
   dialog: Dialog
   refreshing: boolean
@@ -53,6 +55,8 @@ interface AppState {
   refresh(): Promise<void>
   setDialog(d: Dialog): void
   toggleSidebar(): void
+  toggleFocus(on?: boolean): void
+  importBooks(paths?: string[]): Promise<void>
   togglePanel(open?: boolean): void
   toast(text: string, tone?: Toast['tone']): void
 }
@@ -77,6 +81,7 @@ export const useApp = create<AppState>((set, get) => ({
   mode: 'feed',
   extracting: false,
   sidebarOpen: true,
+  focusMode: false,
   panelOpen: false,
   dialog: null,
   refreshing: false,
@@ -230,6 +235,26 @@ export const useApp = create<AppState>((set, get) => ({
   },
   toggleSidebar() {
     set((s) => ({ sidebarOpen: !s.sidebarOpen }))
+  },
+  toggleFocus(on) {
+    set((s) => ({ focusMode: on ?? !s.focusMode }))
+  },
+  async importBooks(paths) {
+    const { api, settings } = get()
+    const t = dictionaries[settings?.language ?? 'fr']
+    try {
+      const r = await api.importBooks(paths)
+      if (r.added.length) {
+        get().toast(t.imported(r.added.length))
+        set({ view: { type: 'library' }, search: '' })
+        await get().reloadMeta()
+        await get().loadItems(true)
+        void get().select(r.added[0].id)
+      }
+      for (const f of r.failed) get().toast(`${f.file} : ${f.error}`, 'error')
+    } catch (e) {
+      get().toast((e as Error).message, 'error')
+    }
   },
   togglePanel(open) {
     set((s) => ({ panelOpen: open ?? !s.panelOpen }))

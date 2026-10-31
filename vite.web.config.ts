@@ -3,10 +3,11 @@
 import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { pdfjsAssets } from './build/pdfjsAssets'
 
 export default defineConfig({
   root: 'src/renderer',
   resolve: { alias: { '@shared': resolve(__dirname, 'src/shared') } },
-  plugins: [react()],
+  plugins: [react(), pdfjsAssets()],
   server: { port: 5199, strictPort: true }
 })

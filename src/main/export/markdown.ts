@@ -23,7 +23,16 @@ function quoteBlock(text: string): string {
     .join('\n')
 }
 
-function typeOf(source?: Source): string {
+/** Ordre de lecture des couches : texte du flux, texte complet, puis chapitres ou pages dans l'ordre. */
+function layerRank(layer: string): number {
+  if (layer === 'feed') return -2
+  if (layer === 'full') return -1
+  const n = Number(layer.split(':')[1])
+  return Number.isFinite(n) ? n : 1e9
+}
+
+function typeOf(item: Item, source?: Source): string {
+  if (item.format) return item.format === 'pdf' ? 'pdf' : 'book'
   switch (source?.kind) {
     case 'reddit':
     case 'forum':
@@ -41,35 +50,46 @@ function typeOf(source?: Source): string {
   }
 }
 
-export function buildMarkdown(item: Item, source: Source | undefined, highlights: Highlight[], now = Date.now()): string {
+export function buildMarkdown(
+  item: Item,
+  source: Source | undefined,
+  highlights: Highlight[],
+  now = Date.now(),
+  /** Titre d'une couche (« Chapitre 3 », « Page 12 ») pour regrouper les surlignages d'un livre. */
+  labelFor: (layer: string) => string | undefined = () => undefined
+): string {
   const tags = ['learn', ...item.tags.map((t) => t.replace(/\s+/g, '-'))]
   const front = [
     '---',
     `learn_id: ${item.id}`,
     `title: ${yamlString(item.title)}`,
     item.author ? `author: ${yamlString(item.author)}` : null,
-    source ? `source: ${yamlString(source.title)}` : null,
+    source && source.kind !== 'book' ? `source: ${yamlString(source.title)}` : null,
     item.url ? `url: ${item.url}` : null,
-    `type: ${typeOf(source)}`,
+    `type: ${typeOf(item, source)}`,
     `published: ${isoDay(item.publishedAt)}`,
     `exported: ${isoDay(now)}`,
     `tags: [${tags.map((t) => yamlString(t)).join(', ')}]`,
     '---'
   ].filter((l): l is string => l !== null)
 
-  const meta = [source?.title ?? hostOf(item.url), item.author, new Date(item.publishedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })]
+  const meta = [item.format ? item.format.toUpperCase() : (source?.title ?? hostOf(item.url)), item.author, new Date(item.publishedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })]
     .filter(Boolean)
     .join(' · ')
 
   const body: string[] = [`# ${item.title}`, '', item.url ? `[${meta}](${item.url})` : meta, '']
 
-  const sorted = [...highlights].sort((a, b) => (a.layer === b.layer ? a.start - b.start : a.layer === 'feed' ? -1 : 1))
+  const sorted = [...highlights].sort((a, b) => layerRank(a.layer) - layerRank(b.layer) || a.start - b.start)
   body.push('## Surlignages', '')
   if (!sorted.length) body.push('_Aucun surlignage pour l’instant._', '')
+  let currentLabel: string | undefined
   for (const h of sorted) {
+    const label = labelFor(h.layer)
+    if (label && label !== currentLabel) body.push(`### ${label}`, '')
+    currentLabel = label
     body.push(quoteBlock(h.quote), '', `^${blockId(h.id)}`, '')
     if (h.note.trim()) body.push(h.note.trim(), '')
-    body.push(`%%learn:highlight id=${h.id} color=${h.color} updated=${new Date(h.updatedAt).toISOString()}%%`, '')
+    body.push(`%%learn:highlight id=${h.id} color=${h.color} layer=${h.layer} updated=${new Date(h.updatedAt).toISOString()}%%`, '')
   }
   return [...front, '', ...body, END_MARKER, ''].join('\n')
 }

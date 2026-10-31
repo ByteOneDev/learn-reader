@@ -1,6 +1,6 @@
 // API simulée, en mémoire : permet de développer et tester l'interface dans un simple navigateur
 // (npm run web), sans Electron ni réseau. Jamais utilisée dans l'application réelle.
-import type { Counts, Highlight, Item, ItemQuery, LearnAPI, LearnEvent, NewSource, Settings, Source, View } from '@shared/types'
+import type { Counts, Highlight, Item, ItemQuery, LearnAPI, LearnEvent, NewSource, ReadingBalance, Settings, Source, TocEntry, View } from '@shared/types'
 import { DEFAULT_SETTINGS } from '@shared/types'
 import { uid } from '@shared/util'
 
@@ -24,8 +24,68 @@ const sources: Source[] = [
   { id: 's4', kind: 'reddit', title: 'r/networking', url: 'https://www.reddit.com/r/networking/.rss', icon: icon('#ff4500', 'r'), createdAt: now },
   { id: 's5', kind: 'mastodon', title: '@exemple@mastodon.social', url: 'https://mastodon.social/@exemple.rss', icon: icon('#6364ff', 'M'), createdAt: now },
   { id: 's6', kind: 'bluesky', title: '@exemple.bsky.social', url: 'https://bsky.app/profile/exemple.bsky.social/rss', createdAt: now },
-  { id: 's7', kind: 'forum', title: 'LinuxFr.org', url: 'https://linuxfr.org/news.atom', icon: icon('#2f9e44', 'L'), createdAt: now }
+  { id: 's7', kind: 'forum', title: 'LinuxFr.org', url: 'https://linuxfr.org/news.atom', icon: icon('#2f9e44', 'L'), createdAt: now },
+  { id: 'lib', kind: 'book', title: 'Bibliothèque', url: 'learn:library', createdAt: now },
+  { id: 'p1', kind: 'rss', title: 'Journal Rouge', url: 'https://exemple.fr/p1.xml', leaning: -2, owner: 'Coopérative', createdAt: now },
+  { id: 'p2', kind: 'rss', title: 'Le Quotidien du Centre', url: 'https://exemple.fr/p2.xml', leaning: 0, createdAt: now },
+  { id: 'p3', kind: 'rss', title: 'La Gazette Bleue', url: 'https://exemple.fr/p3.xml', leaning: 2, owner: 'Groupe Exemple', createdAt: now },
+  { id: 'p4', kind: 'rss', title: 'L’Hebdo Libéral', url: 'https://exemple.fr/p4.xml', leaning: 1, createdAt: now }
 ]
+
+// ── Livres de démonstration ────────────────────────────────────────────────
+
+const chapters = [
+  {
+    title: 'I. Le temps des relais',
+    html: '<h2>I. Le temps des relais</h2>' + [0, 1, 2].map(() => '<p>Avant l’électricité, transmettre une information à distance supposait une chaîne humaine : coursiers, relais de poste, signaux de fumée. Chaque maillon ajoutait du délai et du risque d’erreur, et la vitesse d’un message dépendait de celle d’un cheval.</p><p>Le génie du télégraphe optique fut de remplacer le transport d’objets par le transport de signes. Une tour voyait la précédente et répétait ses signaux ; le sens du message restait opaque aux opérateurs.</p>').join('') + '<p>Voir aussi <a href="#ch2">le chapitre sur les protocoles</a>.</p>'
+  },
+  {
+    title: 'II. Codes et erreurs',
+    html: '<h2>II. Codes et erreurs</h2>' + [0, 1].map(() => '<p>Un code partagé est un contrat. Les opérateurs Chappe disposaient d’un vocabulaire de plusieurs milliers d’entrées, et toute ambiguïté coûtait cher. Les premiers mécanismes de correction d’erreurs étaient humains : répéter, accuser réception, signaler un doute.</p>').join('')
+  },
+  {
+    title: 'III. Naissance des protocoles',
+    html: '<h2>III. Naissance des protocoles</h2>' + [0, 1].map(() => '<p>Un protocole fixe qui parle, quand, et comment l’on sait que le message est arrivé. Les réseaux modernes ont formalisé ces règles en couches, chacune ignorant le détail des autres : exactement comme les guetteurs des tours ignoraient le sens des dépêches.</p>').join('')
+  }
+]
+const bookToc: TocEntry[] = chapters.map((c, i) => ({ title: c.title, chapter: i, depth: 0 }))
+
+/** Petit PDF valide généré à la volée (3 pages de texte), pour tester le lecteur PDF sans fichier. */
+function samplePdf(): Uint8Array {
+  const esc = (t: string): string =>
+    Array.from(t)
+      .map((c) => {
+        const code = c.charCodeAt(0)
+        if (c === '(' || c === ')' || c === '\\') return '\\' + c
+        if (code > 126) return '\\' + (code === 8217 ? 146 : code).toString(8).padStart(3, '0')
+        return c
+      })
+      .join('')
+  const pages = [
+    ['Histoire des réseaux', 'Notes de lecture', '', 'Le télégraphe optique de Chappe relie Paris à Lille en 1794.', 'Les opérateurs relaient des signaux sans en connaître le sens.', 'Cette séparation entre transport et signification annonce', 'les couches des réseaux modernes.'],
+    ['Chapitre 2', '', 'Le télégraphe électrique supplante le réseau optique au XIXe siècle.', 'Il est plus rapide et indifférent au brouillard.', 'Le code Morse devient le premier protocole de masse.'],
+    ['Chapitre 3', '', 'ARPANET relie quatre universités en 1969.', 'La commutation de paquets découpe les messages en morceaux', 'qui voyagent chacun par leur propre chemin.']
+  ]
+  const objs: string[] = []
+  objs.push('<< /Type /Catalog /Pages 2 0 R >>')
+  objs.push(`<< /Type /Pages /Kids [${pages.map((_, i) => `${4 + i * 2} 0 R`).join(' ')}] /Count ${pages.length} >>`)
+  objs.push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>')
+  pages.forEach((lines, i) => {
+    const stream = ['BT', '/F1 22 Tf', '72 720 Td', `(${esc(lines[0])}) Tj`, '/F1 13 Tf', '0 -34 Td', ...lines.slice(1).flatMap((l) => [`(${esc(l)}) Tj`, '0 -20 Td']), 'ET'].join('\n')
+    objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents ${5 + i * 2} 0 R >>`)
+    objs.push(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`)
+  })
+  let out = '%PDF-1.4\n'
+  const offsets: number[] = []
+  objs.forEach((o, i) => {
+    offsets.push(out.length)
+    out += `${i + 1} 0 obj\n${o}\nendobj\n`
+  })
+  const xref = out.length
+  out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n${offsets.map((o) => `${String(o).padStart(10, '0')} 00000 n \n`).join('')}`
+  out += `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`
+  return Uint8Array.from(out, (c) => c.charCodeAt(0))
+}
 
 const lorem = [
   'Pendant des décennies, le routage d’Internet a reposé sur une confiance implicite entre opérateurs. Chaque réseau annonçait les préfixes qu’il savait joindre, et ses voisins le croyaient sur parole.',
@@ -76,6 +136,65 @@ const items: Item[] = titles.map(([sourceId, title, hoursAgo, label], i) => {
   }
 })
 
+items.push(
+  {
+    id: 'b1',
+    sourceId: 'lib',
+    guid: 'b1',
+    title: 'Une brève histoire des réseaux',
+    author: 'Inès Moreau',
+    summary: '3 chapitres',
+    imageUrl: thumb(160, 'EPUB'),
+    publishedAt: now - 3 * H,
+    fetchedAt: now,
+    read: true,
+    later: false,
+    bookmarked: false,
+    favorite: true,
+    tags: [],
+    format: 'epub',
+    progress: 0.34,
+    position: JSON.stringify({ chapter: 1, scroll: 0 })
+  },
+  {
+    id: 'b2',
+    sourceId: 'lib',
+    guid: 'b2',
+    title: 'notes-reseaux.pdf',
+    publishedAt: now - 4 * H,
+    fetchedAt: now,
+    read: false,
+    later: false,
+    bookmarked: false,
+    favorite: false,
+    tags: [],
+    format: 'pdf',
+    progress: 0
+  },
+  ...[
+    ['p1', 6],
+    ['p2', 3],
+    ['p3', 2],
+    ['p4', 1]
+  ].flatMap(([sourceId, n]) =>
+    Array.from({ length: n as number }, (_, k) => ({
+      id: `${sourceId}-${k}`,
+      sourceId: sourceId as string,
+      guid: `${sourceId}-${k}`,
+      title: `Article politique ${k + 1}`,
+      summary: 'Exemple.',
+      publishedAt: now - (100 + k) * H,
+      fetchedAt: now,
+      read: true,
+      readAt: now - k * H,
+      later: false,
+      bookmarked: false,
+      favorite: false,
+      tags: []
+    }))
+  )
+)
+
 let highlights: Highlight[] = []
 let settings: Settings = { ...DEFAULT_SETTINGS, onboarded: new URLSearchParams(location.search).get('onboarding') === null, obsidianVault: '/Users/moi/Obsidian' }
 const listeners = new Set<(e: LearnEvent) => void>()
@@ -86,7 +205,9 @@ function matches(view: View, it: Item): boolean {
   const src = sources.find((s) => s.id === it.sourceId)
   switch (view.type) {
     case 'home':
-      return src?.kind !== 'links'
+      return src?.kind !== 'links' && src?.kind !== 'book' && !src?.leaning && src?.leaning !== 0
+    case 'library':
+      return src?.kind === 'book'
     case 'later':
       return it.later
     case 'bookmarks':
@@ -116,6 +237,7 @@ function counts(): Counts {
     bookmarks: items.filter((i) => i.bookmarked).length,
     favorites: items.filter((i) => i.favorite).length,
     links: items.filter((i) => matches({ type: 'links' }, i)).length,
+    library: items.filter((i) => matches({ type: 'library' }, i)).length,
     highlights: new Set(highlights.map((h) => h.itemId)).size,
     tags,
     unreadBySource,
@@ -208,6 +330,27 @@ export const mockApi: LearnAPI = {
   },
   removeHighlight: async (id) => {
     highlights = highlights.filter((h) => h.id !== id)
+  },
+  importBooks: async () => delay({ added: [], failed: [] }),
+  bookToc: async () => delay(bookToc),
+  bookChapter: async (_id, index) => delay({ ...chapters[index], count: chapters.length }, 120),
+  readBookFile: async () => samplePdf(),
+  savePosition: async (id, position, progress) => {
+    const it = items.find((i) => i.id === id)
+    if (it) Object.assign(it, { position, progress })
+  },
+  updateBook: async (id, patch) => {
+    const it = items.find((i) => i.id === id)!
+    Object.assign(it, patch)
+    return delay(it)
+  },
+  readingBalance: async (days): Promise<ReadingBalance> => {
+    const since = Date.now() - days * 24 * H
+    const entries = sources
+      .filter((s) => s.leaning !== undefined)
+      .map((s) => ({ sourceId: s.id, title: s.title, leaning: s.leaning!, owner: s.owner, reads: items.filter((i) => i.sourceId === s.id && (i.readAt ?? 0) >= since).length }))
+      .sort((a, b) => a.leaning - b.leaning)
+    return delay({ days, entries, otherReads: items.filter((i) => i.read && !sources.find((s) => s.id === i.sourceId)?.leaning).length })
   },
   refresh: async () => {
     emit({ type: 'refresh-started' })

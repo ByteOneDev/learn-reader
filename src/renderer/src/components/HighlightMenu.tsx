@@ -8,6 +8,7 @@ import Popover from './Popover'
 const COLORS: HighlightColor[] = ['yellow', 'green', 'blue', 'pink', 'purple']
 
 export interface PendingSelection {
+  layer: string
   start: number
   end: number
   quote: string

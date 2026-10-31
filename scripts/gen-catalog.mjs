@@ -184,6 +184,28 @@ const rows = [
   ['jeux', 'en', 'reddit', 'r/Games', 'r/Games', 0]
 ]
 
+// Propriétaires, tels que connus lors de la constitution du catalogue (2025) : à vérifier, ça bouge.
+// Seuls les cas bien établis sont renseignés.
+const owners = {
+  'Le Monde — Politique': 'Groupe Le Monde',
+  'Le Monde diplomatique': 'Groupe Le Monde (majoritaire), lecteurs et salariés',
+  Mediapart: 'Fonds pour une presse libre (non lucratif)',
+  Libération: 'Fonds de dotation pour une presse indépendante (créé par Patrick Drahi)',
+  'franceinfo — Politique': 'France Télévisions et Radio France (service public)',
+  Reporterre: 'Association (non lucratif)',
+  "L'Express": 'Alain Weill',
+  'Le Point — Politique': 'Groupe Artémis (famille Pinault)',
+  'Le Figaro — Politique': 'Groupe Dassault',
+  'The Guardian — Politics': 'Scott Trust',
+  'The New York Times — Politics': 'The New York Times Company (famille Sulzberger)',
+  'NPR — Politics': 'Radio publique (non lucratif)',
+  'BBC — Politics': 'Service public britannique',
+  'The Economist': 'The Economist Group',
+  'The Wall Street Journal — World': 'News Corp (famille Murdoch)',
+  'Fox News — Politics': 'Fox Corporation (famille Murdoch)',
+  Reason: 'Reason Foundation (non lucratif)'
+}
+
 const slug = (s) =>
   s
     .normalize('NFD')
@@ -199,6 +221,7 @@ const entries = rows.map(([category, lang, kind, title, input, preselected, lean
   ids.add(id)
   const e = { id, category, lang, kind, title, input, preselected: !!preselected }
   if (leaning !== undefined) e.leaning = leaning
+  if (owners[title]) e.owner = owners[title]
   return e
 })
 

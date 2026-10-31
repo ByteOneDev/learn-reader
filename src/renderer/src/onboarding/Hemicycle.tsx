@@ -79,7 +79,7 @@ export default function Hemicycle({ entries, selected, onToggle, lang }: {
           )
         })}
       </svg>
-      <div className="hemi-tip">{hover ? `${hover.title} · ${labels[hover.leaning ?? 0]}` : ' '}</div>
+      <div className="hemi-tip">{hover ? [hover.title, labels[hover.leaning ?? 0], hover.owner && `${t.owner} : ${hover.owner}`].filter(Boolean).join(' · ') : '\u00a0'}</div>
       <div className="balance-bar" aria-hidden>
         <div style={{ flexGrow: left, background: 'var(--lean-m2)' }} />
         <div style={{ flexGrow: center, background: 'var(--lean-0)' }} />

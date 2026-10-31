@@ -1,7 +1,7 @@
 import initSqlJs, { type Database, type SqlValue } from 'sql.js'
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
-import type { Counts, Highlight, Item, ItemQuery, Settings, Source, View } from '@shared/types'
+import type { Counts, Highlight, Item, ItemQuery, ReadingBalance, Settings, Source, View } from '@shared/types'
 import { DEFAULT_SETTINGS } from '@shared/types'
 
 // SQLite compilé en WebAssembly (sql.js) : aucun module natif à recompiler pour Mac, Windows et Linux.
@@ -35,7 +35,16 @@ const MIGRATIONS = [
      layer TEXT NOT NULL DEFAULT 'feed', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
    );
    CREATE INDEX highlights_item ON highlights (item_id);
-   CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);`
+   CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);`,
+  // v0.2 : bibliothèque (EPUB/PDF), position de lecture, date de lecture, orientation des sources.
+  `ALTER TABLE items ADD COLUMN format TEXT;
+   ALTER TABLE items ADD COLUMN file_path TEXT;
+   ALTER TABLE items ADD COLUMN position TEXT;
+   ALTER TABLE items ADD COLUMN progress REAL NOT NULL DEFAULT 0;
+   ALTER TABLE items ADD COLUMN read_at INTEGER;
+   CREATE INDEX items_read_at ON items (read_at);
+   ALTER TABLE sources ADD COLUMN leaning INTEGER;
+   ALTER TABLE sources ADD COLUMN owner TEXT;`
 ]
 
 type Row = Record<string, SqlValue>
@@ -159,7 +168,9 @@ export class Store {
       lang: (r.lang as Source['lang']) ?? undefined,
       createdAt: r.created_at as number,
       lastFetchedAt: (r.last_fetched_at as number) ?? undefined,
-      error: (r.error as string) ?? undefined
+      error: (r.error as string) ?? undefined,
+      leaning: (r.leaning as number) ?? undefined,
+      owner: (r.owner as string) ?? undefined
     }
   }
 
@@ -179,15 +190,38 @@ export class Store {
 
   insertSource(s: Source): Source {
     this.run(
-      `INSERT INTO sources (id, kind, title, url, site_url, icon, category, lang, created_at, last_fetched_at, error)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [s.id, s.kind, s.title, s.url, s.siteUrl ?? null, s.icon ?? null, s.category ?? null, s.lang ?? null, s.createdAt, s.lastFetchedAt ?? null, s.error ?? null]
+      `INSERT INTO sources (id, kind, title, url, site_url, icon, category, lang, created_at, last_fetched_at, error, leaning, owner)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        s.id,
+        s.kind,
+        s.title,
+        s.url,
+        s.siteUrl ?? null,
+        s.icon ?? null,
+        s.category ?? null,
+        s.lang ?? null,
+        s.createdAt,
+        s.lastFetchedAt ?? null,
+        s.error ?? null,
+        s.leaning ?? null,
+        s.owner ?? null
+      ]
     )
     return s
   }
 
   updateSource(id: string, patch: Partial<Source>): Source {
-    const cols: Record<string, string> = { title: 'title', category: 'category', icon: 'icon', siteUrl: 'site_url', lastFetchedAt: 'last_fetched_at', error: 'error' }
+    const cols: Record<string, string> = {
+      title: 'title',
+      category: 'category',
+      icon: 'icon',
+      siteUrl: 'site_url',
+      lastFetchedAt: 'last_fetched_at',
+      error: 'error',
+      leaning: 'leaning',
+      owner: 'owner'
+    }
     const sets: string[] = []
     const vals: SqlValue[] = []
     for (const [k, col] of Object.entries(cols)) {
@@ -241,7 +275,11 @@ export class Store {
       bookmarked: !!r.bookmarked,
       favorite: !!r.favorite,
       tags,
-      highlightCount: (r.highlight_count as number) ?? 0
+      highlightCount: (r.highlight_count as number) ?? 0,
+      format: (r.format as Item['format']) ?? undefined,
+      position: (r.position as string) ?? undefined,
+      progress: (r.progress as number) ?? 0,
+      readAt: (r.read_at as number) ?? undefined
     }
   }
 
@@ -254,25 +292,47 @@ export class Store {
   }
 
   /** Insère les nouveaux articles ; renvoie le nombre réellement ajouté (les doublons sont ignorés). */
-  insertItems(items: Omit<Item, 'read' | 'later' | 'bookmarked' | 'favorite' | 'tags'>[]): number {
+  insertItems(items: (Omit<Item, 'read' | 'later' | 'bookmarked' | 'favorite' | 'tags'> & { filePath?: string })[]): number {
     let added = 0
     this.transaction(() => {
       for (const it of items) {
         added += this.run(
-          `INSERT OR IGNORE INTO items (id, source_id, guid, url, title, author, summary, content_html, image_url, published_at, fetched_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [it.id, it.sourceId, it.guid, it.url ?? null, it.title, it.author ?? null, it.summary ?? null, it.contentHtml ?? null, it.imageUrl ?? null, it.publishedAt, it.fetchedAt]
+          `INSERT OR IGNORE INTO items (id, source_id, guid, url, title, author, summary, content_html, image_url, published_at, fetched_at, format, file_path)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            it.id,
+            it.sourceId,
+            it.guid,
+            it.url ?? null,
+            it.title,
+            it.author ?? null,
+            it.summary ?? null,
+            it.contentHtml ?? null,
+            it.imageUrl ?? null,
+            it.publishedAt,
+            it.fetchedAt,
+            it.format ?? null,
+            it.filePath ?? null
+          ]
         )
       }
     })
     return added
   }
 
+  bookFile(id: string): string | undefined {
+    return (this.one('SELECT file_path FROM items WHERE id = ?', [id])?.file_path as string) ?? undefined
+  }
+
+  savePosition(id: string, position: string, progress: number): void {
+    this.run('UPDATE items SET position = ?, progress = ? WHERE id = ?', [position, Math.max(0, Math.min(1, progress)), id])
+  }
+
   private viewWhere(view: View): { where: string; params: SqlValue[] } {
 
     switch (view.type) {
       case 'home':
-        return { where: "s.kind != 'links'", params: [] }
+        return { where: "s.kind NOT IN ('links', 'book')", params: [] }
       case 'later':
         return { where: 'i.later = 1', params: [] }
       case 'bookmarks':
@@ -281,6 +341,8 @@ export class Store {
         return { where: 'i.favorite = 1', params: [] }
       case 'links':
         return { where: "s.kind = 'links'", params: [] }
+      case 'library':
+        return { where: "s.kind = 'book'", params: [] }
       case 'highlights':
         return { where: 'EXISTS (SELECT 1 FROM highlights h WHERE h.item_id = i.id)', params: [] }
       case 'tag':
@@ -306,11 +368,11 @@ export class Store {
     }
     const rows = this.all(
       `SELECT i.id, i.source_id, i.guid, i.url, i.title, i.author, i.summary, i.image_url, i.published_at, i.fetched_at,
-              i.read, i.later, i.bookmarked, i.favorite,
+              i.read, i.later, i.bookmarked, i.favorite, i.format, i.position, i.progress, i.read_at,
               (SELECT COUNT(*) FROM highlights h WHERE h.item_id = i.id) AS highlight_count
        FROM items i JOIN sources s ON s.id = i.source_id
        WHERE ${conds.join(' AND ')}
-       ORDER BY i.published_at DESC LIMIT ? OFFSET ?`,
+       ORDER BY ${q.view.type === 'library' ? 'COALESCE(i.read_at, i.published_at)' : 'i.published_at'} DESC LIMIT ? OFFSET ?`,
       [...vals, q.limit ?? 100, q.offset ?? 0]
     )
     const tags = this.tagsFor(rows.map((r) => r.id as string))
@@ -323,7 +385,10 @@ export class Store {
     return this.toItem(r, this.tagsFor([id]).get(id) ?? [])
   }
 
-  updateItem(id: string, patch: Partial<Pick<Item, 'read' | 'later' | 'bookmarked' | 'favorite' | 'tags' | 'fullHtml' | 'title' | 'imageUrl' | 'author' | 'summary'>>): Item {
+  updateItem(
+    id: string,
+    patch: Partial<Pick<Item, 'read' | 'later' | 'bookmarked' | 'favorite' | 'tags' | 'fullHtml' | 'title' | 'imageUrl' | 'author' | 'summary'>>
+  ): Item {
     this.transaction(() => {
       const cols: Record<string, string> = {
         read: 'read',
@@ -341,6 +406,9 @@ export class Store {
         const v = (patch as Record<string, unknown>)[k]
         this.run(`UPDATE items SET ${col} = ? WHERE id = ?`, [typeof v === 'boolean' ? (v ? 1 : 0) : ((v ?? null) as SqlValue), id])
       }
+      // Date de lecture : sert au bilan de lecture (et à trier la bibliothèque).
+      if (patch.read === true) this.run('UPDATE items SET read_at = COALESCE(read_at, ?) WHERE id = ?', [Date.now(), id])
+      if (patch.read === false) this.run('UPDATE items SET read_at = NULL WHERE id = ?', [id])
       if (patch.tags) {
         this.run('DELETE FROM item_tags WHERE item_id = ?', [id])
         for (const t of new Set(patch.tags.map((t) => t.trim()).filter(Boolean))) this.run('INSERT INTO item_tags (item_id, tag) VALUES (?, ?)', [id, t])
@@ -361,7 +429,7 @@ export class Store {
     return this.run(
       `DELETE FROM items WHERE published_at < ? AND read = 1 AND later = 0 AND bookmarked = 0 AND favorite = 0
          AND id NOT IN (SELECT item_id FROM highlights) AND id NOT IN (SELECT item_id FROM item_tags)
-         AND source_id NOT IN (SELECT id FROM sources WHERE kind = 'links')`,
+         AND source_id NOT IN (SELECT id FROM sources WHERE kind IN ('links', 'book'))`,
       [olderThan]
     )
   }
@@ -372,7 +440,9 @@ export class Store {
     for (const r of this.all('SELECT tag, COUNT(*) AS n FROM item_tags GROUP BY tag ORDER BY tag COLLATE NOCASE')) tags[r.tag as string] = r.n as number
     const unreadBySource: Record<string, number> = {}
     let unreadTotal = 0
-    for (const r of this.all('SELECT source_id, COUNT(*) AS n FROM items WHERE read = 0 GROUP BY source_id')) {
+    for (const r of this.all(
+      "SELECT source_id, COUNT(*) AS n FROM items WHERE read = 0 AND source_id NOT IN (SELECT id FROM sources WHERE kind IN ('links', 'book')) GROUP BY source_id"
+    )) {
       unreadBySource[r.source_id as string] = r.n as number
       unreadTotal += r.n as number
     }
@@ -381,11 +451,36 @@ export class Store {
       bookmarks: n('SELECT COUNT(*) AS n FROM items WHERE bookmarked = 1'),
       favorites: n('SELECT COUNT(*) AS n FROM items WHERE favorite = 1'),
       links: n("SELECT COUNT(*) AS n FROM items i JOIN sources s ON s.id = i.source_id WHERE s.kind = 'links'"),
+      library: n("SELECT COUNT(*) AS n FROM items i JOIN sources s ON s.id = i.source_id WHERE s.kind = 'book'"),
       highlights: n('SELECT COUNT(DISTINCT item_id) AS n FROM highlights'),
       tags,
       unreadBySource,
       unreadTotal
     }
+  }
+
+  /** Lectures des N derniers jours, par source politique (orientation connue) et pour le reste. */
+  readingBalance(days: number): ReadingBalance {
+    const since = Date.now() - days * 24 * 3600 * 1000
+    const entries = this.all(
+      `SELECT s.id, s.title, s.leaning, s.owner,
+              (SELECT COUNT(*) FROM items i WHERE i.source_id = s.id AND i.read_at >= ?) AS reads
+       FROM sources s WHERE s.leaning IS NOT NULL ORDER BY s.leaning, s.title COLLATE NOCASE`,
+      [since]
+    ).map((r) => ({
+      sourceId: r.id as string,
+      title: r.title as string,
+      leaning: r.leaning as number,
+      owner: (r.owner as string) ?? undefined,
+      reads: r.reads as number
+    }))
+    const otherReads =
+      (this.one(
+        `SELECT COUNT(*) AS n FROM items i JOIN sources s ON s.id = i.source_id
+         WHERE i.read_at >= ? AND s.leaning IS NULL AND s.kind != 'book'`,
+        [since]
+      )?.n as number) ?? 0
+    return { days, entries, otherReads }
   }
 
   allTags(): string[] {

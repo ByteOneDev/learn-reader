@@ -19,6 +19,8 @@ export interface CatalogEntry {
   preselected: boolean
   /** Orientation politique indicative, de −3 (gauche radicale) à +3 (droite radicale). */
   leaning?: number
+  /** Propriétaire connu lors de la constitution du catalogue (2025), à vérifier. */
+  owner?: string
 }
 
 export const catalog = raw as { version: number; note: string; categories: CatalogCategory[]; entries: CatalogEntry[] }

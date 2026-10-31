@@ -47,7 +47,7 @@ describe('export Markdown', () => {
   it('range les surlignages dans l’ordre du texte, avec identifiants de bloc et notes', () => {
     expect(md.indexOf('Premier passage')).toBeLessThan(md.indexOf('Second passage'))
     expect(md).toContain(`> Second passage\n\n^${blockId('h_b')}\n\n**Important** : à relier au cours de réseau.`)
-    expect(md).toContain('%%learn:highlight id=h_b color=yellow updated=2026-10-30T08:00:00.000Z%%')
+    expect(md).toContain('%%learn:highlight id=h_b color=yellow layer=feed updated=2026-10-30T08:00:00.000Z%%')
     expect(md.trimEnd().endsWith(END_MARKER)).toBe(true)
   })
 

@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowUp, Bookmark, CheckCheck, Heart, Highlighter, Layers, PanelLeft, RefreshCw, Search, X } from 'lucide-react'
+import { ArrowUp, Bookmark, BookPlus, CheckCheck, Heart, Highlighter, Layers, PanelLeft, RefreshCw, Search, X } from 'lucide-react'
 import type { Item, Source, View } from '@shared/types'
 import { useApp } from '../lib/store'
 import { useT, type Dict } from '../lib/i18n'
@@ -21,6 +21,8 @@ function viewTitle(view: View, t: Dict, sources: Source[]): [string, string] {
       return [t.favorites, t.saved]
     case 'links':
       return [t.links, t.saved]
+    case 'library':
+      return [t.library, 'EPUB · PDF']
     case 'highlights':
       return [t.highlights, t.saved]
     case 'tag':
@@ -31,6 +33,8 @@ function viewTitle(view: View, t: Dict, sources: Source[]): [string, string] {
       const s = sources.find((x) => x.id === view.sourceId)
       return [s?.title ?? '', s ? t.kinds[s.kind] : '']
     }
+    default:
+      return ['', '']
   }
 }
 
@@ -50,6 +54,48 @@ const Card = memo(function Card({ item, source, selected, beforeSelected, showUn
   useEffect(() => {
     if (selected) ref.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
   }, [selected])
+
+  if (item.format) {
+    const pct = Math.round((item.progress ?? 0) * 100)
+    return (
+      <button
+        ref={ref}
+        className={`card book-card${selected ? ' selected' : ''}${beforeSelected ? ' before-selected' : ''}`}
+        onClick={() => onSelect(item.id)}
+        data-id={item.id}
+      >
+        {selected && <motion.div layoutId="card-selected" className="card-selected-bg" transition={{ type: 'spring', stiffness: 520, damping: 42 }} />}
+        <div className="book-card-row">
+          {item.imageUrl && imgOk ? (
+            <img className="book-cover" src={item.imageUrl} alt="" draggable={false} onError={() => setImgOk(false)} />
+          ) : (
+            <div className="book-cover placeholder">
+              <span>{item.title}</span>
+            </div>
+          )}
+          <div className="book-card-info">
+            <div className="card-title">{item.title}</div>
+            {item.author && <div className="book-card-author">{item.author}</div>}
+            <div className="book-card-meta">
+              <span className="chip">{item.format.toUpperCase()}</span>
+              {!!item.highlightCount && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                  <Highlighter size={13} /> {item.highlightCount}
+                </span>
+              )}
+              {item.favorite && <Heart size={13} className="flag-on" />}
+            </div>
+            <div className="book-card-progress">
+              <div className="bar">
+                <div style={{ width: `${pct}%` }} />
+              </div>
+              <span>{pct} %</span>
+            </div>
+          </div>
+        </div>
+      </button>
+    )
+  }
 
   return (
     <button
@@ -121,6 +167,7 @@ export default function Timeline(): React.JSX.Element {
   const toggleSidebar = useApp((s) => s.toggleSidebar)
   const setSearch = useApp((s) => s.setSearch)
   const api = useApp((s) => s.api)
+  const importBooks = useApp((s) => s.importBooks)
 
   const [searching, setSearching] = useState(false)
   const [q, setQ] = useState('')
@@ -226,6 +273,11 @@ export default function Timeline(): React.JSX.Element {
                   <CheckCheck size={17} />
                 </button>
               )}
+              {view.type === 'library' && (
+                <button className="round-btn" onClick={() => void importBooks()} title={t.importBooks} aria-label={t.importBooks}>
+                  <BookPlus size={17} />
+                </button>
+              )}
               <button className="round-btn" onClick={() => void refresh()} title={t.refresh} aria-label={t.refresh} disabled={refreshing}>
                 <motion.span
                   style={{ display: 'grid' }}
@@ -252,7 +304,7 @@ export default function Timeline(): React.JSX.Element {
       </div>
 
       <div className="list-scroll" ref={scrollRef}>
-        {items.length === 0 && !loading && <div className="list-empty">{t.emptyList}</div>}
+        {items.length === 0 && !loading && <div className="list-empty">{view.type === 'library' ? t.emptyLibrary : t.emptyList}</div>}
         {items.map((item, i) => (
           <Card
             key={item.id}

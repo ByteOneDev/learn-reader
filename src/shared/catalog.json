@@ -379,7 +379,8 @@
       "title": "Le Monde diplomatique",
       "input": "https://www.monde-diplomatique.fr/recents.xml",
       "preselected": false,
-      "leaning": -2
+      "leaning": -2,
+      "owner": "Groupe Le Monde (majoritaire), lecteurs et salariés"
     },
     {
       "id": "fr-politique-mediapart",
@@ -389,7 +390,8 @@
       "title": "Mediapart",
       "input": "https://www.mediapart.fr/articles/feed",
       "preselected": false,
-      "leaning": -2
+      "leaning": -2,
+      "owner": "Fonds pour une presse libre (non lucratif)"
     },
     {
       "id": "fr-politique-reporterre",
@@ -399,7 +401,8 @@
       "title": "Reporterre",
       "input": "https://reporterre.net/spip.php?page=backend",
       "preselected": false,
-      "leaning": -2
+      "leaning": -2,
+      "owner": "Association (non lucratif)"
     },
     {
       "id": "fr-politique-liberation",
@@ -409,7 +412,8 @@
       "title": "Libération",
       "input": "https://www.liberation.fr/arc/outboundfeeds/rss-all/?outputType=xml",
       "preselected": true,
-      "leaning": -2
+      "leaning": -2,
+      "owner": "Fonds de dotation pour une presse indépendante (créé par Patrick Drahi)"
     },
     {
       "id": "fr-politique-le-monde-politique",
@@ -419,7 +423,8 @@
       "title": "Le Monde — Politique",
       "input": "https://www.lemonde.fr/politique/rss_full.xml",
       "preselected": true,
-      "leaning": -1
+      "leaning": -1,
+      "owner": "Groupe Le Monde"
     },
     {
       "id": "fr-politique-franceinfo-politique",
@@ -429,7 +434,8 @@
       "title": "franceinfo — Politique",
       "input": "https://www.francetvinfo.fr/politique.rss",
       "preselected": true,
-      "leaning": 0
+      "leaning": 0,
+      "owner": "France Télévisions et Radio France (service public)"
     },
     {
       "id": "fr-politique-marianne",
@@ -449,7 +455,8 @@
       "title": "L'Express",
       "input": "https://www.lexpress.fr/arc/outboundfeeds/rss/alaune.xml",
       "preselected": false,
-      "leaning": 1
+      "leaning": 1,
+      "owner": "Alain Weill"
     },
     {
       "id": "fr-politique-le-point-politique",
@@ -459,7 +466,8 @@
       "title": "Le Point — Politique",
       "input": "https://www.lepoint.fr/politique/rss.xml",
       "preselected": true,
-      "leaning": 1
+      "leaning": 1,
+      "owner": "Groupe Artémis (famille Pinault)"
     },
     {
       "id": "fr-politique-contrepoints",
@@ -479,7 +487,8 @@
       "title": "Le Figaro — Politique",
       "input": "https://www.lefigaro.fr/rss/figaro_politique.xml",
       "preselected": true,
-      "leaning": 2
+      "leaning": 2,
+      "owner": "Groupe Dassault"
     },
     {
       "id": "fr-politique-causeur",
@@ -547,7 +556,8 @@
       "title": "The Guardian — Politics",
       "input": "https://www.theguardian.com/politics/rss",
       "preselected": true,
-      "leaning": -2
+      "leaning": -2,
+      "owner": "Scott Trust"
     },
     {
       "id": "en-politique-the-new-york-times-politics",
@@ -557,7 +567,8 @@
       "title": "The New York Times — Politics",
       "input": "https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml",
       "preselected": true,
-      "leaning": -1
+      "leaning": -1,
+      "owner": "The New York Times Company (famille Sulzberger)"
     },
     {
       "id": "en-politique-npr-politics",
@@ -567,7 +578,8 @@
       "title": "NPR — Politics",
       "input": "https://feeds.npr.org/1014/rss.xml",
       "preselected": false,
-      "leaning": -1
+      "leaning": -1,
+      "owner": "Radio publique (non lucratif)"
     },
     {
       "id": "en-politique-bbc-politics",
@@ -577,7 +589,8 @@
       "title": "BBC — Politics",
       "input": "https://feeds.bbci.co.uk/news/politics/rss.xml",
       "preselected": true,
-      "leaning": 0
+      "leaning": 0,
+      "owner": "Service public britannique"
     },
     {
       "id": "en-politique-the-economist",
@@ -587,7 +600,8 @@
       "title": "The Economist",
       "input": "https://www.economist.com/united-states/rss.xml",
       "preselected": false,
-      "leaning": 0
+      "leaning": 0,
+      "owner": "The Economist Group"
     },
     {
       "id": "en-politique-the-wall-street-journal-world",
@@ -597,7 +611,8 @@
       "title": "The Wall Street Journal — World",
       "input": "https://feeds.a.dj.com/rss/RSSWorldNews.xml",
       "preselected": true,
-      "leaning": 1
+      "leaning": 1,
+      "owner": "News Corp (famille Murdoch)"
     },
     {
       "id": "en-politique-reason",
@@ -607,7 +622,8 @@
       "title": "Reason",
       "input": "https://reason.com/feed/",
       "preselected": false,
-      "leaning": 1
+      "leaning": 1,
+      "owner": "Reason Foundation (non lucratif)"
     },
     {
       "id": "en-politique-the-telegraph-politics",
@@ -637,7 +653,8 @@
       "title": "Fox News — Politics",
       "input": "https://moxie.foxnews.com/google-publisher/politics.xml",
       "preselected": false,
-      "leaning": 2
+      "leaning": 2,
+      "owner": "Fox Corporation (famille Murdoch)"
     },
     {
       "id": "en-politique-the-federalist",

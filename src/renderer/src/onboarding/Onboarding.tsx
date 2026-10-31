@@ -77,7 +77,7 @@ export default function Onboarding({ mode, onClose }: { mode: 'first' | 'catalog
   const subscribe = async (): Promise<void> => {
     const list: NewSource[] = entries
       .filter((e) => selected.has(e.id))
-      .map((e) => ({ input: e.input, kind: e.kind, title: e.title, category: e.category, lang: e.lang }))
+      .map((e) => ({ input: e.input, kind: e.kind, title: e.title, category: e.category, lang: e.lang, leaning: e.leaning, owner: e.owner }))
     let failed = 0
     setProgress({ done: 0, total: list.length })
     for (let i = 0; i < list.length; i += 6) {

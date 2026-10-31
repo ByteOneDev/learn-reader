@@ -48,11 +48,15 @@ export function useShortcuts(): void {
         case '[':
           s.toggleSidebar()
           break
+        case 'z':
+          s.toggleFocus()
+          break
         case '/':
           window.dispatchEvent(new Event('learn:focus-search'))
           break
         case 'Escape':
           if (s.panelOpen) s.togglePanel(false)
+          else if (s.focusMode) s.toggleFocus(false)
           else void s.select(null)
           break
         default:

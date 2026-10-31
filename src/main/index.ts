@@ -98,6 +98,25 @@ function registerIpc(): void {
     updateHighlight: (id: string, patch: Parameters<typeof core.store.updateHighlight>[1]) => core.store.updateHighlight(id, patch),
     removeHighlight: (id: string) => core.store.removeHighlight(id),
     refresh: (sourceId?: string) => core.refresh(sourceId),
+    importBooks: async (paths?: string[]) => {
+      let files = paths
+      if (!files) {
+        const r = await dialog.showOpenDialog(win!, {
+          title: 'Importer des livres',
+          properties: ['openFile', 'multiSelections'],
+          filters: [{ name: 'Livres (EPUB, PDF)', extensions: ['epub', 'pdf'] }]
+        })
+        if (r.canceled) return { added: [], failed: [] }
+        files = r.filePaths
+      }
+      return core.importBooks(files)
+    },
+    bookToc: (itemId: string) => core.bookToc(itemId),
+    bookChapter: (itemId: string, index: number) => core.bookChapter(itemId, index),
+    readBookFile: (itemId: string) => core.readBookFile(itemId),
+    savePosition: (itemId: string, position: string, progress: number) => core.store.savePosition(itemId, position, progress),
+    updateBook: (itemId: string, patch: { title?: string; author?: string; imageUrl?: string }) => core.store.updateItem(itemId, patch),
+    readingBalance: (days: number) => core.store.readingBalance(days),
     chooseFolder: async () => {
       const r = await dialog.showOpenDialog(win!, { properties: ['openDirectory', 'createDirectory'], title: 'Choisir le coffre Obsidian' })
       return r.canceled ? null : r.filePaths[0]
@@ -137,7 +156,7 @@ app.whenReady().then(async () => {
 
   const wasm = readFileSync(require.resolve('sql.js/dist/sql-wasm.wasm'))
   const store = await openDatabase(join(app.getPath('userData'), 'learn.sqlite'), wasm.buffer.slice(wasm.byteOffset, wasm.byteOffset + wasm.byteLength) as ArrayBuffer)
-  core = new LearnCore(store, (url, init) => net.fetch(url, init), send)
+  core = new LearnCore(store, (url, init) => net.fetch(url, init), send, join(app.getPath('userData'), 'library'))
   nativeTheme.themeSource = store.getSettings().theme
 
   registerIpc()

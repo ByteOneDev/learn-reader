@@ -4,15 +4,23 @@ import type { Highlight } from '@shared/types'
 import { useApp } from '../lib/store'
 import { useT } from '../lib/i18n'
 
-export default function HighlightsPanel({ highlights, orphans, layer, onJump }: {
+function layerRank(layer: string): number {
+  if (layer === 'feed') return -2
+  if (layer === 'full') return -1
+  return Number(layer.split(':')[1]) || 0
+}
+
+export default function HighlightsPanel({ highlights, orphans, current, labelFor, onJump }: {
   highlights: Highlight[]
   orphans: Set<string>
-  layer: 'feed' | 'full'
+  /** Couche affichée (texte du flux, chapitre…) : les autres sont étiquetées. */
+  current?: string
+  labelFor(layer: string): string
   onJump(h: Highlight): void
 }): React.JSX.Element {
   const t = useT()
   const togglePanel = useApp((s) => s.togglePanel)
-  const sorted = [...highlights].sort((a, b) => (a.layer === b.layer ? a.start - b.start : a.layer === layer ? -1 : 1))
+  const sorted = [...highlights].sort((a, b) => layerRank(a.layer) - layerRank(b.layer) || a.start - b.start)
   return (
     <motion.aside
       className="hl-panel"
@@ -43,8 +51,8 @@ export default function HighlightsPanel({ highlights, orphans, layer, onJump }: 
           >
             <div className="q">{h.quote}</div>
             {h.note.trim() && <div className="n">{h.note}</div>}
-            {h.layer === layer && orphans.has(h.id) && <div className="o">{t.orphan}</div>}
-            {h.layer !== layer && <div className="hint" style={{ marginTop: 6 }}>{h.layer === 'full' ? t.fullText : t.feedText}</div>}
+            {orphans.has(h.id) && <div className="o">{t.orphan}</div>}
+            {h.layer !== current && <div className="hint" style={{ marginTop: 6 }}>{labelFor(h.layer)}</div>}
           </motion.button>
         ))}
       </div>

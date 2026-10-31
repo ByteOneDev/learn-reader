@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   BookOpenText,
@@ -11,6 +11,8 @@ import {
   Highlighter,
   Layers,
   Link as LinkIcon,
+  Maximize2,
+  Minimize2,
   Share,
   Tag
 } from 'lucide-react'
@@ -20,35 +22,28 @@ import { useApp } from '../lib/store'
 import { useT } from '../lib/i18n'
 import { fullDate } from '../lib/time'
 import { sanitize } from '../lib/sanitize'
-import { applyHighlights, plainText, selectionOffsets } from '../lib/highlightDom'
+import { plainText, selectionOffsets } from '../lib/highlightDom'
 import SourceIcon from './SourceIcon'
 import Popover from './Popover'
 import TagEditor from './TagEditor'
 import HighlightsPanel from './HighlightsPanel'
 import { HighlightMenu, type PendingSelection } from './HighlightMenu'
+import ArticleContent from './ArticleContent'
+import EpubView from './books/EpubView'
+import PdfView from './books/PdfView'
+import type { BookNav } from './books/common'
+import type { Dict } from '../lib/i18n'
+
+export function layerLabel(layer: string, t: Dict): string {
+  const [kind, n] = layer.split(':')
+  if (kind === 'p') return `${t.page} ${Number(n) + 1}`
+  if (kind === 'ch') return `${t.chapter} ${Number(n) + 1}`
+  return layer === 'full' ? t.fullText : t.feedText
+}
 
 export const COLORS: HighlightColor[] = ['yellow', 'green', 'blue', 'pink', 'purple']
 
 type Anchor = { x: number; y: number; bottom: number }
-
-/** Contenu de l'article, monté une fois par article : géré à la main (et non par React) pour y insérer les <mark>. */
-function ArticleContent({ contentRef, html, highlights, serif, onOrphans, onMouseUp, onClick }: {
-  contentRef: RefObject<HTMLDivElement | null>
-  html: string
-  highlights: Highlight[]
-  serif: boolean
-  onOrphans(ids: Set<string>): void
-  onMouseUp(): void
-  onClick(e: React.MouseEvent): void
-}): React.JSX.Element {
-  useLayoutEffect(() => {
-    const el = contentRef.current
-    if (!el) return
-    el.innerHTML = html // déjà nettoyé par DOMPurify (lib/sanitize)
-    onOrphans(applyHighlights(el, highlights))
-  }, [contentRef, html, highlights, onOrphans])
-  return <div ref={contentRef} className={`content${serif ? ' serif' : ''}`} onMouseUp={onMouseUp} onClick={onClick} />
-}
 
 export default function Reader(): React.JSX.Element {
   const t = useT()
@@ -63,6 +58,8 @@ export default function Reader(): React.JSX.Element {
   const select = useApp((s) => s.select)
   const panelOpen = useApp((s) => s.panelOpen)
   const togglePanel = useApp((s) => s.togglePanel)
+  const focusMode = useApp((s) => s.focusMode)
+  const toggleFocus = useApp((s) => s.toggleFocus)
   const settings = useApp((s) => s.settings)
   const api = useApp((s) => s.api)
   const toast = useApp((s) => s.toast)
@@ -70,6 +67,7 @@ export default function Reader(): React.JSX.Element {
 
   const contentRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const navRef = useRef<BookNav | null>(null)
   const [orphans, setOrphans] = useState<Set<string>>(new Set())
   const [pending, setPending] = useState<PendingSelection | null>(null)
   const [active, setActive] = useState<{ id: string; anchor: Anchor; edit?: boolean } | null>(null)
@@ -91,16 +89,21 @@ export default function Reader(): React.JSX.Element {
     scrollRef.current?.scrollTo({ top: 0 })
   }, [item?.id])
 
+  // La sélection appartient à une « couche » : le contenu de l'article, un chapitre ou une page de PDF.
   const onMouseUp = useCallback(() => {
-    const el = contentRef.current
     const sel = window.getSelection()
-    if (!el || !sel || !item) return
-    const off = selectionOffsets(el, sel)
+    if (!sel || !sel.rangeCount || sel.isCollapsed || !item) return
+    const range = sel.getRangeAt(0)
+    const startEl = range.startContainer instanceof Element ? range.startContainer : range.startContainer.parentElement
+    const root = startEl?.closest('[data-layer]') as HTMLElement | null
+    if (!root || !root.contains(range.endContainer)) return
+    const off = selectionOffsets(root, sel)
     if (!off) return
-    const rect = sel.getRangeAt(0).getBoundingClientRect()
-    const text = plainText(el)
+    const rect = range.getBoundingClientRect()
+    const text = plainText(root)
     setActive(null)
     setPending({
+      layer: root.dataset.layer!,
       start: off.start,
       end: off.end,
       quote: off.text,
@@ -128,7 +131,7 @@ export default function Reader(): React.JSX.Element {
       start: pending.start,
       end: pending.end,
       note: '',
-      layer
+      layer: pending.layer
     })
     window.getSelection()?.removeAllRanges()
     const anchor = pending.anchor
@@ -138,10 +141,10 @@ export default function Reader(): React.JSX.Element {
   }
 
   const scrollToHighlight = (id: string): void => {
-    const mark = contentRef.current?.querySelector(`mark[data-hl="${id}"]`) as HTMLElement | null
+    const mark = scrollRef.current?.querySelector(`mark[data-hl="${id}"]`) as HTMLElement | null
     if (!mark) return
     mark.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    const all = contentRef.current?.querySelectorAll(`mark[data-hl="${id}"]`)
+    const all = scrollRef.current?.querySelectorAll(`mark[data-hl="${id}"]`)
     all?.forEach((m) => {
       m.classList.remove('flash')
       void (m as HTMLElement).offsetWidth
@@ -189,7 +192,7 @@ export default function Reader(): React.JSX.Element {
   return (
     <main className="reader">
       <div className="reader-top drag">
-        <button className="round-btn" onClick={() => void select(null)} aria-label={t.back} title={t.back}>
+        <button className="round-btn" onClick={() => (focusMode ? toggleFocus(false) : void select(null))} aria-label={t.back} title={t.back}>
           <ChevronLeft size={19} />
         </button>
         <span className="spacer" />
@@ -217,6 +220,9 @@ export default function Reader(): React.JSX.Element {
           </button>
         </div>
         <div className="pill">
+          <button onClick={() => toggleFocus()} className={focusMode ? 'on' : ''} title={`${t.focus} (z)`} aria-pressed={focusMode}>
+            {focusMode ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+          </button>
           <button onClick={() => togglePanel()} className={panelOpen ? 'on' : ''} title={`${t.highlightsOf} (h)`} aria-pressed={panelOpen}>
             <Highlighter size={17} />
           </button>
@@ -227,7 +233,14 @@ export default function Reader(): React.JSX.Element {
       </div>
       {extracting && <div className="loading-bar" />}
 
-      <div className="reader-scroll" ref={scrollRef}>
+      <div className={`reader-scroll${item.format === 'pdf' ? ' pdf-scroll' : ''}`} ref={scrollRef}>
+        {item.format === 'epub' && (
+          <EpubView key={item.id} item={item} highlights={highlights} scrollRef={scrollRef} navRef={navRef} onOrphans={setOrphans} onMouseUp={onMouseUp} onClick={onClickContent} />
+        )}
+        {item.format === 'pdf' && (
+          <PdfView key={item.id} item={item} highlights={highlights} scrollRef={scrollRef} navRef={navRef} onOrphans={setOrphans} onMouseUp={onMouseUp} onClick={onClickContent} />
+        )}
+        {!item.format && (
         <motion.article
             key={item.id}
             className="article"
@@ -266,6 +279,7 @@ export default function Reader(): React.JSX.Element {
             <ArticleContent
               contentRef={contentRef}
               html={html}
+              layer={layer}
               highlights={layerHighlights}
               serif={settings?.readerFont === 'serif'}
               onOrphans={setOrphans}
@@ -273,6 +287,7 @@ export default function Reader(): React.JSX.Element {
               onClick={onClickContent}
             />
           </motion.article>
+        )}
       </div>
 
       <AnimatePresence>
@@ -281,9 +296,15 @@ export default function Reader(): React.JSX.Element {
             key="panel"
             highlights={highlights}
             orphans={orphans}
-            layer={layer}
-            onJump={(h) => {
-              if (h.layer !== layer) void setMode(h.layer)
+            current={item.format ? navRef.current?.current() : layer}
+            labelFor={(l) => layerLabel(l, t)}
+            onJump={async (h) => {
+              if (item.format) {
+                await navRef.current?.goTo(h.layer)
+                setTimeout(() => scrollToHighlight(h.id), 120)
+                return
+              }
+              if (h.layer !== layer) void setMode(h.layer as 'feed' | 'full')
               setTimeout(() => scrollToHighlight(h.id), h.layer !== layer ? 300 : 0)
             }}
           />

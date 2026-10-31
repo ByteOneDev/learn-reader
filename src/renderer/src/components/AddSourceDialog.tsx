@@ -10,7 +10,8 @@ export default function AddSourceDialog({ onClose }: { onClose(): void }): React
   const setView = useApp((s) => s.setView)
   const reloadMeta = useApp((s) => s.reloadMeta)
   const toast = useApp((s) => s.toast)
-  const [tab, setTab] = useState<'feed' | 'link'>('feed')
+  const [tab, setTab] = useState<'feed' | 'link' | 'book'>('feed')
+  const importBooks = useApp((s) => s.importBooks)
   const [input, setInput] = useState('')
   const [detected, setDetected] = useState<ResolvedInput | null>(null)
   const [error, setError] = useState('')
@@ -62,7 +63,25 @@ export default function AddSourceDialog({ onClose }: { onClose(): void }): React
         <button className={tab === 'link' ? 'on' : ''} onClick={() => setTab('link')}>
           {t.linkTab}
         </button>
+        <button className={tab === 'book' ? 'on' : ''} onClick={() => setTab('book')}>
+          {t.bookTab}
+        </button>
       </div>
+      {tab === 'book' && (
+        <div className="field">
+          <p className="hint" style={{ fontSize: 14, margin: '4px 0 16px' }}>{t.bookHint}</p>
+          <button
+            className="btn primary"
+            onClick={() => {
+              onClose()
+              void importBooks()
+            }}
+          >
+            {t.importBooks}
+          </button>
+        </div>
+      )}
+      {tab !== 'book' && (
       <form
         className="field"
         onSubmit={(e) => {
@@ -94,6 +113,7 @@ export default function AddSourceDialog({ onClose }: { onClose(): void }): React
           </button>
         </div>
       </form>
+      )}
     </Dialog>
   )
 }

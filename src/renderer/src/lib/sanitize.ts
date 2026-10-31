@@ -23,3 +23,12 @@ export function sanitize(html: string): string {
     ALLOW_DATA_ATTR: false
   })
 }
+
+/** Variante pour les chapitres d'EPUB : on garde les identifiants (déjà préfixés par Learn) pour les renvois internes. */
+export function sanitizeBook(html: string): string {
+  return purify.sanitize(html, {
+    FORBID_TAGS: ['style', 'script', 'iframe', 'form', 'input', 'button', 'object', 'embed', 'link', 'meta', 'svg', 'math', 'video', 'audio', 'source'],
+    FORBID_ATTR: ['style', 'class'],
+    ALLOW_DATA_ATTR: false
+  })
+}
