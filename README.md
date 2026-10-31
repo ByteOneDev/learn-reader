@@ -14,6 +14,18 @@ Direction graphique inspirée de [Reeder](https://reederapp.com) (2024), avec sa
 | Livre EPUB | PDF surligné |
 | ![](docs/screenshots/livre-epub.png) | ![](docs/screenshots/livre-pdf.png) |
 
+## Nouveautés de la v0.4 : Boards (mind maps et canvas)
+
+![Un board](docs/screenshots/board.png)
+
+- **Boards** dans la barre latérale : mode **mind map** (arbre rangé automatiquement) ou **canvas** (placement libre), on passe de l'un à l'autre.
+- **Nœuds** : idées libres (double-clic pour écrire), **surlignages**, et **extraits**, des passages que tu n'as pas surlignés (liseré en pointillés).
+- **Depuis le lecteur** : sélectionne un passage ou clique sur un surlignage, bouton **Board**, choisis le board (ou crée-le). Le passage s'y ajoute, relié à la racine.
+- **Liens nommés** pour l'analyse : clique sur un lien pour lui donner un sens (*soutient, contredit, cause, conséquence, exemple de, précise, question*).
+- **Retour à la source** : le bouton ↗ d'un nœud ouvre le document au bon chapitre, à la bonne page, sur le passage.
+- **Export** : **Obsidian Canvas** (format JSON Canvas). Chaque surlignage y pointe vers son bloc exact (`^h-…`) dans le fichier du document. Ou **plan Markdown** dans le presse-papiers.
+- Un surlignage supprimé reste lisible dans le board, marqué « source supprimée ».
+
 ## Nouveautés de la v0.3 : synchronisation avec Obsidian
 
 Active **Réglages → Obsidian → Synchroniser automatiquement**. Ensuite :
@@ -102,7 +114,7 @@ src/
     export/    Génération du Markdown Obsidian
     sync/      Synchronisation bidirectionnelle avec Obsidian (fusion à trois voies)
   preload/     Pont minimal et typé entre l'interface et le système
-  renderer/    Interface React (Zustand, Framer Motion, Lucide, pdf.js)
+  renderer/    Interface React (Zustand, Framer Motion, Lucide, pdf.js, React Flow)
 tests/         Vitest : analyse, résolution, OPML, Markdown, ancrage, catalogue, intégration HTTP
 ```
 
@@ -130,7 +142,7 @@ L'orientation politique (−3 à +3) est une estimation de Learn à partir des l
 
 - ~~**v0.2** : EPUB et PDF avec surlignage ; bilan de lecture dans l'hémicycle ; propriétaires des médias~~ ✓
 - ~~**v0.3** : synchronisation bidirectionnelle avec Obsidian (surveillance du coffre)~~ ✓
-- **v0.4** : Boards, des mind maps et canvas où glisser surlignages et extraits, export JSON Canvas (Obsidian Canvas)
+- ~~**v0.4** : Boards, des mind maps et canvas où glisser surlignages et extraits, export JSON Canvas (Obsidian Canvas)~~ ✓
 - **v0.5** : Notion (export puis synchro)
 - **Ensuite** : podcasts, vidéos YouTube, extension Obsidian, app native
 

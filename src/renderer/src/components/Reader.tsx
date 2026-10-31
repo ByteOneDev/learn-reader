@@ -89,6 +89,26 @@ export default function Reader(): React.JSX.Element {
     scrollRef.current?.scrollTo({ top: 0 })
   }, [item?.id])
 
+  // Ouverture depuis un board : on va au chapitre / à la page / au texte complet, puis au surlignage.
+  const jumpTo = useApp((s) => s.jumpTo)
+  useEffect(() => {
+    if (!item || !jumpTo || jumpTo.itemId !== item.id) return
+    useApp.setState({ jumpTo: null })
+    let cancelled = false
+    void (async () => {
+      const deadline = Date.now() + 5000
+      const ready = (): boolean => !item.format || (!!navRef.current && (item.format !== 'pdf' || !!scrollRef.current?.querySelector('.pdf-page')))
+      while (!ready() && Date.now() < deadline && !cancelled) await new Promise((r) => setTimeout(r, 100))
+      if (cancelled) return
+      if (item.format) await navRef.current?.goTo(jumpTo.layer)
+      else if (jumpTo.layer === 'full' || jumpTo.layer === 'feed') await useApp.getState().setMode(jumpTo.layer)
+      setTimeout(() => !cancelled && scrollToHighlight(jumpTo.highlightId), 250)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [item?.id, jumpTo]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // La sélection appartient à une « couche » : le contenu de l'article, un chapitre ou une page de PDF.
   const onMouseUp = useCallback(() => {
     const sel = window.getSelection()

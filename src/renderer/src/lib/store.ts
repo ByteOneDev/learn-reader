@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Counts, Highlight, Item, LearnAPI, Settings, Source, View } from '@shared/types'
+import type { BoardSummary, Counts, Highlight, Item, LearnAPI, Settings, Source, View } from '@shared/types'
 import { dictionaries } from './strings'
 
 export const PAGE = 80
@@ -18,6 +18,9 @@ interface AppState {
   settings: Settings | null
   sources: Source[]
   counts: Counts | null
+  boards: BoardSummary[]
+  /** Surlignage à montrer dès que son document est ouvert (depuis un board). */
+  jumpTo: { itemId: string; highlightId: string; layer: string } | null
 
   view: View
   search: string
@@ -56,6 +59,9 @@ interface AppState {
   setDialog(d: Dialog): void
   toggleSidebar(): void
   toggleFocus(on?: boolean): void
+  reloadBoards(): Promise<void>
+  createBoard(): Promise<void>
+  openHighlight(itemId: string, highlightId: string, layer: string): Promise<void>
   importBooks(paths?: string[]): Promise<void>
   togglePanel(open?: boolean): void
   toast(text: string, tone?: Toast['tone']): void
@@ -70,6 +76,8 @@ export const useApp = create<AppState>((set, get) => ({
   settings: null,
   sources: [],
   counts: null,
+  boards: [],
+  jumpTo: null,
   view: { type: 'home' },
   search: '',
   items: [],
@@ -104,6 +112,7 @@ export const useApp = create<AppState>((set, get) => ({
         }
         if (e.message) get().toast(e.message)
       }
+      if (e.type === 'boards-changed') void get().reloadBoards()
       if (e.type === 'items-changed') {
         void get().reloadMeta()
         void get().loadItems(true)
@@ -117,8 +126,8 @@ export const useApp = create<AppState>((set, get) => ({
 
   async reloadMeta() {
     const { api } = get()
-    const [sources, counts] = await Promise.all([api.listSources(), api.counts()])
-    set({ sources, counts })
+    const [sources, counts, boards] = await Promise.all([api.listSources(), api.counts(), api.listBoards()])
+    set({ sources, counts, boards })
   },
 
   async updateSettings(patch) {
@@ -128,7 +137,7 @@ export const useApp = create<AppState>((set, get) => ({
 
   setView(view) {
     set({ view, selectedId: null, item: null, highlights: [], search: '' })
-    void get().loadItems(true)
+    if (view.type !== 'board') void get().loadItems(true)
   },
 
   setSearch(search) {
@@ -141,6 +150,7 @@ export const useApp = create<AppState>((set, get) => ({
     const seq = ++loadSeq
     set({ loading: true })
     const offset = reset ? 0 : items.length
+    if (view.type === 'board') return set({ loading: false })
     const page = await api.listItems({ view, search, limit: PAGE, offset, unreadOnly: false })
     if (seq !== loadSeq) return
     set({ items: reset ? page : [...items, ...page], hasMore: page.length === PAGE, loading: false })
@@ -246,6 +256,20 @@ export const useApp = create<AppState>((set, get) => ({
   },
   toggleFocus(on) {
     set((s) => ({ focusMode: on ?? !s.focusMode }))
+  },
+  async reloadBoards() {
+    set({ boards: await get().api.listBoards() })
+  },
+  async createBoard() {
+    const { api, settings } = get()
+    const board = await api.createBoard(dictionaries[settings?.language ?? 'fr'].boardUntitled, 'mindmap')
+    await get().reloadBoards()
+    get().setView({ type: 'board', boardId: board.id })
+  },
+  async openHighlight(itemId, highlightId, layer) {
+    set({ jumpTo: { itemId, highlightId, layer } })
+    get().setView({ type: 'highlights' })
+    await get().select(itemId)
   },
   async importBooks(paths) {
     const { api, settings } = get()

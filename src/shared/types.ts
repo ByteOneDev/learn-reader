@@ -104,6 +104,65 @@ export interface Highlight {
   updatedAt: number
 }
 
+// ── Boards : mind maps et canvas ──────────────────────────────────────────
+
+export type BoardMode = 'mindmap' | 'canvas'
+/** note : idée libre ; highlight : surlignage ; excerpt : passage non surligné ; source : document entier. */
+export type BoardNodeKind = 'note' | 'highlight' | 'excerpt' | 'source'
+
+export interface BoardNode {
+  id: string
+  kind: BoardNodeKind
+  x: number
+  y: number
+  text?: string
+  itemId?: string
+  highlightId?: string
+  layer?: string
+  start?: number
+  /** Copie prise à l'ajout : le nœud reste lisible même si la source disparaît. */
+  quote?: string
+  itemTitle?: string
+  color?: HighlightColor
+  root?: boolean
+}
+
+export interface BoardEdge {
+  id: string
+  from: string
+  to: string
+  label?: string
+}
+
+export interface BoardData {
+  nodes: BoardNode[]
+  edges: BoardEdge[]
+}
+
+export interface Board {
+  id: string
+  title: string
+  mode: BoardMode
+  data: BoardData
+  createdAt: number
+  updatedAt: number
+}
+
+export interface BoardSummary {
+  id: string
+  title: string
+  mode: BoardMode
+  nodeCount: number
+  updatedAt: number
+}
+
+export type NewBoardNode = Omit<BoardNode, 'id' | 'x' | 'y'>
+
+export interface HighlightWithItem extends Highlight {
+  itemTitle: string
+  format?: BookFormat
+}
+
 export type View =
   | { type: 'home' }
   | { type: 'later' }
@@ -115,6 +174,7 @@ export type View =
   | { type: 'tag'; tag: string }
   | { type: 'kind'; kind: SourceKind }
   | { type: 'source'; sourceId: string }
+  | { type: 'board'; boardId: string }
 
 export interface ItemQuery {
   view: View
@@ -213,6 +273,7 @@ export type LearnEvent =
   | { type: 'refresh-finished'; result: RefreshResult }
   | { type: 'items-changed' }
   | { type: 'highlights-changed'; itemId: string; message?: string }
+  | { type: 'boards-changed' }
   | { type: 'menu'; action: 'add-source' | 'settings' | 'refresh' }
 
 /** API exposée à l'interface par le preload (window.learn). Toutes les méthodes passent par IPC. */
@@ -255,6 +316,17 @@ export interface LearnAPI {
   updateBook(itemId: string, patch: Partial<Pick<Item, 'title' | 'author' | 'imageUrl'>>): Promise<Item>
   readingBalance(days: number): Promise<ReadingBalance>
 
+  listBoards(): Promise<BoardSummary[]>
+  createBoard(title: string, mode: BoardMode): Promise<Board>
+  getBoard(id: string): Promise<Board | null>
+  saveBoard(id: string, patch: Partial<Pick<Board, 'title' | 'mode' | 'data'>>): Promise<Board>
+  deleteBoard(id: string): Promise<void>
+  /** Ajoute un nœud (surlignage, extrait, note…) au board, placé automatiquement. */
+  addToBoard(boardId: string, node: NewBoardNode): Promise<Board>
+  allHighlights(): Promise<HighlightWithItem[]>
+  exportBoardToObsidian(id: string): Promise<{ path: string }>
+  boardMarkdown(id: string): Promise<string>
+
   chooseFolder(): Promise<string | null>
   exportToObsidian(itemId: string): Promise<ExportResult>
   exportAllToObsidian(): Promise<{ count: number; folder: string }>
@@ -296,6 +368,15 @@ export const API_METHODS = [
   'savePosition',
   'updateBook',
   'readingBalance',
+  'listBoards',
+  'createBoard',
+  'getBoard',
+  'saveBoard',
+  'deleteBoard',
+  'addToBoard',
+  'allHighlights',
+  'exportBoardToObsidian',
+  'boardMarkdown',
   'chooseFolder',
   'exportToObsidian',
   'exportAllToObsidian',

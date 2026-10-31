@@ -1,12 +1,14 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
-import { basename, extname, join } from 'node:path'
-import type { BookFormat, Highlight, Item, LearnEvent, NewSource, RefreshResult, ResolvedInput, Source, TocEntry } from '@shared/types'
+import { basename, extname, join, relative, sep } from 'node:path'
+import type { Board, BoardMode, BookFormat, Highlight, Item, LearnEvent, NewBoardNode, NewSource, RefreshResult, ResolvedInput, Source, TocEntry } from '@shared/types'
+import { findRoot, layoutMindmap, nodeHeight, NODE_WIDTH } from '@shared/boardLayout'
 import { hostOf, uid } from '@shared/util'
 import { fetchArticle } from './article'
 import { Epub } from './books/epub'
 import type { Store, SyncBase } from './db'
 import { buildMarkdown, mergeWithExisting, safeFileName } from './export/markdown'
+import { boardOutline, buildCanvas } from './export/canvas'
 import { fetchFeed, fetchIcon, type FetchFn } from './feeds/fetcher'
 import { resolveInput } from './feeds/resolve'
 import { buildOpml, parseOpml } from './opml'
@@ -376,6 +378,71 @@ export class LearnCore {
     for (const id of ids) this.exportToObsidian(id)
     const s = this.store.getSettings()
     return { count: ids.length, folder: join(s.obsidianVault ?? '', s.obsidianFolder) }
+  }
+
+  // ── Boards ────────────────────────────────────────────────────────────────
+
+  createBoard(title: string, mode: BoardMode): Board {
+    const now = Date.now()
+    return this.store.insertBoard({ id: uid('b_'), title: title.trim() || 'Sans titre', mode, data: { nodes: [], edges: [] }, createdAt: now, updatedAt: now })
+  }
+
+  /**
+   * Ajoute un nœud au board. En mind map, il devient un enfant de la racine (ou la racine du board vide)
+   * et l'arbre est remis en page ; en canvas, il se place à droite du contenu existant.
+   */
+  addToBoard(boardId: string, node: NewBoardNode): Board {
+    const board = this.store.getBoard(boardId)
+    if (!board) throw new Error('Board introuvable')
+    const data = structuredClone(board.data)
+    if (node.highlightId && data.nodes.some((n) => n.highlightId === node.highlightId)) return board
+    const id = uid('n_')
+    const root = findRoot(data)
+    if (board.mode === 'mindmap') {
+      data.nodes.push({ ...node, id, x: 0, y: 0, root: !root })
+      if (root) data.edges.push({ id: uid('e_'), from: root.id, to: id })
+      for (const [nid, p] of layoutMindmap(data)) Object.assign(data.nodes.find((n) => n.id === nid)!, p)
+    } else {
+      const maxX = data.nodes.reduce((m, n) => Math.max(m, n.x + NODE_WIDTH), -NODE_WIDTH - 40)
+      const col = data.nodes.filter((n) => n.x >= maxX - NODE_WIDTH - 1)
+      const y = col.length && col.length < 5 ? Math.max(...col.map((n) => n.y + nodeHeight(n))) + 30 : 0
+      data.nodes.push({ ...node, id, x: col.length && col.length < 5 ? maxX - NODE_WIDTH : maxX + 40, y })
+    }
+    const updated = this.store.updateBoard(boardId, { data })
+    this.emit({ type: 'boards-changed' })
+    return updated
+  }
+
+  boardMarkdown(id: string): string {
+    const board = this.store.getBoard(id)
+    if (!board) throw new Error('Board introuvable')
+    return boardOutline(board)
+  }
+
+  /** Écrit le board en JSON Canvas dans le coffre (dossier Boards) ; les documents liés sont exportés aussi. */
+  exportBoardToObsidian(id: string): { path: string } {
+    const board = this.store.getBoard(id)
+    if (!board) throw new Error('Board introuvable')
+    const dir = this.obsidianDir()
+    const vault = this.store.getSettings().obsidianVault
+    if (!dir || !vault) throw new Error('Choisis d’abord ton coffre Obsidian dans les Réglages')
+    const paths = new Map<string, string | undefined>()
+    const docPath = (itemId: string): string | undefined => {
+      if (!paths.has(itemId)) {
+        try {
+          paths.set(itemId, relative(vault, this.exportToObsidian(itemId).path).split(sep).join('/'))
+        } catch {
+          paths.set(itemId, undefined)
+        }
+      }
+      return paths.get(itemId)
+    }
+    const canvas = buildCanvas(board, docPath)
+    const boardsDir = join(dir, 'Boards')
+    mkdirSync(boardsDir, { recursive: true })
+    const path = join(boardsDir, `${safeFileName(board.title)}.canvas`)
+    writeFileSync(path, JSON.stringify(canvas, null, 2), 'utf8')
+    return { path }
   }
 
   importOpml(xml: string): Promise<{ added: Source[]; failed: { input: string; error: string }[] }> {

@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { Copy, MessageSquarePlus, Trash2 } from 'lucide-react'
+import { Copy, MessageSquarePlus, Network, Trash2 } from 'lucide-react'
 import type { Highlight, HighlightColor } from '@shared/types'
 import { useApp } from '../lib/store'
 import { useT } from '../lib/i18n'
 import Popover from './Popover'
+import BoardPicker from './boards/BoardPicker'
+import type { NewBoardNode } from '@shared/types'
 
 const COLORS: HighlightColor[] = ['yellow', 'green', 'blue', 'pink', 'purple']
 
@@ -30,6 +32,8 @@ export function HighlightMenu(props: Props): React.JSX.Element {
   const existing = props.highlight
   const [editing, setEditing] = useState(!!props.startEditing)
   const [note, setNote] = useState(existing?.note ?? '')
+  const [boardMenu, setBoardMenu] = useState(false)
+  const item = useApp((s) => s.item)
   const taRef = useRef<HTMLTextAreaElement>(null)
   const anchor = existing ? props.anchor! : props.selection!.anchor
 
@@ -52,6 +56,19 @@ export function HighlightMenu(props: Props): React.JSX.Element {
     props.onClose()
   }
 
+  // Nœud de board : le surlignage lui-même, ou un simple extrait (passage non surligné).
+  const boardNode: NewBoardNode = existing
+    ? { kind: 'highlight', highlightId: existing.id, itemId: existing.itemId, layer: existing.layer, quote: existing.quote, color: existing.color, itemTitle: item?.title }
+    : { kind: 'excerpt', itemId: item?.id, layer: props.selection!.layer, start: props.selection!.start, quote: props.selection!.quote, itemTitle: item?.title }
+
+  if (boardMenu) {
+    return (
+      <Popover anchor={anchor} onClose={props.onClose}>
+        <BoardPicker node={boardNode} onDone={props.onClose} />
+      </Popover>
+    )
+  }
+
   if (editing || (existing && existing.note)) {
     return (
       <Popover anchor={anchor} placement="below" onClose={close}>
@@ -68,6 +85,9 @@ export function HighlightMenu(props: Props): React.JSX.Element {
               </button>
             ))}
             <span style={{ flex: 1 }} />
+            <button className="tb-btn" onClick={() => setBoardMenu(true)} title={t.sendToBoard} aria-label={t.sendToBoard}>
+              <Network size={15} />
+            </button>
             <button className="tb-btn" onClick={() => void copy()} title={t.copy}>
               <Copy size={15} />
             </button>
@@ -131,6 +151,9 @@ export function HighlightMenu(props: Props): React.JSX.Element {
           }}
         >
           <MessageSquarePlus size={15} /> {t.note}
+        </button>
+        <button className="tb-btn" onClick={() => setBoardMenu(true)} title={t.sendToBoard} aria-label={t.sendToBoard}>
+          <Network size={15} /> {t.sendToBoard}
         </button>
         <button className="tb-btn" onClick={() => void copy()} title={t.copy} aria-label={t.copy}>
           <Copy size={15} />

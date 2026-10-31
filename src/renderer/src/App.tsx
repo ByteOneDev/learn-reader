@@ -11,6 +11,7 @@ import SettingsDialog from './components/SettingsDialog'
 import Toasts from './components/Toasts'
 import Onboarding from './onboarding/Onboarding'
 import BalanceDialog from './components/BalanceDialog'
+import BoardView from './components/boards/BoardView'
 import { useT } from './lib/i18n'
 
 export default function App(): React.JSX.Element {
@@ -19,6 +20,7 @@ export default function App(): React.JSX.Element {
   const dialog = useApp((s) => s.dialog)
   const setDialog = useApp((s) => s.setDialog)
   const focusMode = useApp((s) => s.focusMode)
+  const view = useApp((s) => s.view)
   const api = useApp((s) => s.api)
   const importBooks = useApp((s) => s.importBooks)
   const t = useT()
@@ -90,8 +92,9 @@ export default function App(): React.JSX.Element {
             </motion.div>
           )}
         </AnimatePresence>
+        {view.type === 'board' && <BoardView boardId={view.boardId} />}
         <AnimatePresence initial={false}>
-          {!focusMode && (
+          {!focusMode && view.type !== 'board' && (
             <motion.div
               key="list"
               style={{ display: 'flex', overflow: 'hidden', flex: 'none' }}
@@ -104,7 +107,7 @@ export default function App(): React.JSX.Element {
             </motion.div>
           )}
         </AnimatePresence>
-        <Reader />
+        {view.type !== 'board' && <Reader />}
       </div>
 
       <AnimatePresence>

@@ -136,6 +136,15 @@ function registerIpc(): void {
     savePosition: (itemId: string, position: string, progress: number) => core.store.savePosition(itemId, position, progress),
     updateBook: (itemId: string, patch: { title?: string; author?: string; imageUrl?: string }) => core.store.updateItem(itemId, patch),
     readingBalance: (days: number) => core.store.readingBalance(days),
+    listBoards: () => core.store.listBoards(),
+    createBoard: (title: string, mode: Parameters<LearnCore['createBoard']>[1]) => core.createBoard(title, mode),
+    getBoard: (id: string) => core.store.getBoard(id),
+    saveBoard: (id: string, patch: Parameters<typeof core.store.updateBoard>[1]) => core.store.updateBoard(id, patch),
+    deleteBoard: (id: string) => core.store.deleteBoard(id),
+    addToBoard: (boardId: string, node: Parameters<LearnCore['addToBoard']>[1]) => core.addToBoard(boardId, node),
+    allHighlights: () => core.store.allHighlights(),
+    exportBoardToObsidian: (id: string) => core.exportBoardToObsidian(id),
+    boardMarkdown: (id: string) => core.boardMarkdown(id),
     chooseFolder: async () => {
       const r = await dialog.showOpenDialog(win!, { properties: ['openDirectory', 'createDirectory'], title: 'Choisir le coffre Obsidian' })
       return r.canceled ? null : r.filePaths[0]

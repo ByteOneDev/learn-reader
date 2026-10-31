@@ -1,7 +1,7 @@
 import initSqlJs, { type Database, type SqlValue } from 'sql.js'
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
-import type { Counts, Highlight, Item, ItemQuery, ReadingBalance, Settings, Source, View } from '@shared/types'
+import type { Board, BoardSummary, Counts, Highlight, HighlightWithItem, Item, ItemQuery, ReadingBalance, Settings, Source, View } from '@shared/types'
 import { DEFAULT_SETTINGS } from '@shared/types'
 
 // SQLite compilé en WebAssembly (sql.js) : aucun module natif à recompiler pour Mac, Windows et Linux.
@@ -49,6 +49,11 @@ const MIGRATIONS = [
   `CREATE TABLE sync_state (
      item_id TEXT PRIMARY KEY REFERENCES items(id) ON DELETE CASCADE,
      path TEXT NOT NULL, hash TEXT NOT NULL, base TEXT NOT NULL, synced_at INTEGER NOT NULL
+   );`,
+  // v0.4 : boards (mind maps et canvas). Le contenu (nœuds, liens) est un document JSON.
+  `CREATE TABLE boards (
+     id TEXT PRIMARY KEY, title TEXT NOT NULL, mode TEXT NOT NULL, data TEXT NOT NULL,
+     created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
    );`
 ]
 
@@ -507,6 +512,59 @@ export class Store {
 
   itemsWithHighlights(): string[] {
     return this.all('SELECT DISTINCT item_id FROM highlights').map((r) => r.item_id as string)
+  }
+
+  // ── Boards ────────────────────────────────────────────────────────────────
+
+  private toBoard(r: Row): Board {
+    return {
+      id: r.id as string,
+      title: r.title as string,
+      mode: r.mode as Board['mode'],
+      data: JSON.parse(r.data as string) as Board['data'],
+      createdAt: r.created_at as number,
+      updatedAt: r.updated_at as number
+    }
+  }
+
+  listBoards(): BoardSummary[] {
+    return this.all('SELECT id, title, mode, data, updated_at FROM boards ORDER BY updated_at DESC').map((r) => ({
+      id: r.id as string,
+      title: r.title as string,
+      mode: r.mode as Board['mode'],
+      nodeCount: (JSON.parse(r.data as string) as Board['data']).nodes.length,
+      updatedAt: r.updated_at as number
+    }))
+  }
+
+  getBoard(id: string): Board | null {
+    const r = this.one('SELECT * FROM boards WHERE id = ?', [id])
+    return r ? this.toBoard(r) : null
+  }
+
+  insertBoard(b: Board): Board {
+    this.run('INSERT INTO boards (id, title, mode, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)', [b.id, b.title, b.mode, JSON.stringify(b.data), b.createdAt, b.updatedAt])
+    return b
+  }
+
+  updateBoard(id: string, patch: Partial<Pick<Board, 'title' | 'mode' | 'data'>>): Board {
+    const b = this.getBoard(id)
+    if (!b) throw new Error('Board introuvable')
+    const next = { ...b, ...patch, updatedAt: Date.now() }
+    this.run('UPDATE boards SET title = ?, mode = ?, data = ?, updated_at = ? WHERE id = ?', [next.title, next.mode, JSON.stringify(next.data), next.updatedAt, id])
+    return next
+  }
+
+  deleteBoard(id: string): void {
+    this.run('DELETE FROM boards WHERE id = ?', [id])
+  }
+
+  allHighlights(): HighlightWithItem[] {
+    return this.all('SELECT h.*, i.title AS item_title, i.format AS item_format FROM highlights h JOIN items i ON i.id = h.item_id ORDER BY h.updated_at DESC').map((r) => ({
+      ...this.toHighlight(r),
+      itemTitle: r.item_title as string,
+      format: (r.item_format as HighlightWithItem['format']) ?? undefined
+    }))
   }
 
   // ── Synchronisation ───────────────────────────────────────────────────────

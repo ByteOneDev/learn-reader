@@ -103,6 +103,8 @@ export default function Sidebar(): React.JSX.Element {
   const t = useT()
   const sources = useApp((s) => s.sources)
   const counts = useApp((s) => s.counts)
+  const boards = useApp((s) => s.boards)
+  const createBoard = useApp((s) => s.createBoard)
   const view = useApp((s) => s.view)
   const settings = useApp((s) => s.settings)
   const setView = useApp((s) => s.setView)
@@ -159,7 +161,6 @@ export default function Sidebar(): React.JSX.Element {
         <NavRow icon={<Headphones size={19} />} label={t.audio} disabled soon={t.soon} />
         <NavRow icon={<Tv size={19} />} label={t.video} disabled soon={t.soon} />
         <NavRow view={{ type: 'library' }} icon={<BookOpen size={19} />} label={t.library} badge={counts?.library} />
-        <NavRow icon={<Network size={19} />} label={t.boards} disabled soon={t.soon} />
 
         <Section id="saved" title={t.saved}>
           <NavRow view={{ type: 'links' }} icon={<Link2 size={19} />} label={t.links} badge={counts?.links} />
@@ -173,6 +174,16 @@ export default function Sidebar(): React.JSX.Element {
           <button className="nav-row" onClick={() => setDialog('balance')}>
             <Scale size={19} />
             <span className="label">{t.balanceNav}</span>
+          </button>
+        </Section>
+
+        <Section id="boards" title={t.boards}>
+          {boards.map((b) => (
+            <NavRow key={b.id} view={{ type: 'board', boardId: b.id }} icon={<Network size={19} />} label={b.title} badge={b.nodeCount || undefined} />
+          ))}
+          <button className="nav-row" onClick={() => void createBoard()}>
+            <Plus size={19} />
+            <span className="label" style={{ color: 'var(--text-2)' }}>{t.newBoard}</span>
           </button>
         </Section>
 

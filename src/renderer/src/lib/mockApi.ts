@@ -1,6 +1,7 @@
 // API simulée, en mémoire : permet de développer et tester l'interface dans un simple navigateur
 // (npm run web), sans Electron ni réseau. Jamais utilisée dans l'application réelle.
-import type { Counts, Highlight, Item, ItemQuery, LearnAPI, LearnEvent, NewSource, ReadingBalance, Settings, Source, TocEntry, View } from '@shared/types'
+import type { Board, Counts, Highlight, Item, ItemQuery, LearnAPI, LearnEvent, NewSource, ReadingBalance, Settings, Source, TocEntry, View } from '@shared/types'
+import { layoutMindmap } from '@shared/boardLayout'
 import { DEFAULT_SETTINGS } from '@shared/types'
 import { uid } from '@shared/util'
 
@@ -196,6 +197,32 @@ items.push(
 )
 
 let highlights: Highlight[] = []
+
+const boards: Board[] = [
+  {
+    id: 'board1',
+    title: 'Confiance et réseaux',
+    mode: 'mindmap',
+    createdAt: now,
+    updatedAt: now,
+    data: {
+      nodes: [
+        { id: 'r', kind: 'note', text: 'Pourquoi les réseaux reposent-ils sur la confiance ?', x: 0, y: 0, root: true },
+        { id: 'q1', kind: 'excerpt', itemId: 'i1', layer: 'feed', quote: 'Chaque réseau annonçait les préfixes qu’il savait joindre, et ses voisins le croyaient sur parole.', itemTitle: 'Comment le routage d’Internet tente enfin de se sécuriser', color: 'yellow', x: 0, y: 0 },
+        { id: 'q2', kind: 'excerpt', itemId: 'i3', layer: 'feed', quote: 'Les opérateurs ne comprenaient pas les messages qu’ils relayaient.', itemTitle: 'Le télégraphe Chappe, premier réseau de données de l’histoire', color: 'green', x: 0, y: 0 },
+        { id: 'n1', kind: 'note', text: 'Même problème en 1794 et en 2026 : qui vérifie le relais ?', x: 0, y: 0 },
+        { id: 'n2', kind: 'note', text: 'Contre-exemple : la validation cryptographique (RPKI)', x: 0, y: 0 }
+      ],
+      edges: [
+        { id: 'e1', from: 'r', to: 'q1' },
+        { id: 'e2', from: 'r', to: 'q2' },
+        { id: 'e3', from: 'q2', to: 'n1', label: 'soutient' },
+        { id: 'e4', from: 'q1', to: 'n2', label: 'contredit' }
+      ]
+    }
+  }
+]
+for (const b of boards) for (const [id, p] of layoutMindmap(b.data)) Object.assign(b.data.nodes.find((n) => n.id === id)!, p)
 let settings: Settings = { ...DEFAULT_SETTINGS, onboarded: new URLSearchParams(location.search).get('onboarding') === null, obsidianVault: '/Users/moi/Obsidian' }
 const listeners = new Set<(e: LearnEvent) => void>()
 const emit = (e: LearnEvent): void => listeners.forEach((l) => l(e))
@@ -224,6 +251,8 @@ function matches(view: View, it: Item): boolean {
       return src?.kind === view.kind
     case 'source':
       return it.sourceId === view.sourceId
+    default:
+      return false
   }
 }
 
@@ -352,6 +381,36 @@ export const mockApi: LearnAPI = {
       .sort((a, b) => a.leaning - b.leaning)
     return delay({ days, entries, otherReads: items.filter((i) => i.read && !sources.find((s) => s.id === i.sourceId)?.leaning).length })
   },
+  listBoards: async () => delay(boards.map((b) => ({ id: b.id, title: b.title, mode: b.mode, nodeCount: b.data.nodes.length, updatedAt: b.updatedAt }))),
+  createBoard: async (title, mode) => {
+    const b: Board = { id: uid('b_'), title, mode, data: { nodes: [], edges: [] }, createdAt: Date.now(), updatedAt: Date.now() }
+    boards.unshift(b)
+    return delay(b)
+  },
+  getBoard: async (id) => delay(boards.find((b) => b.id === id) ?? null),
+  saveBoard: async (id, patch) => {
+    const b = boards.find((x) => x.id === id)!
+    Object.assign(b, patch, { updatedAt: Date.now() })
+    return delay(b)
+  },
+  deleteBoard: async (id) => {
+    boards.splice(
+      boards.findIndex((b) => b.id === id),
+      1
+    )
+  },
+  addToBoard: async (id, node) => {
+    const b = boards.find((x) => x.id === id)!
+    const nid = uid('n_')
+    const root = b.data.nodes.find((n) => n.root) ?? b.data.nodes[0]
+    b.data.nodes.push({ ...node, id: nid, x: 0, y: 0, root: !root })
+    if (root) b.data.edges.push({ id: uid('e_'), from: root.id, to: nid })
+    for (const [i, p] of layoutMindmap(b.data)) Object.assign(b.data.nodes.find((n) => n.id === i)!, p)
+    return delay(b)
+  },
+  allHighlights: async () => delay(highlights.map((h) => ({ ...h, itemTitle: items.find((i) => i.id === h.itemId)?.title ?? '' }))),
+  exportBoardToObsidian: async (id) => delay({ path: `/Users/moi/Obsidian/Learn/Boards/${boards.find((b) => b.id === id)?.title}.canvas` }),
+  boardMarkdown: async (id) => delay(`# ${boards.find((b) => b.id === id)?.title}\n`),
   refresh: async () => {
     emit({ type: 'refresh-started' })
     await delay(null, 800)
