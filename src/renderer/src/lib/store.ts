@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { BoardSummary, Counts, Highlight, Item, LearnAPI, Settings, Source, View } from '@shared/types'
+import type { BoardMode, BoardSummary, Counts, Highlight, Item, LearnAPI, Settings, Source, View } from '@shared/types'
 import { dictionaries } from './strings'
 
 export const PAGE = 80
@@ -59,8 +59,10 @@ interface AppState {
   setDialog(d: Dialog): void
   toggleSidebar(): void
   toggleFocus(on?: boolean): void
+  /** Geste de balayage : vers la gauche on replie les volets un à un, vers la droite on les rouvre. */
+  swipe(direction: 'left' | 'right'): void
   reloadBoards(): Promise<void>
-  createBoard(): Promise<void>
+  createBoard(mode?: BoardMode): Promise<void>
   openHighlight(itemId: string, highlightId: string, layer: string): Promise<void>
   /** Lien learn:// : ouvre le document dans sa vue (bibliothèque, audio, vidéo, accueil), ou le passage. */
   openLink(itemId: string, highlightId?: string): Promise<void>
@@ -116,6 +118,7 @@ export const useApp = create<AppState>((set, get) => ({
       }
       if (e.type === 'boards-changed') void get().reloadBoards()
       if (e.type === 'open-link') void get().openLink(e.itemId, e.highlightId)
+      if (e.type === 'swipe') get().swipe(e.direction)
       if (e.type === 'items-changed') {
         void get().reloadMeta()
         void get().loadItems(true)
@@ -260,12 +263,21 @@ export const useApp = create<AppState>((set, get) => ({
   toggleFocus(on) {
     set((s) => ({ focusMode: on ?? !s.focusMode }))
   },
+  swipe(direction) {
+    const { sidebarOpen, focusMode, item } = get()
+    if (direction === 'left') {
+      if (sidebarOpen && !focusMode) set({ sidebarOpen: false })
+      else if (!focusMode && item) set({ focusMode: true })
+    } else if (focusMode) set({ focusMode: false })
+    else if (!sidebarOpen) set({ sidebarOpen: true })
+    else if (item) void get().select(null)
+  },
   async reloadBoards() {
     set({ boards: await get().api.listBoards() })
   },
-  async createBoard() {
+  async createBoard(mode = 'mindmap') {
     const { api, settings } = get()
-    const board = await api.createBoard(dictionaries[settings?.language ?? 'fr'].boardUntitled, 'mindmap')
+    const board = await api.createBoard(dictionaries[settings?.language ?? 'fr'].boardUntitled, mode)
     await get().reloadBoards()
     get().setView({ type: 'board', boardId: board.id })
   },

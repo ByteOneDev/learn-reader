@@ -33,6 +33,8 @@ export interface Source {
   leaning?: number
   /** Propriétaire du média, tel que connu lors de la constitution du catalogue. */
   owner?: string
+  /** YouTube : année déjà récupérée en entier grâce à la clé d'API. */
+  backfilledYear?: number
 }
 
 export type BookFormat = 'epub' | 'pdf'
@@ -124,7 +126,8 @@ export interface Highlight {
 
 // ── Boards : mind maps et canvas ──────────────────────────────────────────
 
-export type BoardMode = 'mindmap' | 'canvas'
+/** mindmap et canvas : nœuds React Flow ; sketch : schéma libre Excalidraw. */
+export type BoardMode = 'mindmap' | 'canvas' | 'sketch'
 /** note : idée libre ; highlight : surlignage ; excerpt : passage non surligné ; source : document entier. */
 export type BoardNodeKind = 'note' | 'highlight' | 'excerpt' | 'source'
 
@@ -155,6 +158,17 @@ export interface BoardEdge {
 export interface BoardData {
   nodes: BoardNode[]
   edges: BoardEdge[]
+  /** Schéma Excalidraw (mode sketch) : éléments, état d'affichage utile, images. */
+  sketch?: { elements: unknown[]; appState?: Record<string, unknown>; files?: Record<string, unknown> }
+  /** Ajouts venus du lecteur pour un schéma : transformés en éléments Excalidraw à l'ouverture. */
+  pending?: NewBoardNode[]
+}
+
+/** Board qui fait référence à un document (surlignage, extrait, document entier). */
+export interface LinkedBoard {
+  id: string
+  title: string
+  mode: BoardMode
 }
 
 export interface Board {
@@ -173,6 +187,8 @@ export interface BoardSummary {
   nodeCount: number
   updatedAt: number
 }
+
+export type BoardExportFormat = 'opml' | 'mm' | 'pdf' | 'svg' | 'mindnode'
 
 export type NewBoardNode = Omit<BoardNode, 'id' | 'x' | 'y'>
 
@@ -193,6 +209,7 @@ export type View =
   | { type: 'kind'; kind: SourceKind }
   | { type: 'source'; sourceId: string }
   | { type: 'board'; boardId: string }
+  | { type: 'category'; category: string }
 
 export interface ItemQuery {
   view: View
@@ -231,6 +248,8 @@ export interface Settings {
   obsidianSync?: boolean
   /** Vidéos YouTube : dans le navigateur par défaut du système, ou dans le lecteur intégré. */
   videoPlayer: 'browser' | 'app'
+  /** Clé d'API YouTube (facultative) : récupère toutes les vidéos de l'année, pas seulement les 15 dernières. */
+  youtubeApiKey?: string
   notionWorkspace?: string
   notionDatabaseId?: string
   notionDatabaseUrl?: string
@@ -309,6 +328,7 @@ export type LearnEvent =
   | { type: 'highlights-changed'; itemId: string; message?: string }
   | { type: 'boards-changed' }
   | { type: 'open-link'; itemId: string; highlightId?: string }
+  | { type: 'swipe'; direction: 'left' | 'right' }
   | { type: 'menu'; action: 'add-source' | 'settings' | 'refresh' }
 
 /** API exposée à l'interface par le preload (window.learn). Toutes les méthodes passent par IPC. */
@@ -363,7 +383,13 @@ export interface LearnAPI {
   /** Ajoute un nœud (surlignage, extrait, note…) au board, placé automatiquement. */
   addToBoard(boardId: string, node: NewBoardNode): Promise<Board>
   allHighlights(): Promise<HighlightWithItem[]>
+  /** Boards qui citent ce document (dans un nœud, un élément de schéma ou en attente d'insertion). */
+  boardsForItem(itemId: string): Promise<LinkedBoard[]>
+  /** Enregistre un fichier choisi par l'utilisateur (export de schéma, etc.). */
+  saveFile(defaultName: string, data: string | Uint8Array): Promise<string | null>
   exportBoardToObsidian(id: string): Promise<{ path: string }>
+  /** Exporte un board : OPML (MindNode), FreeMind, PDF, SVG ; « mindnode » l'ouvre directement dans MindNode (Mac). */
+  exportBoardFile(id: string, format: BoardExportFormat): Promise<string | null>
   boardMarkdown(id: string): Promise<string>
 
   notionStatus(): Promise<NotionStatus>
@@ -424,7 +450,10 @@ export const API_METHODS = [
   'deleteBoard',
   'addToBoard',
   'allHighlights',
+  'boardsForItem',
+  'saveFile',
   'exportBoardToObsidian',
+  'exportBoardFile',
   'boardMarkdown',
   'notionStatus',
   'notionConnect',

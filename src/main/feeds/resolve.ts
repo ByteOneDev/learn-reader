@@ -47,6 +47,17 @@ export function resolveInput(raw: string, opts: { xBridge?: string } = {}): Reso
   const host = url.hostname.replace(/^(www|old|new)\./, '')
   const parts = url.pathname.split('/').filter(Boolean)
 
+  // Newsletters publiées en ligne : leur flux est à une adresse connue.
+  if (host.endsWith('.substack.com') || (parts[0] === 'p' && parts[1] && host.includes('substack'))) {
+    return { kind: 'rss', url: `${url.origin}/feed`, siteUrl: url.origin }
+  }
+  if (host === 'buttondown.com' || host === 'buttondown.email') {
+    if (parts[0]) return { kind: 'rss', url: `https://buttondown.com/${parts[0]}/rss`, siteUrl: `https://buttondown.com/${parts[0]}` }
+  }
+  if (host === 'medium.com' && parts[0] && parts[0] !== 'feed') {
+    return { kind: 'rss', url: `https://medium.com/feed/${parts[0]}`, siteUrl: `https://medium.com/${parts[0]}` }
+  }
+  if (host.endsWith('.medium.com')) return { kind: 'rss', url: `${url.origin}/feed`, siteUrl: url.origin }
   if (host === 'reddit.com' && parts.length >= 2 && ['r', 'u', 'user'].includes(parts[0])) {
     if (parts[2] === '.rss' || parts[1].endsWith('.rss')) return { kind: 'reddit', url: url.href, title: `${parts[0]}/${parts[1]}` }
     return reddit(parts[0] === 'r' ? 'r' : 'user', parts[1])

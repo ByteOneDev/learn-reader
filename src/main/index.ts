@@ -1,11 +1,13 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, net, safeStorage, session, shell } from 'electron'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { API_METHODS, type ApiMethod, type LearnEvent } from '@shared/types'
+import { API_METHODS, type ApiMethod, type BoardExportFormat, type LearnEvent } from '@shared/types'
 import { LearnCore } from './core'
 import { openDatabase } from './db'
 import { buildMenu } from './menu'
 import { parseLearnLink } from '@shared/links'
+import { boardToFreeMind, boardToOpml, boardToSvg } from '@shared/boardExport'
+import { execFile } from 'node:child_process'
 import { ObsidianSync } from './sync/obsidianSync'
 import { NotionSync, type SecretBox } from './notion/notionSync'
 
@@ -60,6 +62,10 @@ function createWindow(): void {
   })
 
   win.once('ready-to-show', () => win?.show())
+  // Balayage à trois doigts (macOS) : replier ou rouvrir les volets, comme dans Reeder.
+  win.on('swipe', (_e, direction) => {
+    if (direction === 'left' || direction === 'right') send({ type: 'swipe', direction })
+  })
   win.webContents.on('did-finish-load', () => {
     if (!pendingLink) return
     const link = pendingLink
@@ -89,6 +95,50 @@ function scheduleRefresh(): void {
   refreshTimer = setInterval(() => void core.refresh(), minutes * 60_000)
 }
 
+/** PDF d'un SVG : rendu dans une fenêtre invisible puis imprimé à la taille exacte du dessin. */
+async function svgToPdf(svg: string, width: number, height: number): Promise<Buffer> {
+  const page = new BrowserWindow({ show: false, webPreferences: { sandbox: true, javascript: false } })
+  try {
+    const html = `<!doctype html><html><head><meta charset="utf-8"><style>@page{margin:0}html,body{margin:0}</style></head><body>${svg}</body></html>`
+    await page.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`)
+    return await page.webContents.printToPDF({
+      printBackground: true,
+      pageSize: { width: Math.max(width / 96, 3), height: Math.max(height / 96, 3) },
+      margins: { top: 0, bottom: 0, left: 0, right: 0 }
+    })
+  } finally {
+    page.destroy()
+  }
+}
+
+async function exportBoardFile(id: string, format: BoardExportFormat): Promise<string | null> {
+  const board = core.store.getBoard(id)
+  if (!board) throw new Error('Board introuvable')
+  const base = board.title.replace(/[\\/:*?"<>|]/g, ' ').trim() || 'Board'
+  if (format === 'mindnode') {
+    // MindNode importe l'OPML : on l'écrit dans un dossier temporaire et on demande à macOS de l'ouvrir avec MindNode.
+    const path = join(app.getPath('temp'), `${base}.opml`)
+    writeFileSync(path, boardToOpml(board), 'utf8')
+    if (process.platform !== 'darwin') throw new Error('MindNode n’existe que sur Mac : exporte en OPML.')
+    await new Promise<void>((resolve, reject) =>
+      execFile('open', ['-a', 'MindNode', path], (err) => (err ? reject(new Error('MindNode n’est pas installé : exporte en OPML et ouvre le fichier avec ton outil.')) : resolve()))
+    )
+    return path
+  }
+  const ext = format === 'mm' ? 'mm' : format
+  const names: Record<string, string> = { opml: 'OPML (MindNode, OmniOutliner)', mm: 'FreeMind (MindNode, XMind, Freeplane)', pdf: 'PDF', svg: 'SVG' }
+  const r = await dialog.showSaveDialog(win!, { defaultPath: `${base}.${ext}`, filters: [{ name: names[format], extensions: [ext] }] })
+  if (r.canceled || !r.filePath) return null
+  if (format === 'opml') writeFileSync(r.filePath, boardToOpml(board), 'utf8')
+  else if (format === 'mm') writeFileSync(r.filePath, boardToFreeMind(board), 'utf8')
+  else {
+    const { svg, width, height } = boardToSvg(board)
+    if (format === 'svg') writeFileSync(r.filePath, svg, 'utf8')
+    else writeFileSync(r.filePath, await svgToPdf(svg, width, height))
+  }
+  return r.filePath
+}
+
 /** Toute modification d'un document est propagée aux synchronisations actives. */
 function touch(itemId: string): void {
   sync.touch(itemId)
@@ -104,6 +154,11 @@ function registerIpc(): void {
       if ('theme' in patch) nativeTheme.themeSource = s.theme
       if ('obsidianSync' in patch || 'obsidianVault' in patch || 'obsidianFolder' in patch) sync.restart()
       if ('notionSync' in patch) notion.restart()
+      // Nouvelle clé YouTube : on remonte tout de suite l'année des chaînes suivies.
+      if (patch.youtubeApiKey) {
+        for (const src of core.store.listSources().filter((x) => x.kind === 'youtube')) core.store.updateSource(src.id, { backfilledYear: undefined })
+        void core.refresh()
+      }
       return s
     },
     listSources: () => core.store.listSources(),
@@ -169,8 +224,17 @@ function registerIpc(): void {
     deleteBoard: (id: string) => core.store.deleteBoard(id),
     addToBoard: (boardId: string, node: Parameters<LearnCore['addToBoard']>[1]) => core.addToBoard(boardId, node),
     allHighlights: () => core.store.allHighlights(),
+    boardsForItem: (itemId: string) => core.boardsForItem(itemId),
+    saveFile: async (defaultName: string, data: string | Uint8Array) => {
+      const ext = defaultName.split('.').pop() ?? ''
+      const r = await dialog.showSaveDialog(win!, { defaultPath: defaultName, filters: ext ? [{ name: ext.toUpperCase(), extensions: [ext] }] : [] })
+      if (r.canceled || !r.filePath) return null
+      writeFileSync(r.filePath, typeof data === 'string' ? data : Buffer.from(data))
+      return r.filePath
+    },
     exportBoardToObsidian: (id: string) => core.exportBoardToObsidian(id),
     boardMarkdown: (id: string) => core.boardMarkdown(id),
+    exportBoardFile: (id: string, format: BoardExportFormat) => exportBoardFile(id, format),
     notionStatus: () => notion.status(),
     notionConnect: async (token: string) => {
       await notion.connect(token)

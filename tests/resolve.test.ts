@@ -14,7 +14,11 @@ describe('resolveInput', () => {
     ['https://bsky.app/profile/nature.com', 'bluesky', 'https://bsky.app/profile/nature.com/rss'],
     ['https://www.youtube.com/channel/UCabc', 'youtube', 'https://www.youtube.com/feeds/videos.xml?channel_id=UCabc'],
     ['https://news.ycombinator.com', 'forum', 'https://hnrss.org/frontpage'],
-    ['numerama.com/feed/', 'rss', 'https://numerama.com/feed/']
+    ['numerama.com/feed/', 'rss', 'https://numerama.com/feed/'],
+    ['https://www.slowboring.com/p/un-article', 'rss', 'https://www.slowboring.com/p/un-article'],
+    ['https://noahpinion.substack.com/p/abc', 'rss', 'https://noahpinion.substack.com/feed'],
+    ['https://buttondown.com/hillelwayne', 'rss', 'https://buttondown.com/hillelwayne/rss'],
+    ['https://medium.com/@karpathy', 'rss', 'https://medium.com/feed/@karpathy']
   ])('%s → %s', (input, kind, url) => {
     expect(resolveInput(input)).toMatchObject({ kind, url })
   })

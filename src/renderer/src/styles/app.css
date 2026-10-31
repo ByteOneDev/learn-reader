@@ -2210,6 +2210,7 @@ mark.hl.flash {
   gap: 6px;
 }
 .picker-row {
+  flex: none;
   display: flex;
   gap: 10px;
   align-items: flex-start;
@@ -2657,4 +2658,246 @@ mark.hl.flash {
   gap: 12px;
   margin-bottom: 18px;
   flex-wrap: wrap;
+}
+
+/* ── Animations ───────────────────────────────────────────────── */
+
+/* Cartes : apparition en cascade quand la liste change. */
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.card {
+  /* backwards et non both : sinon l'animation figerait transform et bloquerait le survol. */
+  animation: card-in 0.38s var(--ease) backwards;
+  animation-delay: calc(var(--i, 0) * 24ms);
+  transition: transform 0.18s var(--ease), background 0.15s;
+}
+.card:hover:not(.selected) {
+  transform: translateY(-1px);
+}
+/* Appui : tous les boutons s'enfoncent légèrement. */
+.round-btn,
+.btn,
+.pill button,
+.tb-btn,
+.nav-row,
+.home-card,
+.segmented button,
+.choice,
+.src-option {
+  transition: transform 0.12s var(--ease), background 0.15s, color 0.15s, border-color 0.2s;
+}
+.round-btn:active:not(:disabled),
+.btn:active:not(:disabled),
+.pill button:active,
+.tb-btn:active,
+.home-card:active,
+.segmented button:active,
+.src-option:active {
+  transform: scale(0.95);
+}
+.nav-row:active:not(.disabled) {
+  transform: scale(0.98);
+}
+/* Survol de la barre latérale : l'icône glisse un peu. */
+.nav-row > svg,
+.nav-row > .src-icon {
+  transition: transform 0.2s var(--ease);
+}
+.nav-row:hover:not(.disabled) > svg,
+.nav-row:hover:not(.disabled) > .src-icon {
+  transform: translateX(2px);
+}
+/* Images de l'article : fondu à l'arrivée. */
+@keyframes img-in {
+  from {
+    opacity: 0;
+    transform: scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.content img,
+.hero,
+.card-thumb {
+  animation: img-in 0.5s var(--ease) both;
+}
+.list-title,
+.book-bar,
+.board-top {
+  animation: card-in 0.3s var(--ease) both;
+}
+
+/* Groupes de sources par catégorie (dossiers) */
+.cat-group {
+  margin: 2px 0;
+}
+.cat-head {
+  display: flex;
+  align-items: center;
+  height: 30px;
+  padding-left: 6px;
+  border-radius: 8px;
+}
+.cat-head.active {
+  background: var(--control);
+}
+.cat-chevron {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  color: var(--text-3);
+  border-radius: 6px;
+}
+.cat-chevron svg {
+  transition: transform 0.25s var(--ease);
+}
+.cat-chevron.closed svg {
+  transform: rotate(-90deg);
+}
+.cat-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-2);
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+.cat-label:hover {
+  color: var(--text);
+}
+.cat-group .nav-row {
+  padding-left: 22px;
+}
+.nav-hint {
+  font-size: 12.5px;
+  color: var(--text-3);
+  padding: 4px 12px 8px;
+}
+.menu button.on {
+  color: var(--accent);
+}
+
+.newsletter-help {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.newsletter-help strong {
+  color: var(--text);
+}
+.newsletter-help ol {
+  padding-left: 1.2em;
+  margin: 8px 0 16px;
+}
+.newsletter-help li {
+  margin: 4px 0;
+}
+.newsletter-help a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ── Schémas Excalidraw ─────────────────────────────────────────────────── */
+.board-kind {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+.sketch-canvas {
+  overflow: hidden;
+}
+.sketch-canvas .excalidraw {
+  --color-primary: var(--accent);
+  --ui-font: inherit;
+}
+.sketch-canvas .excalidraw.theme--dark {
+  --default-bg-color: var(--reader);
+}
+.sketch-board .board-hint {
+  bottom: 56px;
+  animation: hint-fade 6s ease 2s forwards;
+}
+@keyframes hint-fade {
+  to {
+    opacity: 0;
+  }
+}
+.doc-icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.picker-row:has(.doc-icon) {
+  align-items: center;
+}
+.picker-row:has(.doc-icon)::before {
+  display: none;
+}
+.picker-row:has(.doc-icon):hover {
+  border-color: var(--accent);
+}
+
+/* Boards qui citent le document ouvert */
+.linked-boards {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 18px 8px;
+  flex: none;
+}
+.lb-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-3);
+  margin-right: 2px;
+}
+.lb-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--control);
+  color: var(--text-2);
+  transition:
+    background 0.15s,
+    color 0.15s,
+    transform 0.15s;
+}
+.lb-chip:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+.lb-chip:active {
+  transform: scale(0.96);
 }

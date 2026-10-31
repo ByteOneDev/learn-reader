@@ -2,6 +2,8 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowUp, Bookmark, BookPlus, CheckCheck, Headphones, Heart, Highlighter, Layers, PanelLeft, Play, RefreshCw, Search, Tv, X } from 'lucide-react'
 import { formatTime } from '@shared/media'
+import { categoryLabel } from './Sidebar'
+import { dictionaries } from '../lib/i18n'
 import type { Item, Source, View } from '@shared/types'
 import { useApp } from '../lib/store'
 import { useT, type Dict } from '../lib/i18n'
@@ -32,6 +34,8 @@ function viewTitle(view: View, t: Dict, sources: Source[]): [string, string] {
       if (view.kind === 'podcast') return [t.audio, t.podcasts]
       if (view.kind === 'youtube') return [t.video, t.youtube]
       return [t.kinds[view.kind] ?? view.kind, t.feeds]
+    case 'category':
+      return [view.category ? categoryLabel(view.category, t === dictionaries.en ? 'en' : 'fr') : t.otherCategory, t.feeds]
     case 'source': {
       const s = sources.find((x) => x.id === view.sourceId)
       return [s?.title ?? '', s ? t.kinds[s.kind] : '']
@@ -41,7 +45,8 @@ function viewTitle(view: View, t: Dict, sources: Source[]): [string, string] {
   }
 }
 
-const Card = memo(function Card({ item, source, selected, beforeSelected, showUnread, lang, onSelect }: {
+const Card = memo(function Card({ item, index, source, selected, beforeSelected, showUnread, lang, onSelect }: {
+  index: number
   item: Item
   source?: Source
   selected: boolean
@@ -66,6 +71,7 @@ const Card = memo(function Card({ item, source, selected, beforeSelected, showUn
         className={`card book-card${selected ? ' selected' : ''}${beforeSelected ? ' before-selected' : ''}`}
         onClick={() => onSelect(item.id)}
         data-id={item.id}
+        style={{ ['--i' as string]: Math.min(index, 14) }}
       >
         {selected && <motion.div layoutId="card-selected" className="card-selected-bg" transition={{ type: 'spring', stiffness: 520, damping: 42 }} />}
         <div className="book-card-row">
@@ -106,6 +112,7 @@ const Card = memo(function Card({ item, source, selected, beforeSelected, showUn
       className={`card${selected ? ' selected' : ''}${beforeSelected ? ' before-selected' : ''}${item.read && !selected ? ' read' : ''}`}
       onClick={() => onSelect(item.id)}
       data-id={item.id}
+      style={{ ['--i' as string]: Math.min(index, 14) }}
     >
       {selected && <motion.div layoutId="card-selected" className="card-selected-bg" transition={{ type: 'spring', stiffness: 520, damping: 42 }} />}
       <div className="card-head">
@@ -329,6 +336,7 @@ export default function Timeline(): React.JSX.Element {
         {items.map((item, i) => (
           <Card
             key={item.id}
+            index={i}
             item={item}
             source={sourceMap.get(item.sourceId)}
             selected={item.id === selectedId}

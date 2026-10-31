@@ -1,8 +1,9 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { basename, extname, join, relative, sep } from 'node:path'
-import type { Board, BoardMode, BookFormat, Cue, Highlight, Item, LearnEvent, NewBoardNode, NewSource, RefreshResult, ResolvedInput, Source, TocEntry } from '@shared/types'
+import type { Board, BoardMode, BookFormat, Cue, Highlight, LinkedBoard, Item, LearnEvent, NewBoardNode, NewSource, RefreshResult, ResolvedInput, Source, TocEntry } from '@shared/types'
 import { findRoot, layoutMindmap, nodeHeight, NODE_WIDTH } from '@shared/boardLayout'
+import { boardCitesItem } from '@shared/boardExport'
 import { hostOf, uid } from '@shared/util'
 import { fetchArticle } from './article'
 import { Epub } from './books/epub'
@@ -11,6 +12,7 @@ import { buildMarkdown, mergeWithExisting, safeFileName } from './export/markdow
 import { boardOutline, buildCanvas } from './export/canvas'
 import { fetchFeed, fetchIcon, fetchText, HttpError, type FetchFn } from './feeds/fetcher'
 import { parseTranscript } from './media/transcript'
+import { fetchYearVideos, startOfYear, uploadsPlaylist } from './media/youtube'
 import { pickPodcast, searchPodcasts, type PodcastResult } from './feeds/podcastSearch'
 import { formatTime, timeLink } from '@shared/media'
 import { resolveInput } from './feeds/resolve'
@@ -110,9 +112,29 @@ export class LearnCore {
       lastFetchedAt: Date.now()
     })
     this.storeItems(source, feed.items)
+    if (source.kind === 'youtube') void this.backfillYear(source).then((n) => n && this.emit({ type: 'items-changed' }))
     void this.loadIcon(source, feed.iconUrl)
     this.emit({ type: 'items-changed' })
     return source
+  }
+
+  /**
+   * Avec une clé d'API YouTube : récupère une fois par an toutes les vidéos de l'année d'une chaîne
+   * (le flux RSS n'en donne que 15). Sans clé, ou en cas d'erreur, on s'en tient au flux.
+   */
+  async backfillYear(source: Source): Promise<number> {
+    const key = this.store.getSettings().youtubeApiKey?.trim()
+    const year = new Date().getFullYear()
+    const playlist = uploadsPlaylist(source.url)
+    if (!key || !playlist || source.backfilledYear === year) return 0
+    try {
+      const videos = await fetchYearVideos(this.fetchFn, key, playlist, startOfYear())
+      const added = this.storeItems(source, videos)
+      this.store.updateSource(source.id, { backfilledYear: year })
+      return added
+    } catch {
+      return 0
+    }
   }
 
   async addSources(list: NewSource[]): Promise<{ added: Source[]; failed: { input: string; error: string }[] }> {
@@ -144,8 +166,10 @@ export class LearnCore {
 
   private storeItems(source: Source, items: Awaited<ReturnType<typeof fetchFeed>>['feed']['items']): number {
     const now = Date.now()
+    // YouTube : uniquement les vidéos de l'année en cours.
+    const kept = source.kind === 'youtube' ? items.filter((p) => (p.publishedAt ?? now) >= startOfYear(now)) : items
     return this.store.insertItems(
-      items.slice(0, MAX_ITEMS_PER_FETCH).map((p, i) => ({
+      kept.slice(0, source.kind === 'youtube' ? 1000 : MAX_ITEMS_PER_FETCH).map((p, i) => ({
         id: uid('i_'),
         sourceId: source.id,
         guid: p.guid,
@@ -185,6 +209,7 @@ export class LearnCore {
       try {
         const { feed } = await fetchFeed(this.fetchFn, s.url)
         result.newItems += this.storeItems(s, feed.items)
+        if (s.kind === 'youtube') result.newItems += await this.backfillYear(s)
         this.store.updateSource(s.id, { lastFetchedAt: Date.now(), error: undefined })
         if (!s.icon) void this.loadIcon(s, feed.iconUrl)
       } catch (e) {
@@ -193,7 +218,10 @@ export class LearnCore {
         result.errors.push({ sourceId: s.id, title: s.title, error })
       }
     })
-    if (!sourceId) this.store.prune(Date.now() - PRUNE_AFTER_MS)
+    if (!sourceId) {
+      this.store.prune(Date.now() - PRUNE_AFTER_MS)
+      this.store.pruneYoutubeBefore(startOfYear())
+    }
     this.emit({ type: 'refresh-finished', result })
     this.emit({ type: 'items-changed' })
     return result
@@ -459,6 +487,14 @@ export class LearnCore {
     if (!board) throw new Error('Board introuvable')
     const data = structuredClone(board.data)
     if (node.highlightId && data.nodes.some((n) => n.highlightId === node.highlightId)) return board
+    // Schéma Excalidraw : l'ajout attend l'ouverture du board, où il devient une carte du dessin.
+    if (board.mode === 'sketch') {
+      if (node.highlightId && data.pending?.some((n) => n.highlightId === node.highlightId)) return board
+      data.pending = [...(data.pending ?? []), node]
+      const updated = this.store.updateBoard(boardId, { data })
+      this.emit({ type: 'boards-changed' })
+      return updated
+    }
     const id = uid('n_')
     const root = findRoot(data)
     if (board.mode === 'mindmap') {
@@ -474,6 +510,15 @@ export class LearnCore {
     const updated = this.store.updateBoard(boardId, { data })
     this.emit({ type: 'boards-changed' })
     return updated
+  }
+
+  /** Boards qui citent un document : nœuds (mind map, canvas), liens learn:// d'un schéma, ajouts en attente. */
+  boardsForItem(itemId: string): LinkedBoard[] {
+    return this.store
+      .listBoards()
+      .map((summary) => this.store.getBoard(summary.id))
+      .filter((b): b is Board => !!b && boardCitesItem(b.data, itemId))
+      .map((b) => ({ id: b.id, title: b.title, mode: b.mode }))
   }
 
   boardMarkdown(id: string): string {

@@ -15,6 +15,7 @@ export default function SettingsDialog({ onClose }: { onClose(): void }): React.
   const setDialog = useApp((s) => s.setDialog)
   const reloadMeta = useApp((s) => s.reloadMeta)
   const [bridge, setBridge] = useState(settings.xBridge ?? '')
+  const [ytKey, setYtKey] = useState(settings.youtubeApiKey ?? '')
   const [folder, setFolder] = useState(settings.obsidianFolder)
 
   const set = (patch: Partial<Settings>): void => void updateSettings(patch)
@@ -62,6 +63,29 @@ export default function SettingsDialog({ onClose }: { onClose(): void }): React.
             {t.videoApp}
           </button>
         </div>
+      </div>
+      <div className="field">
+        <label>{t.youtubeKey}</label>
+        <input
+          className="text-input"
+          type="password"
+          value={ytKey}
+          onChange={(e) => setYtKey(e.target.value)}
+          onBlur={() => set({ youtubeApiKey: ytKey.trim() || undefined })}
+          placeholder="AIza…"
+          spellCheck={false}
+          autoComplete="off"
+        />
+        <p className="hint" style={{ margin: '6px 0 0' }}>
+          {t.youtubeKeyHint}{' '}
+          <a href="#" onClick={(e) => { e.preventDefault(); void api.openExternal('https://developers.google.com/youtube/v3/getting-started') }}>
+            {t.howTo}
+          </a>
+        </p>
+      </div>
+      <div className="field">
+        <label>{t.gestures}</label>
+        <p className="hint" style={{ margin: 0 }}>{t.gesturesHint}</p>
       </div>
       <div className="field row-between">
         <span style={{ fontSize: 14.5, fontWeight: 600 }}>{t.readerFont}</span>

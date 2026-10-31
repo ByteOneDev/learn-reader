@@ -342,7 +342,47 @@ const nicheRows = [
   ['culture', 'fr', 'podcast', 'ÊTRE ÉTUDIANT — Le Podcast', 'podcast:ÊTRE ÉTUDIANT Le Podcast', 0],
   ['culture', 'fr', 'youtube', 'Fabien Olicard', 'https://www.youtube.com/@FabienOlicard', 0],
   ['culture', 'fr', 'youtube', 'Abrège', 'https://www.youtube.com/@Abrege', 0],
-  ['culture', 'fr', 'youtube', 'Adrien Boulisset', 'https://www.youtube.com/@AdrienBoulisset', 0]
+  ['culture', 'fr', 'youtube', 'Adrien Boulisset', 'https://www.youtube.com/@AdrienBoulisset', 0],
+
+  // ── Échecs : articles, vidéos, podcasts. Sans flux documenté, on donne le site (Learn trouve son flux).
+  ['sport', 'en', 'rss', 'Chess.com — Articles', 'https://www.chess.com/rss/articles', 0],
+  ['sport', 'en', 'rss', 'New in Chess — Blog', 'https://www.newinchess.com/blog/rss/feed', 0],
+  ['sport', 'en', 'rss', 'ChessTech News', 'https://www.chesstech.org/rss/', 0],
+  ['sport', 'en', 'rss', 'The Week in Chess', 'https://theweekinchess.com/', 0],
+  ['sport', 'fr', 'rss', 'ChessBase France', 'https://fr.chessbase.com/', 0],
+  ['sport', 'fr', 'rss', 'Europe Échecs', 'https://www.europe-echecs.com/', 0],
+  ['sport', 'fr', 'rss', 'Fédération Française des Échecs', 'https://www.ffechecs.org/', 0],
+  ['sport', 'fr', 'youtube', 'Kevin Bordi', 'https://www.youtube.com/@KevinBordi', 0],
+  ['sport', 'en', 'youtube', 'Hikaru Nakamura', 'https://www.youtube.com/@GMHikaru', 0],
+  ['sport', 'en', 'youtube', 'Eric Rosen', 'https://www.youtube.com/@EricRosen', 0],
+  ['sport', 'en', 'youtube', 'Saint Louis Chess Club', 'https://www.youtube.com/@STLChessClub', 0],
+  ['sport', 'en', 'podcast', 'Perpetual Chess Podcast', 'podcast:Perpetual Chess Podcast', 0],
+  ['sport', 'en', 'podcast', 'C-Squared Podcast', 'podcast:C-Squared Podcast', 0],
+  ['sport', 'en', 'reddit', 'r/chessbeginners', 'r/chessbeginners', 0],
+
+  // ── Maths et Kurzgesagt (Tout Simplement en français, Dinge Erklärt en allemand)
+  ['sciences', 'fr', 'youtube', 'Tout Simplement — Kurzgesagt', 'https://www.youtube.com/@KurzgesagtFR', 1],
+  ['sciences', 'en', 'youtube', 'Dinge Erklärt — Kurzgesagt (allemand)', 'https://www.youtube.com/@KurzgesagtDE', 0],
+  ['sciences', 'fr', 'youtube', 'Micmaths (Mickaël Launay)', 'https://www.youtube.com/@Micmaths', 0],
+  ['sciences', 'fr', 'youtube', 'El Jj', 'https://www.youtube.com/@ElJj', 0],
+  ['sciences', 'fr', 'youtube', 'Hedacademy', 'https://www.youtube.com/@hedacademy', 0],
+  ['sciences', 'en', 'youtube', 'Mathologer', 'https://www.youtube.com/@Mathologer', 0],
+  ['sciences', 'en', 'youtube', 'Stand-up Maths', 'https://www.youtube.com/@standupmaths', 0],
+  ['sciences', 'fr', 'rss', 'Images des mathématiques (CNRS)', 'https://images.math.cnrs.fr/', 0],
+  ['sciences', 'en', 'rss', 'Quanta — Mathematics', 'https://www.quantamagazine.org/mathematics/', 0],
+
+  // ── Histoire : fondations, musées, archives (sites : Learn trouve le flux qu'ils annoncent)
+  ['histoire', 'fr', 'rss', 'Fondation Napoléon', 'https://www.napoleon.org/', 0],
+  ['histoire', 'fr', 'rss', 'Fondation Charles de Gaulle', 'https://www.charles-de-gaulle.org/', 0],
+  ['histoire', 'fr', 'rss', "Musée de l'Armée — Actualités", 'https://actualites.musee-armee.fr/', 0],
+  ['histoire', 'fr', 'rss', 'Gallica — Le blog', 'https://gallica.bnf.fr/blog', 0],
+  ['histoire', 'fr', 'rss', "L'Histoire par l'image", 'https://histoire-image.org/', 0],
+  ['histoire', 'fr', 'rss', 'Comité d’histoire — Ministère des Armées (Chemins de mémoire)', 'https://www.cheminsdememoire.gouv.fr/', 0],
+
+  // ── Newsletters (Substack et consorts publient un flux)
+  ['tech', 'en', 'rss', "Pragmatic Engineer (newsletter)", 'https://newsletter.pragmaticengineer.com/', 0],
+  ['tech', 'en', 'rss', 'Platformer (newsletter)', 'https://www.platformer.news/', 0],
+  ['culture', 'en', 'rss', 'Garbage Day (newsletter)', 'https://www.garbageday.email/', 0]
 ]
 
 const slug = (s) =>

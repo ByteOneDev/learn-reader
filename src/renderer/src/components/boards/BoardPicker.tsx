@@ -1,4 +1,4 @@
-import { Network, Plus } from 'lucide-react'
+import { LayoutGrid, Network, PenTool, Plus } from 'lucide-react'
 import type { NewBoardNode } from '@shared/types'
 import { useApp } from '../../lib/store'
 import { useT } from '../../lib/i18n'
@@ -24,7 +24,7 @@ export default function BoardPicker({ node, onDone }: { node: NewBoardNode; onDo
     <div className="menu">
       {boards.map((b) => (
         <button key={b.id} onClick={() => void send(b.id, b.title)}>
-          <Network size={15} /> {b.title}
+          {b.mode === 'sketch' ? <PenTool size={15} /> : b.mode === 'canvas' ? <LayoutGrid size={15} /> : <Network size={15} />} {b.title}
         </button>
       ))}
       {boards.length > 0 && <div className="sep" />}

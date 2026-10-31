@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import {
   addEdge,
@@ -16,8 +16,8 @@ import {
   type OnConnectEnd
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { FileDown, Highlighter, LayoutGrid, MoreHorizontal, Copy, Plus, Trash2, Wand2 } from 'lucide-react'
-import type { Board, BoardData, BoardMode, BoardNode, HighlightWithItem } from '@shared/types'
+import { FileDown, FileText, Share2, Highlighter, LayoutGrid, MoreHorizontal, Copy, Plus, Trash2, Wand2 } from 'lucide-react'
+import type { Board, BoardData, BoardExportFormat, BoardMode, BoardNode, HighlightWithItem } from '@shared/types'
 import { layoutMindmap, NODE_WIDTH } from '@shared/boardLayout'
 import { uid } from '@shared/util'
 import { useApp } from '../../lib/store'
@@ -25,6 +25,9 @@ import { useT } from '../../lib/i18n'
 import Popover from '../Popover'
 import HighlightPicker from './HighlightPicker'
 import { BoardActionsContext, nodeTypes, type FlowNode } from './BoardNodes'
+
+// Excalidraw pèse lourd : chargé seulement à l'ouverture d'un schéma.
+const SketchView = lazy(() => import('./SketchView'))
 
 const EDGE_STYLE = { markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16 } }
 
@@ -56,7 +59,7 @@ function Canvas({ board }: { board: Board }): React.JSX.Element {
   const reloadBoards = useApp((s) => s.reloadBoards)
   const setView = useApp((s) => s.setView)
   const openHighlight = useApp((s) => s.openHighlight)
-  const select = useApp((s) => s.select)
+  const openLink = useApp((s) => s.openLink)
   const flow = useReactFlow<FlowNode, Edge>()
 
   const [title, setTitle] = useState(board.title)
@@ -129,6 +132,17 @@ function Canvas({ board }: { board: Board }): React.JSX.Element {
     await api.saveBoard(board.id, { data, title, mode })
   }
 
+  const exportFile = async (format: BoardExportFormat): Promise<void> => {
+    setMenu(null)
+    try {
+      await flush()
+      const path = await api.exportBoardFile(board.id, format)
+      if (path) toast(format === 'mindnode' ? t.openedInMindNode : `${t.exportedTo} ${path.split(/[\\/]/).pop()}`)
+    } catch (e) {
+      toast((e as Error).message, 'error')
+    }
+  }
+
   const relayout = useCallback(
     (ns: FlowNode[] = flow.getNodes(), es: Edge[] = flow.getEdges()) => {
       const pos = layoutMindmap(fromFlow(ns, es))
@@ -185,13 +199,10 @@ function Canvas({ board }: { board: Board }): React.JSX.Element {
       openSource: (n: BoardNode) => {
         if (!n.itemId) return
         if (n.highlightId) void openHighlight(n.itemId, n.highlightId, n.layer ?? 'feed')
-        else {
-          setView({ type: 'highlights' })
-          void select(n.itemId)
-        }
+        else void openLink(n.itemId)
       }
     }),
-    [setNodes, openHighlight, setView, select]
+    [setNodes, openHighlight, openLink]
   )
 
   const onConnect = useCallback((c: Connection) => setEdges((es) => addEdge({ ...c, id: uid('e_'), ...EDGE_STYLE }, es)), [setEdges])
@@ -344,6 +355,24 @@ function Canvas({ board }: { board: Board }): React.JSX.Element {
               <Copy size={15} /> {t.copyOutline}
             </button>
             <div className="sep" />
+            {api.platform === 'darwin' && (
+              <button onClick={() => void exportFile('mindnode')}>
+                <Share2 size={15} /> {t.openInMindNode}
+              </button>
+            )}
+            <button onClick={() => void exportFile('pdf')}>
+              <FileText size={15} /> {t.exportPdf}
+            </button>
+            <button onClick={() => void exportFile('opml')}>
+              <FileDown size={15} /> {t.exportOpml2}
+            </button>
+            <button onClick={() => void exportFile('mm')}>
+              <FileDown size={15} /> {t.exportFreeMind}
+            </button>
+            <button onClick={() => void exportFile('svg')}>
+              <FileDown size={15} /> {t.exportSvg}
+            </button>
+            <div className="sep" />
             <button
               style={{ color: 'var(--danger)' }}
               onClick={async () => {
@@ -403,6 +432,12 @@ export default function BoardView({ boardId }: { boardId: string }): React.JSX.E
     }
   }, [api, boardId])
   if (!board) return <main className="board" />
+  if (board.mode === 'sketch')
+    return (
+      <Suspense fallback={<main className="board" />}>
+        <SketchView key={board.id} board={board} />
+      </Suspense>
+    )
   return (
     <ReactFlowProvider key={board.id}>
       <Canvas board={board} />

@@ -2,6 +2,7 @@
 // (npm run web), sans Electron ni réseau. Jamais utilisée dans l'application réelle.
 import type { Board, NotionStatus, Counts, Highlight, Item, ItemQuery, LearnAPI, LearnEvent, NewSource, ReadingBalance, Settings, Source, TocEntry, View } from '@shared/types'
 import { layoutMindmap } from '@shared/boardLayout'
+import { boardCitesItem, boardSize } from '@shared/boardExport'
 import { DEFAULT_SETTINGS } from '@shared/types'
 import { uid } from '@shared/util'
 
@@ -300,9 +301,24 @@ const boards: Board[] = [
         { id: 'e4', from: 'q1', to: 'n2', label: 'contredit' }
       ]
     }
+  },
+  {
+    id: 'board2',
+    title: 'Schéma du routage',
+    mode: 'sketch',
+    createdAt: now,
+    updatedAt: now,
+    data: {
+      nodes: [],
+      edges: [],
+      pending: [
+        { kind: 'source', itemId: 'i1', itemTitle: 'Comment le routage d’Internet tente enfin de se sécuriser' },
+        { kind: 'excerpt', itemId: 'i3', layer: 'feed', quote: 'Les opérateurs ne comprenaient pas les messages qu’ils relayaient.', itemTitle: 'Le télégraphe Chappe, premier réseau de données de l’histoire', color: 'green' }
+      ]
+    }
   }
 ]
-for (const b of boards) for (const [id, p] of layoutMindmap(b.data)) Object.assign(b.data.nodes.find((n) => n.id === id)!, p)
+for (const b of boards) if (b.mode === 'mindmap') for (const [id, p] of layoutMindmap(b.data)) Object.assign(b.data.nodes.find((n) => n.id === id)!, p)
 let settings: Settings = { ...DEFAULT_SETTINGS, onboarded: new URLSearchParams(location.search).get('onboarding') === null, obsidianVault: '/Users/moi/Obsidian' }
 const listeners = new Set<(e: LearnEvent) => void>()
 const emit = (e: LearnEvent): void => listeners.forEach((l) => l(e))
@@ -331,6 +347,8 @@ function matches(view: View, it: Item): boolean {
       return src?.kind === view.kind
     case 'source':
       return it.sourceId === view.sourceId
+    case 'category':
+      return (src?.category ?? '') === view.category
     default:
       return false
   }
@@ -470,7 +488,7 @@ export const mockApi: LearnAPI = {
       .sort((a, b) => a.leaning - b.leaning)
     return delay({ days, entries, otherReads: items.filter((i) => i.read && !sources.find((s) => s.id === i.sourceId)?.leaning).length })
   },
-  listBoards: async () => delay(boards.map((b) => ({ id: b.id, title: b.title, mode: b.mode, nodeCount: b.data.nodes.length, updatedAt: b.updatedAt }))),
+  listBoards: async () => delay(boards.map((b) => ({ id: b.id, title: b.title, mode: b.mode, nodeCount: boardSize(b.data), updatedAt: b.updatedAt }))),
   createBoard: async (title, mode) => {
     const b: Board = { id: uid('b_'), title, mode, data: { nodes: [], edges: [] }, createdAt: Date.now(), updatedAt: Date.now() }
     boards.unshift(b)
@@ -490,6 +508,10 @@ export const mockApi: LearnAPI = {
   },
   addToBoard: async (id, node) => {
     const b = boards.find((x) => x.id === id)!
+    if (b.mode === 'sketch') {
+      if (!(node.highlightId && b.data.pending?.some((n) => n.highlightId === node.highlightId))) b.data.pending = [...(b.data.pending ?? []), node]
+      return delay(b)
+    }
     const nid = uid('n_')
     const root = b.data.nodes.find((n) => n.root) ?? b.data.nodes[0]
     b.data.nodes.push({ ...node, id: nid, x: 0, y: 0, root: !root })
@@ -497,8 +519,14 @@ export const mockApi: LearnAPI = {
     for (const [i, p] of layoutMindmap(b.data)) Object.assign(b.data.nodes.find((n) => n.id === i)!, p)
     return delay(b)
   },
+  boardsForItem: async (itemId) => delay(boards.filter((b) => boardCitesItem(b.data, itemId)).map((b) => ({ id: b.id, title: b.title, mode: b.mode }))),
+  saveFile: async (name) => {
+    console.info('[mock] saveFile', name)
+    return delay(`/Users/moi/Documents/${name}`, 200)
+  },
   allHighlights: async () => delay(highlights.map((h) => ({ ...h, itemTitle: items.find((i) => i.id === h.itemId)?.title ?? '' }))),
   exportBoardToObsidian: async (id) => delay({ path: `/Users/moi/Obsidian/Learn/Boards/${boards.find((b) => b.id === id)?.title}.canvas` }),
+  exportBoardFile: async (id, format) => delay(`/Users/moi/Documents/${boards.find((b) => b.id === id)?.title}.${format === 'mindnode' ? 'opml' : format}`, 300),
   boardMarkdown: async (id) => delay(`# ${boards.find((b) => b.id === id)?.title}\n`),
   notionStatus: async () => delay(notion),
   notionConnect: async () => {

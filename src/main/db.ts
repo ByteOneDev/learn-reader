@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from '
 import { dirname } from 'node:path'
 import type { Board, BoardSummary, Counts, Highlight, HighlightWithItem, Item, ItemQuery, ReadingBalance, Settings, Source, View } from '@shared/types'
 import { DEFAULT_SETTINGS } from '@shared/types'
+import { boardSize } from '@shared/boardExport'
 
 // SQLite compilé en WebAssembly (sql.js) : aucun module natif à recompiler pour Mac, Windows et Linux.
 // La base vit en mémoire et est écrite sur disque (écriture atomique) peu après chaque modification.
@@ -65,7 +66,9 @@ const MIGRATIONS = [
    ALTER TABLE items ADD COLUMN media_type TEXT;
    ALTER TABLE items ADD COLUMN duration INTEGER;
    ALTER TABLE items ADD COLUMN transcript_url TEXT;
-   ALTER TABLE items ADD COLUMN transcript TEXT;`
+   ALTER TABLE items ADD COLUMN transcript TEXT;`,
+  // v0.10 : année déjà récupérée en entier pour une chaîne YouTube (avec une clé d'API).
+  `ALTER TABLE sources ADD COLUMN backfilled_year INTEGER;`
 ]
 
 export interface NotionState {
@@ -226,7 +229,8 @@ export class Store {
       lastFetchedAt: (r.last_fetched_at as number) ?? undefined,
       error: (r.error as string) ?? undefined,
       leaning: (r.leaning as number) ?? undefined,
-      owner: (r.owner as string) ?? undefined
+      owner: (r.owner as string) ?? undefined,
+      backfilledYear: (r.backfilled_year as number) ?? undefined
     }
   }
 
@@ -276,7 +280,8 @@ export class Store {
       lastFetchedAt: 'last_fetched_at',
       error: 'error',
       leaning: 'leaning',
-      owner: 'owner'
+      owner: 'owner',
+      backfilledYear: 'backfilled_year'
     }
     const sets: string[] = []
     const vals: SqlValue[] = []
@@ -424,6 +429,8 @@ export class Store {
         return { where: 's.kind = ?', params: [view.kind] }
       case 'source':
         return { where: 'i.source_id = ?', params: [view.sourceId] }
+      case 'category':
+        return { where: "s.category IS ? AND s.kind NOT IN ('links', 'book')", params: [view.category || null] }
       default:
         throw new Error('Vue inconnue')
     }
@@ -496,6 +503,19 @@ export class Store {
   markAllRead(view: View): void {
     const { where, params } = this.viewWhere(view)
     this.run(`UPDATE items SET read = 1 WHERE id IN (SELECT i.id FROM items i JOIN sources s ON s.id = i.source_id WHERE ${where})`, params)
+  }
+
+  /**
+   * YouTube : on ne garde que les vidéos de l'année en cours. Au changement d'année, tout repart de zéro,
+   * sauf les vidéos où l'utilisateur a laissé une trace (marque, tag, surlignage, note horodatée).
+   */
+  pruneYoutubeBefore(start: number): number {
+    return this.run(
+      `DELETE FROM items WHERE published_at < ? AND later = 0 AND bookmarked = 0 AND favorite = 0
+         AND id NOT IN (SELECT item_id FROM highlights) AND id NOT IN (SELECT item_id FROM item_tags)
+         AND source_id IN (SELECT id FROM sources WHERE kind = 'youtube')`,
+      [start]
+    )
   }
 
   /** Purge les vieux articles lus sans marque ni surlignage, pour garder une base légère. */
@@ -583,7 +603,7 @@ export class Store {
       id: r.id as string,
       title: r.title as string,
       mode: r.mode as Board['mode'],
-      nodeCount: (JSON.parse(r.data as string) as Board['data']).nodes.length,
+      nodeCount: boardSize(JSON.parse(r.data as string) as Board['data']),
       updatedAt: r.updated_at as number
     }))
   }

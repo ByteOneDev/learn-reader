@@ -14,6 +14,20 @@ Direction graphique inspirée de [Reeder](https://reederapp.com) (2024), avec sa
 | Livre EPUB | PDF surligné |
 | ![](docs/screenshots/livre-epub.png) | ![](docs/screenshots/livre-pdf.png) |
 
+## Nouveautés de la v0.10
+
+- **Schémas Excalidraw** : *Nouveau board → Schéma (Excalidraw)* ouvre une feuille de dessin libre (formes, flèches, croquis, images collées). **Surlignages** et **Lier un document** y posent des cartes qui gardent un lien vers leur source : un article, une vidéo, un podcast, un livre, un passage précis ou un surlignage. Clic sur l'icône 🔗 d'une carte : Learn ouvre le passage. Le bouton **Board** du lecteur fonctionne aussi vers un schéma : le passage y apparaît à l'ouverture. Export **PNG** ou fichier **.excalidraw** (rouvrable sur excalidraw.com).
+- **Liens dans les deux sens** : en haut du lecteur, **Dans les boards** liste les mind maps, canvas et schémas qui citent le document ouvert ; un clic y mène. *Partager → Lier à un board…* ajoute le document entier à un board.
+- **Mind maps vers MindNode et PDF** : menu ⋯ d'un board → *Ouvrir dans MindNode* (macOS), *PDF*, *OPML*, *FreeMind (.mm)* ou *SVG*.
+- **Catégories** : dans la barre latérale, flux, Reddit, podcasts, YouTube… sont rangés par thème (tech, politique, sciences, sport & échecs…), en dossiers repliables ; un clic sur le dossier affiche tous ses articles. Clic droit sur une source → *Changer de catégorie…* (ou en créer une).
+- **Tags** : une section *Tags* dans la barre latérale ; touche **t** pour taguer le document ouvert.
+- **YouTube, l'année en cours** : seules les vidéos publiées depuis le 1er janvier restent, les nouvelles arrivent au fil de l'eau, et tout repart à zéro au changement d'année (sauf ce que tu as gardé : favoris, signets, surlignages, à lire plus tard). Le flux public d'une chaîne ne donne que ses 15 dernières vidéos ; pour avoir **toute l'année**, ajoute une clé *YouTube Data API* (gratuite) dans *Réglages → Vidéos YouTube*.
+- **Geste à trois doigts** (macOS) : balayer vers la gauche replie les volets un par un (barre latérale, puis liste : mode concentration), vers la droite les rouvre. Il faut activer *Réglages Système → Trackpad → Autres gestes → Balayer entre les pages* (deux ou trois doigts). Au clavier : **[** et **z**.
+- **Plus d'animations** : cartes de la timeline en cascade, article qui glisse à l'ouverture, compteurs qui rebondissent, retours au clic.
+- **Newsletters** : *Ajouter une source → Newsletter*. Substack, Buttondown, Medium, Ghost… se lisent par leur flux ; pour une newsletter sans flux, Learn explique comment passer par Kill the Newsletter.
+- **Catalogue : 288 sources** (65 chaînes YouTube, 25 podcasts) : échecs (Chess.com, New in Chess, The Week in Chess, Europe Échecs, Kevin Bordi, Hikaru, Eric Rosen, Perpetual Chess…), Kurzgesagt en français (*Tout Simplement*) et en allemand (*Dinge Erklärt*), maths (Micmaths, El Jj, Mathologer, Images des maths…), histoire (Fondation Napoléon, Fondation Charles de Gaulle, Gallica, Musée de l'Armée…) et newsletters.
+- **Reddit** : Learn espace ses requêtes et réessaie quand Reddit répond « trop de requêtes » (HTTP 429) ; l'abonnement est créé quand même et se remplit au rafraîchissement suivant.
+
 ## Nouveautés de la v0.9
 
 - **Vidéos YouTube dans ton navigateur** : par défaut, cliquer sur la vidéo l'ouvre dans ton navigateur habituel (celui choisi dans ton système), là où tu t'étais arrêté, et la marque comme vue. Le bouton **Lire ici** utilise ponctuellement le lecteur intégré. *Réglages → Vidéos YouTube → Lecteur intégré* le rend permanent (avec les moments notés et la reprise automatique).
@@ -195,6 +209,7 @@ L'orientation politique (−3 à +3) est une estimation de Learn à partir des l
 - ~~**v0.5** : Notion (export puis synchro)~~ ✓
 - ~~**v0.6** : podcasts, vidéos YouTube, signature macOS~~ ✓
 - ~~**v0.8** : extension Obsidian~~ ✓
+- ~~**v0.10** : schémas Excalidraw liés aux documents, catégories, tags, export MindNode/PDF~~ ✓
 - **Ensuite** : app native
 
 ## Licence

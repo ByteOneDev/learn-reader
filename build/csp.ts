@@ -10,8 +10,9 @@ export const CSP = [
   "style-src 'self' 'unsafe-inline'",
   'img-src * data: blob:',
   'media-src * blob:',
-  "font-src 'self' data:",
-  "connect-src 'self'",
+  "font-src 'self' data: blob:",
+  // Excalidraw relit ses polices et les images collées (data:, blob:) pour l'export.
+  "connect-src 'self' data: blob:",
   // Seul le lecteur YouTube intégré (version sans cookies) peut s'afficher dans un cadre.
   'frame-src https://www.youtube-nocookie.com',
   "object-src 'none'",

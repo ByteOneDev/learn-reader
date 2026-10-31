@@ -7,9 +7,12 @@ import {
   Headphones,
   Heart,
   Highlighter,
+  LayoutGrid,
   Layers,
   Link2,
   Network,
+  PenTool,
+  Folder,
   Plus,
   RefreshCw,
   Scale,
@@ -23,6 +26,7 @@ import type { Source, SourceKind, View } from '@shared/types'
 import { useApp } from '../lib/store'
 import { useT } from '../lib/i18n'
 import SourceIcon from './SourceIcon'
+import { catalog } from '@shared/catalog'
 import Popover from './Popover'
 
 function sameView(a: View, b: View): boolean {
@@ -55,7 +59,11 @@ function NavRow({ view, icon, label, badge, disabled, soon, error, onContext }: 
       <span className="label">{label}</span>
       {error && <span className="error-dot" />}
       {soon && <span className="soon">{soon}</span>}
-      {!!badge && <span className="badge">{badge}</span>}
+      {!!badge && (
+        <motion.span key={badge} className="badge" initial={{ scale: 0.6, opacity: 0.4 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 600, damping: 18 }}>
+          {badge}
+        </motion.span>
+      )}
     </button>
   )
 }
@@ -99,6 +107,64 @@ function Section({ id, title, children }: { id: string; title: string; children:
   )
 }
 
+/** Nom affiché d'une catégorie : celles du catalogue sont traduites, les dossiers OPML gardés tels quels. */
+export function categoryLabel(id: string, lang: 'fr' | 'en'): string {
+  const c = catalog.categories.find((x) => x.id === id)
+  return c ? c[lang] : id
+}
+
+/** Groupe de sources d'une même catégorie, repliable, comme un dossier de Reeder. */
+function CategoryGroup({ section, category, label, children }: { section: string; category: string; label: string; children: ReactNode }): React.JSX.Element {
+  const key = `group:${section}:${category}`
+  const [open, setOpen] = useState(() => {
+    try {
+      return localStorage.getItem(key) !== 'closed'
+    } catch {
+      return true
+    }
+  })
+  const view = useApp((s) => s.view)
+  const setView = useApp((s) => s.setView)
+  const active = view.type === 'category' && view.category === category
+  return (
+    <div className="cat-group">
+      <div className={`cat-head${active ? ' active' : ''}`}>
+        <button
+          className={`cat-chevron${open ? '' : ' closed'}`}
+          onClick={() => {
+            setOpen(!open)
+            try {
+              localStorage.setItem(key, open ? 'closed' : 'open')
+            } catch {
+              /* stockage indisponible */
+            }
+          }}
+          aria-expanded={open}
+          aria-label={label}
+        >
+          <ChevronDown size={14} />
+        </button>
+        <button className="cat-label" onClick={() => setView({ type: 'category', category })}>
+          <Folder size={14} /> {label}
+        </button>
+      </div>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            className="section-body"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 38 }}
+          >
+            {children}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
 export default function Sidebar(): React.JSX.Element {
   const t = useT()
   const sources = useApp((s) => s.sources)
@@ -113,11 +179,22 @@ export default function Sidebar(): React.JSX.Element {
   const reloadMeta = useApp((s) => s.reloadMeta)
   const toast = useApp((s) => s.toast)
   const [menu, setMenu] = useState<{ source: Source; x: number; y: number } | null>(null)
+  const [catMenu, setCatMenu] = useState<{ source: Source; x: number; y: number } | null>(null)
+  const [boardMenu, setBoardMenu] = useState<{ x: number; y: number } | null>(null)
+  const [newCat, setNewCat] = useState('')
+  const lang = settings?.language ?? 'fr'
+  const knownCategories = [...new Set([...catalog.categories.map((c) => c.id), ...sources.map((s) => s.category).filter((c): c is string => !!c)])]
+  const setCategory = async (source: Source, category: string | undefined): Promise<void> => {
+    setCatMenu(null)
+    setNewCat('')
+    await api.updateSource(source.id, { category })
+    await reloadMeta()
+  }
 
   const unread = (id: string): number | undefined => (settings?.showUnread ? counts?.unreadBySource[id] : undefined)
   const byKind = (kinds: SourceKind[]): Source[] => sources.filter((s) => kinds.includes(s.kind))
 
-  const sourceRows = (list: Source[]): ReactNode =>
+  const plainRows = (list: Source[]): ReactNode =>
     list.map((s) => (
       <NavRow
         key={s.id}
@@ -132,6 +209,21 @@ export default function Sidebar(): React.JSX.Element {
         }}
       />
     ))
+
+  /** Sources regroupées par catégorie dès qu'il y en a plusieurs ; sans catégorie : « Autres », en dernier. */
+  const sourceRows = (list: Source[], section: string): ReactNode => {
+    const groups = new Map<string, Source[]>()
+    for (const s of list) groups.set(s.category ?? '', [...(groups.get(s.category ?? '') ?? []), s])
+    if (groups.size <= 1) return plainRows(list)
+    const order = (c: string): number => (c ? catalog.categories.findIndex((x) => x.id === c) + 1 || 50 : 99)
+    return [...groups.entries()]
+      .sort(([a], [b]) => order(a) - order(b) || a.localeCompare(b))
+      .map(([cat, items]) => (
+        <CategoryGroup key={cat || '_'} section={section} category={cat} label={cat ? categoryLabel(cat, lang) : t.otherCategory}>
+          {plainRows(items)}
+        </CategoryGroup>
+      ))
+  }
 
   const social = byKind(['mastodon', 'bluesky', 'x'])
   const reddit = byKind(['reddit'])
@@ -170,20 +262,36 @@ export default function Sidebar(): React.JSX.Element {
           <NavRow view={{ type: 'bookmarks' }} icon={<Bookmark size={19} />} label={t.bookmarks} badge={counts?.bookmarks} />
           <NavRow view={{ type: 'favorites' }} icon={<Heart size={19} />} label={t.favorites} badge={counts?.favorites} />
           <NavRow view={{ type: 'highlights' }} icon={<Highlighter size={19} />} label={t.highlights} badge={counts?.highlights} />
-          {tags.map(([tag, n]) => (
-            <NavRow key={tag} view={{ type: 'tag', tag }} icon={<Tag size={19} />} label={tag} badge={n} />
-          ))}
           <button className="nav-row" onClick={() => setDialog('balance')}>
             <Scale size={19} />
             <span className="label">{t.balanceNav}</span>
           </button>
         </Section>
 
+        <Section id="tags" title={t.tagsLabel}>
+          {tags.map(([tag, n]) => (
+            <NavRow key={tag} view={{ type: 'tag', tag }} icon={<Tag size={19} />} label={tag} badge={n} />
+          ))}
+          {!tags.length && <div className="nav-hint">{t.tagsHint}</div>}
+        </Section>
+
         <Section id="boards" title={t.boards}>
           {boards.map((b) => (
-            <NavRow key={b.id} view={{ type: 'board', boardId: b.id }} icon={<Network size={19} />} label={b.title} badge={b.nodeCount || undefined} />
+            <NavRow
+              key={b.id}
+              view={{ type: 'board', boardId: b.id }}
+              icon={b.mode === 'sketch' ? <PenTool size={18} /> : b.mode === 'canvas' ? <LayoutGrid size={18} /> : <Network size={19} />}
+              label={b.title}
+              badge={b.nodeCount || undefined}
+            />
           ))}
-          <button className="nav-row" onClick={() => void createBoard()}>
+          <button
+            className="nav-row"
+            onClick={(e) => {
+              const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
+              setBoardMenu({ x: r.left + 24, y: r.bottom })
+            }}
+          >
             <Plus size={19} />
             <span className="label" style={{ color: 'var(--text-2)' }}>{t.newBoard}</span>
           </button>
@@ -191,32 +299,32 @@ export default function Sidebar(): React.JSX.Element {
 
         {podcasts.length > 0 && (
           <Section id="podcasts" title={t.podcasts}>
-            {sourceRows(podcasts)}
+            {sourceRows(podcasts, 'podcasts')}
           </Section>
         )}
         {videos.length > 0 && (
           <Section id="youtube" title={t.youtube}>
-            {sourceRows(videos)}
+            {sourceRows(videos, 'videos')}
           </Section>
         )}
         {social.length > 0 && (
           <Section id="social" title={t.social}>
-            {sourceRows(social)}
+            {sourceRows(social, 'social')}
           </Section>
         )}
         {reddit.length > 0 && (
           <Section id="reddit" title={t.reddit}>
-            {sourceRows(reddit)}
+            {sourceRows(reddit, 'reddit')}
           </Section>
         )}
         {forums.length > 0 && (
           <Section id="forums" title={t.forums}>
-            {sourceRows(forums)}
+            {sourceRows(forums, 'forums')}
           </Section>
         )}
         {feeds.length > 0 && (
           <Section id="feeds" title={t.feeds}>
-            {sourceRows(feeds)}
+            {sourceRows(feeds, 'feeds')}
           </Section>
         )}
       </nav>
@@ -235,6 +343,14 @@ export default function Sidebar(): React.JSX.Element {
             >
               <RefreshCw size={15} /> {t.refresh}
             </button>
+            <button
+              onClick={() => {
+                setCatMenu(menu)
+                setMenu(null)
+              }}
+            >
+              <Folder size={15} /> {t.changeCategory}
+            </button>
             <div className="sep" />
             <button
               style={{ color: 'var(--danger)' }}
@@ -250,6 +366,50 @@ export default function Sidebar(): React.JSX.Element {
             >
               <Trash2 size={15} /> {t.removeSource}
             </button>
+          </Popover>
+        )}
+        {catMenu && (
+          <Popover key="cat" anchor={{ x: catMenu.x + 110, y: catMenu.y, bottom: catMenu.y }} placement="below" onClose={() => setCatMenu(null)} className="menu">
+            <div className="hint" style={{ padding: '4px 10px 6px' }}>
+              {catMenu.source.title}
+            </div>
+            {knownCategories.map((c) => (
+              <button key={c} onClick={() => void setCategory(catMenu.source, c)} className={catMenu.source.category === c ? 'on' : ''}>
+                <Folder size={15} /> {categoryLabel(c, lang)}
+              </button>
+            ))}
+            <button onClick={() => void setCategory(catMenu.source, undefined)}>{t.otherCategory}</button>
+            <div className="sep" />
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                if (newCat.trim()) void setCategory(catMenu.source, newCat.trim())
+              }}
+              style={{ padding: '2px 6px 4px' }}
+            >
+              <input className="text-input" style={{ height: 32 }} value={newCat} onChange={(e) => setNewCat(e.target.value)} placeholder={t.newCategory} autoFocus />
+            </form>
+          </Popover>
+        )}
+        {boardMenu && (
+          <Popover key="boards" anchor={{ x: boardMenu.x + 110, y: boardMenu.y, bottom: boardMenu.y }} placement="below" onClose={() => setBoardMenu(null)} className="menu">
+            {(
+              [
+                ['mindmap', <Network key="m" size={15} />, t.newMindmap],
+                ['canvas', <LayoutGrid key="c" size={15} />, t.newCanvas],
+                ['sketch', <PenTool key="s" size={15} />, t.newSketch]
+              ] as const
+            ).map(([mode, icon, label]) => (
+              <button
+                key={mode}
+                onClick={() => {
+                  setBoardMenu(null)
+                  void createBoard(mode)
+                }}
+              >
+                {icon} {label}
+              </button>
+            ))}
           </Popover>
         )}
       </AnimatePresence>

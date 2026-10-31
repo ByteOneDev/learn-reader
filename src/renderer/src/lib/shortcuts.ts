@@ -51,6 +51,9 @@ export function useShortcuts(): void {
         case 'z':
           s.toggleFocus()
           break
+        case 't':
+          if (item) window.dispatchEvent(new Event('learn:edit-tags'))
+          break
         case '/':
           window.dispatchEvent(new Event('learn:focus-search'))
           break

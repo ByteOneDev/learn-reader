@@ -8,6 +8,7 @@ import { LearnCore } from '../src/main/core'
 import { openDatabase } from '../src/main/db'
 import type { Board, BoardData, BoardNode } from '../src/shared/types'
 import { blockId } from '../src/shared/util'
+import { learnLink } from '../src/shared/links'
 
 const note = (id: string, text: string, extra: Partial<BoardNode> = {}): BoardNode => ({ id, kind: 'note', text, x: 0, y: 0, ...extra })
 
@@ -133,6 +134,28 @@ describe('boards dans Learn', async () => {
     const file = canvas.nodes.find((n: { type: string }) => n.type === 'file')
     expect(file).toMatchObject({ file: 'Learn/Le routage BGP.md', subpath: `#^${blockId(h.id)}` })
     expect(readFileSync(join(vault, 'Learn', 'Le routage BGP.md'), 'utf8')).toContain(`^${blockId(h.id)}`)
+  })
+
+  it('met en attente les ajouts destinés à un schéma Excalidraw, sans doublon', () => {
+    const board = core.createBoard('Schéma', 'sketch')
+    core.addToBoard(board.id, { kind: 'highlight', highlightId: h.id, itemId: 'i1', quote: h.quote, color: 'green' })
+    const b = core.addToBoard(board.id, { kind: 'highlight', highlightId: h.id, itemId: 'i1', quote: h.quote })
+    expect(b.mode).toBe('sketch')
+    expect(b.data.nodes).toHaveLength(0)
+    expect(b.data.pending).toHaveLength(1)
+    expect(store.listBoards().find((x) => x.id === board.id)?.nodeCount).toBe(1)
+  })
+
+  it('retrouve les boards qui citent un document, y compris par un lien de schéma', () => {
+    const sketch = core.createBoard('Dessin', 'sketch')
+    store.updateBoard(sketch.id, {
+      data: { nodes: [], edges: [], sketch: { elements: [{ id: 'r', type: 'rectangle', link: learnLink('i2', 'h9') }, { id: 'x', link: learnLink('i1'), isDeleted: true }] } }
+    })
+    const ids = (item: string): string[] => core.boardsForItem(item).map((b) => b.title).sort()
+    expect(ids('i1')).toEqual(['Sans titre', 'Schéma'])
+    expect(ids('i2')).toEqual(['Dessin'])
+    // « i2 » ne doit pas correspondre à « i22 ».
+    expect(ids('i22')).toEqual([])
   })
 
   it('supprime un board sans toucher aux surlignages', () => {

@@ -2528,6 +2528,326 @@
       "input": "https://www.youtube.com/@AdrienBoulisset",
       "preselected": false,
       "niche": true
+    },
+    {
+      "id": "en-sport-chess-com-articles",
+      "category": "sport",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Chess.com — Articles",
+      "input": "https://www.chess.com/rss/articles",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sport-new-in-chess-blog",
+      "category": "sport",
+      "lang": "en",
+      "kind": "rss",
+      "title": "New in Chess — Blog",
+      "input": "https://www.newinchess.com/blog/rss/feed",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sport-chesstech-news",
+      "category": "sport",
+      "lang": "en",
+      "kind": "rss",
+      "title": "ChessTech News",
+      "input": "https://www.chesstech.org/rss/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sport-the-week-in-chess",
+      "category": "sport",
+      "lang": "en",
+      "kind": "rss",
+      "title": "The Week in Chess",
+      "input": "https://theweekinchess.com/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-sport-chessbase-france",
+      "category": "sport",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "ChessBase France",
+      "input": "https://fr.chessbase.com/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-sport-europe-echecs",
+      "category": "sport",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Europe Échecs",
+      "input": "https://www.europe-echecs.com/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-sport-federation-francaise-des-echecs",
+      "category": "sport",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Fédération Française des Échecs",
+      "input": "https://www.ffechecs.org/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-sport-kevin-bordi",
+      "category": "sport",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Kevin Bordi",
+      "input": "https://www.youtube.com/@KevinBordi",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sport-hikaru-nakamura",
+      "category": "sport",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "Hikaru Nakamura",
+      "input": "https://www.youtube.com/@GMHikaru",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sport-eric-rosen",
+      "category": "sport",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "Eric Rosen",
+      "input": "https://www.youtube.com/@EricRosen",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sport-saint-louis-chess-club",
+      "category": "sport",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "Saint Louis Chess Club",
+      "input": "https://www.youtube.com/@STLChessClub",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sport-perpetual-chess-podcast",
+      "category": "sport",
+      "lang": "en",
+      "kind": "podcast",
+      "title": "Perpetual Chess Podcast",
+      "input": "podcast:Perpetual Chess Podcast",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sport-c-squared-podcast",
+      "category": "sport",
+      "lang": "en",
+      "kind": "podcast",
+      "title": "C-Squared Podcast",
+      "input": "podcast:C-Squared Podcast",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sport-r-chessbeginners",
+      "category": "sport",
+      "lang": "en",
+      "kind": "reddit",
+      "title": "r/chessbeginners",
+      "input": "r/chessbeginners",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-sciences-tout-simplement-kurzgesagt",
+      "category": "sciences",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Tout Simplement — Kurzgesagt",
+      "input": "https://www.youtube.com/@KurzgesagtFR",
+      "preselected": true,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-dinge-erklart-kurzgesagt-allemand",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "Dinge Erklärt — Kurzgesagt (allemand)",
+      "input": "https://www.youtube.com/@KurzgesagtDE",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-sciences-micmaths-mickael-launay",
+      "category": "sciences",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Micmaths (Mickaël Launay)",
+      "input": "https://www.youtube.com/@Micmaths",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-sciences-el-jj",
+      "category": "sciences",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "El Jj",
+      "input": "https://www.youtube.com/@ElJj",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-sciences-hedacademy",
+      "category": "sciences",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "Hedacademy",
+      "input": "https://www.youtube.com/@hedacademy",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-mathologer",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "Mathologer",
+      "input": "https://www.youtube.com/@Mathologer",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-stand-up-maths",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "youtube",
+      "title": "Stand-up Maths",
+      "input": "https://www.youtube.com/@standupmaths",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-sciences-images-des-mathematiques-cnrs",
+      "category": "sciences",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Images des mathématiques (CNRS)",
+      "input": "https://images.math.cnrs.fr/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-quanta-mathematics",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Quanta — Mathematics",
+      "input": "https://www.quantamagazine.org/mathematics/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-histoire-fondation-napoleon",
+      "category": "histoire",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Fondation Napoléon",
+      "input": "https://www.napoleon.org/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-histoire-fondation-charles-de-gaulle",
+      "category": "histoire",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Fondation Charles de Gaulle",
+      "input": "https://www.charles-de-gaulle.org/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-histoire-musee-de-l-armee-actualites",
+      "category": "histoire",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Musée de l'Armée — Actualités",
+      "input": "https://actualites.musee-armee.fr/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-histoire-gallica-le-blog",
+      "category": "histoire",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Gallica — Le blog",
+      "input": "https://gallica.bnf.fr/blog",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-histoire-l-histoire-par-l-image",
+      "category": "histoire",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "L'Histoire par l'image",
+      "input": "https://histoire-image.org/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-histoire-comite-d-histoire-ministere-des-armees-chemins-de-memoire",
+      "category": "histoire",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Comité d’histoire — Ministère des Armées (Chemins de mémoire)",
+      "input": "https://www.cheminsdememoire.gouv.fr/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-pragmatic-engineer-newsletter",
+      "category": "tech",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Pragmatic Engineer (newsletter)",
+      "input": "https://newsletter.pragmaticengineer.com/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-platformer-newsletter",
+      "category": "tech",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Platformer (newsletter)",
+      "input": "https://www.platformer.news/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-culture-garbage-day-newsletter",
+      "category": "culture",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Garbage Day (newsletter)",
+      "input": "https://www.garbageday.email/",
+      "preselected": false,
+      "niche": true
     }
   ]
 }

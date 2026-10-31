@@ -9,16 +9,20 @@ import {
   FileDown,
   Heart,
   Highlighter,
+  LayoutGrid,
   Layers,
   Link as LinkIcon,
   Maximize2,
   Minimize2,
+  Network,
+  PenTool,
   Send,
   Share,
   Tag
 } from 'lucide-react'
 import { contextOf } from '@shared/anchor'
-import type { Highlight, HighlightColor } from '@shared/types'
+import type { Highlight, HighlightColor, LinkedBoard } from '@shared/types'
+import BoardPicker from './boards/BoardPicker'
 import { useApp } from '../lib/store'
 import { useT } from '../lib/i18n'
 import { fullDate } from '../lib/time'
@@ -67,6 +71,7 @@ export default function Reader(): React.JSX.Element {
   const toggleFocus = useApp((s) => s.toggleFocus)
   const settings = useApp((s) => s.settings)
   const api = useApp((s) => s.api)
+  const setView = useApp((s) => s.setView)
   const toast = useApp((s) => s.toast)
   const lang = settings?.language ?? 'fr'
 
@@ -77,7 +82,29 @@ export default function Reader(): React.JSX.Element {
   const [pending, setPending] = useState<PendingSelection | null>(null)
   const [active, setActive] = useState<{ id: string; anchor: Anchor; edit?: boolean } | null>(null)
   const [tagAnchor, setTagAnchor] = useState<Anchor | null>(null)
+  const tagBtn = useRef<HTMLButtonElement>(null)
+  // Touche « t » : éditeur de tags du document ouvert.
+  useEffect(() => {
+    const open = (): void => {
+      const r = tagBtn.current?.getBoundingClientRect()
+      if (r) setTagAnchor({ x: r.left + r.width / 2, y: r.top, bottom: r.bottom })
+    }
+    window.addEventListener('learn:edit-tags', open)
+    return () => window.removeEventListener('learn:edit-tags', open)
+  }, [])
   const [shareAnchor, setShareAnchor] = useState<Anchor | null>(null)
+  const [boardAnchor, setBoardAnchor] = useState<Anchor | null>(null)
+  // Boards qui citent ce document (mind maps, canvas, schémas) : lien retour depuis le lecteur.
+  const boards = useApp((s) => s.boards)
+  const [linked, setLinked] = useState<LinkedBoard[]>([])
+  useEffect(() => {
+    let alive = true
+    if (!item) return
+    void api.boardsForItem(item.id).then((l) => alive && setLinked(l)).catch(() => alive && setLinked([]))
+    return () => {
+      alive = false
+    }
+  }, [api, item?.id, boards]) // eslint-disable-line react-hooks/exhaustive-deps
   const [heroOk, setHeroOk] = useState(true)
 
   const source = sources.find((s) => s.id === item?.sourceId)
@@ -222,7 +249,7 @@ export default function Reader(): React.JSX.Element {
         </button>
         <span className="spacer" />
         <div className="pill">
-          <button onClick={(e) => setTagAnchor(anchorOf(e))} title={t.tagsLabel} aria-label={t.tagsLabel} className={item.tags.length ? 'on' : ''}>
+          <button ref={tagBtn} onClick={(e) => setTagAnchor(anchorOf(e))} title={`${t.tagsLabel} (t)`} aria-label={t.tagsLabel} className={item.tags.length ? 'on' : ''}>
             <Tag size={17} />
           </button>
           <button onClick={() => void patchItem(item.id, { later: !item.later })} className={item.later ? 'on' : ''} title={`${t.later} (l)`} aria-pressed={item.later}>
@@ -257,6 +284,19 @@ export default function Reader(): React.JSX.Element {
         </div>
       </div>
       {extracting && <div className="loading-bar" />}
+      <AnimatePresence>
+        {linked.length > 0 && (
+          <motion.div className="linked-boards" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}>
+            <span className="lb-label">{t.linkedBoards}</span>
+            {linked.map((b) => (
+              <button key={b.id} className="lb-chip" onClick={() => setView({ type: 'board', boardId: b.id })}>
+                {b.mode === 'sketch' ? <PenTool size={13} /> : b.mode === 'canvas' ? <LayoutGrid size={13} /> : <Network size={13} />}
+                {b.title}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className={`reader-scroll${item.format === 'pdf' ? ' pdf-scroll' : ''}`} ref={scrollRef}>
         {item.format === 'epub' && (
@@ -282,9 +322,9 @@ export default function Reader(): React.JSX.Element {
         <motion.article
             key={item.id}
             className="article"
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, x: 22 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 36 }}
           >
             <div className="article-source">
               <SourceIcon source={source} />
@@ -367,6 +407,11 @@ export default function Reader(): React.JSX.Element {
             <TagEditor tags={item.tags} onChange={(tags) => void patchItem(item.id, { tags })} />
           </Popover>
         )}
+        {boardAnchor && (
+          <Popover key="board" anchor={{ ...boardAnchor, x: boardAnchor.x - 90 }} placement="below" onClose={() => setBoardAnchor(null)}>
+            <BoardPicker node={{ kind: 'source', itemId: item.id, itemTitle: item.title }} onDone={() => setBoardAnchor(null)} />
+          </Popover>
+        )}
         {shareAnchor && (
           <Popover key="share" anchor={{ ...shareAnchor, x: shareAnchor.x - 90 }} placement="below" onClose={() => setShareAnchor(null)} className="menu">
             <button
@@ -398,6 +443,15 @@ export default function Reader(): React.JSX.Element {
               }}
             >
               <Send size={15} /> {t.sendToNotion}
+            </button>
+            <button
+              onClick={() => {
+                const a = shareAnchor
+                setShareAnchor(null)
+                setBoardAnchor(a)
+              }}
+            >
+              <Network size={15} /> {t.linkToBoard}
             </button>
             {item.url && (
               <>

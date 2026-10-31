@@ -10,7 +10,7 @@ export default function AddSourceDialog({ onClose }: { onClose(): void }): React
   const setView = useApp((s) => s.setView)
   const reloadMeta = useApp((s) => s.reloadMeta)
   const toast = useApp((s) => s.toast)
-  const [tab, setTab] = useState<'feed' | 'link' | 'book'>('feed')
+  const [tab, setTab] = useState<'feed' | 'link' | 'book' | 'newsletter'>('feed')
   const importBooks = useApp((s) => s.importBooks)
   const [input, setInput] = useState('')
   const [detected, setDetected] = useState<ResolvedInput | null>(null)
@@ -93,7 +93,32 @@ export default function AddSourceDialog({ onClose }: { onClose(): void }): React
         <button className={tab === 'book' ? 'on' : ''} onClick={() => setTab('book')}>
           {t.bookTab}
         </button>
+        <button className={tab === 'newsletter' ? 'on' : ''} onClick={() => setTab('newsletter')}>
+          {t.newsletterTab}
+        </button>
       </div>
+      {tab === 'newsletter' && (
+        <div className="field newsletter-help">
+          <p>
+            <strong>{t.nlWebTitle}</strong> {t.nlWebText}
+          </p>
+          <p>
+            <strong>{t.nlMailTitle}</strong> {t.nlMailText}
+          </p>
+          <ol>
+            <li>
+              <a href="#" onClick={(e) => { e.preventDefault(); void api.openExternal('https://kill-the-newsletter.com/') }}>
+                {t.nlStep1}
+              </a>
+            </li>
+            <li>{t.nlStep2}</li>
+            <li>{t.nlStep3}</li>
+          </ol>
+          <button className="btn primary" onClick={() => setTab('feed')}>
+            {t.nlPaste}
+          </button>
+        </div>
+      )}
       {tab === 'book' && (
         <div className="field">
           <p className="hint" style={{ fontSize: 14, margin: '4px 0 16px' }}>{t.bookHint}</p>
@@ -108,7 +133,7 @@ export default function AddSourceDialog({ onClose }: { onClose(): void }): React
           </button>
         </div>
       )}
-      {tab !== 'book' && (
+      {(tab === 'feed' || tab === 'link') && (
       <form
         className="field"
         onSubmit={(e) => {
