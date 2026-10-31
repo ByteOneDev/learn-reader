@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Pause, Play, RotateCcw, RotateCw, Timer } from 'lucide-react'
+import { ExternalLink, Pause, Play, RotateCcw, RotateCw, Timer, Tv } from 'lucide-react'
 import type { Cue, Highlight } from '@shared/types'
 import { formatTime, youtubeId } from '@shared/media'
 import { useApp } from '../../lib/store'
@@ -81,6 +81,16 @@ export default function MediaView({ item, highlights, navRef, onOrphans, onMouse
   const time = isAudio ? (current ? player.time : start) : isYouTube ? yt.time : videoTime
   const duration = isAudio ? (current ? player.duration : item.duration ?? 0) : isYouTube ? yt.duration || item.duration || 0 : item.duration ?? 0
   const ytId = youtubeId(item.mediaUrl ?? item.url)
+  // Par défaut, une vidéo YouTube s'ouvre dans le navigateur de l'utilisateur ; « Lire ici » (ou le réglage) garde le lecteur intégré.
+  const videoPlayer = useApp((s) => s.settings?.videoPlayer ?? 'browser')
+  const [playHere, setPlayHere] = useState(false)
+  const inApp = videoPlayer === 'app' || playHere
+  const patchItem = useApp((s) => s.patchItem)
+  const openInBrowser = async (): Promise<void> => {
+    if (!ytId) return
+    await api.openExternal(`https://www.youtube.com/watch?v=${ytId}${start ? `&t=${start}s` : ''}`)
+    if (!item.read) void patchItem(item.id, { read: true })
+  }
 
   const seek = (sec: number): void => {
     if (isAudio) {
@@ -166,11 +176,31 @@ export default function MediaView({ item, highlights, navRef, onOrphans, onMouse
       </div>
       <h1 className="title">{item.title}</h1>
 
-      {isYouTube && ytId && (
+      {isYouTube && ytId && !inApp && (
+        <button className="video-launch" onClick={() => void openInBrowser()} title={t.watchInBrowser}>
+          <img src={item.imageUrl ?? `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`} alt="" referrerPolicy="no-referrer" />
+          <span className="video-launch-play">
+            <Play size={30} fill="currentColor" />
+          </span>
+          <span className="video-launch-label">
+            <ExternalLink size={15} /> {t.watchInBrowser}
+            {start ? ` · ${formatTime(start)}` : ''}
+          </span>
+        </button>
+      )}
+      {isYouTube && ytId && !inApp && (
+        <div className="video-launch-alt">
+          <button className="btn" onClick={() => setPlayHere(true)}>
+            <Tv size={15} /> {t.playHere}
+          </button>
+          <span className="hint">{t.videoSettingHint}</span>
+        </div>
+      )}
+      {isYouTube && ytId && inApp && (
         <div className="video-frame">
           <iframe
             ref={frame}
-            src={`https://www.youtube-nocookie.com/embed/${ytId}?enablejsapi=1&rel=0&playsinline=1${start ? `&start=${start}` : ''}`}
+            src={`https://www.youtube-nocookie.com/embed/${ytId}?enablejsapi=1&rel=0&playsinline=1${playHere ? '&autoplay=1' : ''}${start ? `&start=${start}` : ''}`}
             title={item.title}
             allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
             allowFullScreen
@@ -225,12 +255,14 @@ export default function MediaView({ item, highlights, navRef, onOrphans, onMouse
         </div>
       )}
 
-      <div className="media-actions">
-        <button className="btn" onClick={(e) => void markMoment(e)} disabled={!isAudio && isYouTube && !yt.time && !start}>
-          <Timer size={16} /> {t.markMoment} · {formatTime(time)}
-        </button>
-        {isYouTube && <span className="hint">{t.youtubeHint}</span>}
-      </div>
+      {(!isYouTube || inApp) && (
+        <div className="media-actions">
+          <button className="btn" onClick={(e) => void markMoment(e)} disabled={!isAudio && isYouTube && !yt.time && !start}>
+            <Timer size={16} /> {t.markMoment} · {formatTime(time)}
+          </button>
+          {isYouTube && <span className="hint">{t.youtubeHint}</span>}
+        </div>
+      )}
 
       {moments.length > 0 && (
         <div className="moments">

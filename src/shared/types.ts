@@ -229,6 +229,8 @@ export interface Settings {
   obsidianFolder: string
   /** Synchronisation automatique dans les deux sens avec le coffre Obsidian. */
   obsidianSync?: boolean
+  /** Vidéos YouTube : dans le navigateur par défaut du système, ou dans le lecteur intégré. */
+  videoPlayer: 'browser' | 'app'
   notionWorkspace?: string
   notionDatabaseId?: string
   notionDatabaseUrl?: string
@@ -247,7 +249,8 @@ export const DEFAULT_SETTINGS: Settings = {
   refreshMinutes: 30,
   readerFont: 'sans',
   readerSize: 18,
-  obsidianFolder: 'Learn'
+  obsidianFolder: 'Learn',
+  videoPlayer: 'browser'
 }
 
 export interface NewSource {

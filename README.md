@@ -14,6 +14,10 @@ Direction graphique inspirée de [Reeder](https://reederapp.com) (2024), avec sa
 | Livre EPUB | PDF surligné |
 | ![](docs/screenshots/livre-epub.png) | ![](docs/screenshots/livre-pdf.png) |
 
+## Nouveautés de la v0.9
+
+- **Vidéos YouTube dans ton navigateur** : par défaut, cliquer sur la vidéo l'ouvre dans ton navigateur habituel (celui choisi dans ton système), là où tu t'étais arrêté, et la marque comme vue. Le bouton **Lire ici** utilise ponctuellement le lecteur intégré. *Réglages → Vidéos YouTube → Lecteur intégré* le rend permanent (avec les moments notés et la reprise automatique).
+
 ## Nouveautés de la v0.8 : extension Obsidian
 
 **Installer** : sur la page de la release, télécharge `learn-obsidian-vX.Y.Z.zip`. Décompresse-le dans `<ton coffre>/.obsidian/plugins/` (tu obtiens un dossier `learn-reader`), puis active **Learn** dans *Réglages → Modules complémentaires de la communauté*.

@@ -53,6 +53,17 @@ export default function SettingsDialog({ onClose }: { onClose(): void }): React.
         </div>
       </div>
       <div className="field row-between">
+        <span style={{ fontSize: 14.5, fontWeight: 600 }}>{t.videoPlayerLabel}</span>
+        <div className="segmented">
+          <button className={settings.videoPlayer !== 'app' ? 'on' : ''} onClick={() => set({ videoPlayer: 'browser' })}>
+            {t.videoBrowser}
+          </button>
+          <button className={settings.videoPlayer === 'app' ? 'on' : ''} onClick={() => set({ videoPlayer: 'app' })}>
+            {t.videoApp}
+          </button>
+        </div>
+      </div>
+      <div className="field row-between">
         <span style={{ fontSize: 14.5, fontWeight: 600 }}>{t.readerFont}</span>
         <div className="segmented">
           <button className={settings.readerFont === 'sans' ? 'on' : ''} onClick={() => set({ readerFont: 'sans' })}>{t.sans}</button>
