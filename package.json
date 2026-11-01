@@ -1,7 +1,7 @@
 {
   "name": "learn-reader",
   "productName": "Learn",
-  "version": "0.10.1",
+  "version": "0.11.0",
   "description": "Lecteur RSS, articles, livres et notes — inspiré de Reeder, pensé pour la recherche.",
   "main": "./out/main/index.js",
   "author": "ByteOneDev",

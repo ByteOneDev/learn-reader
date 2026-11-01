@@ -14,7 +14,7 @@ Direction graphique inspirée de [Reeder](https://reederapp.com) (2024), avec sa
 | Livre EPUB | PDF surligné |
 | ![](docs/screenshots/livre-epub.png) | ![](docs/screenshots/livre-pdf.png) |
 
-## En préparation (prochaine release)
+## Nouveautés de la v0.11
 
 - **Ranger les sources par type ou par catégorie** : sélecteur *Ranger par : Type | Catégorie* dans la barre latérale (touche **g**). Par catégorie, chaque thème (Tech, Sciences, Sport & échecs…) regroupe articles, Reddit, vidéos et podcasts, avec un pictogramme pour le type ; le titre du thème ouvre une timeline de tous ses médias. Au-delà de 10 sources, elles se rangent en sous-dossiers par type.
 - **Raccourcis clavier modifiables** : *Réglages → Raccourcis clavier → Personnaliser…*. Clique sur une touche, appuie sur la nouvelle (combinaisons ⌘/Ctrl/⌥/⇧ acceptées) ; une touche déjà prise est échangée, Retour arrière désactive, un bouton remet les valeurs par défaut. Les touches qui servent à taper un symbole sur un clavier AZERTY (« [ » = ⌥⇧( sur Mac) fonctionnent désormais.
@@ -216,6 +216,7 @@ L'orientation politique (−3 à +3) est une estimation de Learn à partir des l
 - ~~**v0.6** : podcasts, vidéos YouTube, signature macOS~~ ✓
 - ~~**v0.8** : extension Obsidian~~ ✓
 - ~~**v0.10** : schémas Excalidraw liés aux documents, catégories, tags, export MindNode/PDF~~ ✓
+- ~~**v0.11** : tri par type ou catégorie, raccourcis modifiables, effet verre~~ ✓
 - **Ensuite** : app native
 
 ## Licence
