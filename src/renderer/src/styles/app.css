@@ -2901,3 +2901,365 @@ mark.hl.flash {
 .lb-chip:active {
   transform: scale(0.96);
 }
+
+/* ── Tri des sources : par type ou par catégorie ─────────────────────── */
+.group-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 18px 4px 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.segmented.small {
+  padding: 2px;
+  border-radius: 10px;
+}
+.segmented.small button {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 8px;
+  text-transform: none;
+  letter-spacing: 0;
+  transition:
+    background 0.18s var(--ease),
+    color 0.18s var(--ease);
+}
+.section-head.split {
+  padding: 0 4px 0 6px;
+  gap: 2px;
+}
+.section-head.split .label {
+  font: inherit;
+  padding: 6px 6px;
+  border-radius: 10px;
+  transition: background 0.15s;
+}
+.section-head.split .label:hover,
+.section-head.split.active .label {
+  background: var(--control);
+}
+.section-head.split .chev {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+}
+.section-head.split.closed svg {
+  transform: rotate(-90deg);
+}
+.nav-trail {
+  display: grid;
+  place-items: center;
+  color: var(--text-3);
+  opacity: 0.8;
+  flex: none;
+}
+
+/* ── Raccourcis clavier ─────────────────────────────────────────────── */
+.shortcut-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 52vh;
+  overflow-y: auto;
+  margin: 0 -6px;
+  padding: 0 6px;
+}
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 4px 0 10px;
+  border-radius: 12px;
+  transition: background 0.15s;
+}
+.shortcut-row:hover,
+.shortcut-row.recording {
+  background: var(--control);
+}
+.shortcut-label {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+}
+.keycap,
+kbd {
+  font: inherit;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  font-weight: 700;
+  min-width: 34px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: var(--card-selected);
+  border: 1px solid var(--border);
+  box-shadow:
+    0 1px 0 var(--border),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  color: var(--text);
+  display: inline-grid;
+  place-items: center;
+  transition:
+    transform 0.12s var(--ease),
+    border-color 0.15s;
+}
+kbd {
+  height: 22px;
+  min-width: 24px;
+  padding: 0 6px;
+  font-size: 11.5px;
+}
+.keycap:hover {
+  border-color: var(--accent);
+}
+.keycap:active {
+  transform: translateY(1px);
+}
+.keycap.empty {
+  color: var(--text-3);
+  font-family: inherit;
+  font-weight: 600;
+}
+.shortcut-row.recording .keycap {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-family: inherit;
+  animation: keycap-pulse 1.2s ease-in-out infinite;
+}
+@keyframes keycap-pulse {
+  50% {
+    box-shadow: 0 0 0 4px var(--accent-soft);
+  }
+}
+.shortcut-reset,
+.shortcut-clear {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: var(--text-3);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.shortcut-reset {
+  opacity: 1;
+  color: var(--accent);
+}
+.shortcut-row:hover .shortcut-clear {
+  opacity: 1;
+}
+.shortcut-clear:hover,
+.shortcut-reset:hover {
+  background: var(--card-selected);
+  color: var(--text);
+}
+
+/* ══ Effet verre (« Liquid Glass ») ═══════════════════════════════════════
+   Activé par html[data-glass="subtle" | "strong"] ; « off » garde l'apparence opaque d'origine.
+   html.native-glass : la fenêtre elle-même est translucide (vibrancy macOS, Mica Windows 11) ; sinon
+   (Linux, Windows 10) le fond reste opaque et seuls les éléments flottants sont en verre. */
+
+:root {
+  --gutter: 8px;
+  --pane-radius: 20px;
+  --glass-blur: 22px;
+  --glass-sat: 1.8;
+  --glass-bg: rgba(255, 255, 255, 0.64);
+  --glass-solid: rgba(250, 250, 249, 0.94);
+  --glass-border: rgba(255, 255, 255, 0.7);
+  --glass-edge: rgba(0, 0, 0, 0.07);
+  --glass-hi: rgba(255, 255, 255, 0.9);
+  --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 55%);
+  --glass-shadow: 0 12px 34px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
+  --pane-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 6px 22px rgba(0, 0, 0, 0.06);
+  --pane-alpha: 100%;
+}
+:root[data-glass='strong'] {
+  --glass-blur: 30px;
+  --glass-sat: 2.1;
+  --glass-bg: rgba(255, 255, 255, 0.46);
+  --glass-solid: rgba(250, 250, 249, 0.74);
+  --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0) 60%);
+  --pane-alpha: 84%;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --glass-bg: rgba(46, 46, 50, 0.6);
+    --glass-solid: rgba(38, 38, 41, 0.93);
+    --glass-border: rgba(255, 255, 255, 0.11);
+    --glass-edge: rgba(255, 255, 255, 0.06);
+    --glass-hi: rgba(255, 255, 255, 0.16);
+    --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 55%);
+    --glass-shadow: 0 16px 44px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.3);
+    --pane-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 26px rgba(0, 0, 0, 0.28);
+  }
+  :root:not([data-theme='light'])[data-glass='strong'] {
+    --glass-bg: rgba(40, 40, 44, 0.42);
+    --glass-solid: rgba(34, 34, 37, 0.74);
+    --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 60%);
+  }
+}
+:root[data-theme='dark'] {
+  --glass-bg: rgba(46, 46, 50, 0.6);
+  --glass-solid: rgba(38, 38, 41, 0.93);
+  --glass-border: rgba(255, 255, 255, 0.11);
+  --glass-edge: rgba(255, 255, 255, 0.06);
+  --glass-hi: rgba(255, 255, 255, 0.16);
+  --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 55%);
+  --glass-shadow: 0 16px 44px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.3);
+  --pane-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 26px rgba(0, 0, 0, 0.28);
+}
+:root[data-theme='dark'][data-glass='strong'] {
+  --glass-bg: rgba(40, 40, 44, 0.42);
+  --glass-solid: rgba(34, 34, 37, 0.74);
+  --glass-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 60%);
+}
+
+/* Volets flottants : la barre latérale repose sur le fond, liste et lecteur sont des cartes arrondies. */
+:root[data-glass='subtle'],
+:root[data-glass='strong'] {
+  --radius: 16px;
+}
+:root[data-glass='subtle'] body,
+:root[data-glass='strong'] body {
+  background: var(--sidebar);
+}
+:root[data-glass='subtle'] .app,
+:root[data-glass='strong'] .app {
+  padding: var(--gutter);
+  gap: var(--gutter);
+}
+:root[data-glass='subtle'] .sidebar,
+:root[data-glass='strong'] .sidebar {
+  background: transparent;
+  border-right: 0;
+}
+/* La barre latérale garde toute la hauteur de la fenêtre (feux de signalisation macOS alignés). */
+:root[data-glass='subtle'] .sidebar-wrap,
+:root[data-glass='strong'] .sidebar-wrap {
+  margin: calc(var(--gutter) * -1) 0 calc(var(--gutter) * -1) calc(var(--gutter) * -1);
+}
+:root[data-glass='subtle'] .list,
+:root[data-glass='strong'] .list,
+:root[data-glass='subtle'] .reader,
+:root[data-glass='strong'] .reader,
+:root[data-glass='subtle'] .board,
+:root[data-glass='strong'] .board {
+  border-radius: var(--pane-radius);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--pane-shadow);
+  overflow: hidden;
+}
+:root[data-glass='subtle'] .list,
+:root[data-glass='strong'] .list {
+  border-right: 1px solid var(--glass-edge);
+}
+
+/* Fenêtre translucide : le fond de l'app laisse voir le bureau flouté par le système. */
+:root.native-glass[data-glass='subtle'] body,
+:root.native-glass[data-glass='strong'] body {
+  background: transparent;
+}
+:root.native-glass[data-glass='strong'] .list {
+  background: color-mix(in srgb, var(--list) var(--pane-alpha), transparent);
+}
+
+/* Éléments flottants en verre : menus, bulles, notifications, lecteur audio, dialogues. */
+:root[data-glass='subtle'] :is(.popover, .toast, .player-bar),
+:root[data-glass='strong'] :is(.popover, .toast, .player-bar) {
+  background: var(--glass-sheen), var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    var(--glass-shadow),
+    inset 0 1px 0 var(--glass-hi);
+}
+:root[data-glass='subtle'] .popover,
+:root[data-glass='strong'] .popover {
+  border-radius: 18px;
+}
+:root[data-glass='subtle'] .player-bar,
+:root[data-glass='strong'] .player-bar {
+  border-radius: 20px;
+}
+:root[data-glass='subtle'] .dialog,
+:root[data-glass='strong'] .dialog {
+  background: var(--glass-sheen), var(--glass-solid);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  border: 1px solid var(--glass-border);
+  border-radius: 26px;
+  box-shadow:
+    var(--glass-shadow),
+    inset 0 1px 0 var(--glass-hi);
+}
+:root[data-glass='strong'] .scrim {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Contrôles : pastilles et boutons ronds avec reflet. */
+:root[data-glass='subtle'] :is(.pill, .round-btn, .segmented),
+:root[data-glass='strong'] :is(.pill, .round-btn, .segmented) {
+  background: var(--glass-sheen), var(--control);
+  border-color: var(--glass-edge);
+  box-shadow:
+    inset 0 1px 0 var(--glass-hi),
+    0 1px 2px rgba(0, 0, 0, 0.05);
+}
+:root[data-glass='subtle'] .segmented,
+:root[data-glass='strong'] .segmented {
+  border-radius: 999px;
+}
+:root[data-glass='subtle'] .segmented button,
+:root[data-glass='strong'] .segmented button {
+  border-radius: 999px;
+}
+:root[data-glass='subtle'] .segmented button.on,
+:root[data-glass='strong'] .segmented button.on {
+  background: var(--glass-sheen), var(--card-selected);
+  box-shadow:
+    var(--card-selected-shadow),
+    inset 0 1px 0 var(--glass-hi);
+}
+:root[data-glass='subtle'] :is(.btn, .home-card, .text-input),
+:root[data-glass='strong'] :is(.btn, .home-card, .text-input) {
+  border-radius: 14px;
+}
+:root[data-glass='subtle'] .btn,
+:root[data-glass='strong'] .btn {
+  box-shadow: inset 0 1px 0 var(--glass-hi);
+}
+:root[data-glass='subtle'] .home-card.active,
+:root[data-glass='strong'] .home-card.active,
+:root[data-glass='subtle'] .nav-active-bg,
+:root[data-glass='strong'] .nav-active-bg {
+  background: var(--glass-sheen), var(--card-selected);
+  box-shadow:
+    var(--card-selected-shadow),
+    inset 0 1px 0 var(--glass-hi);
+}
+:root[data-glass='subtle'] .nav-active-bg,
+:root[data-glass='strong'] .nav-active-bg {
+  border-radius: 12px;
+}
+:root[data-glass='subtle'] .card.selected,
+:root[data-glass='strong'] .card.selected {
+  box-shadow:
+    var(--card-selected-shadow),
+    inset 0 1px 0 var(--glass-hi);
+}
+/* Fenêtre translucide : la barre latérale laisse passer le fond, la carte active reste lisible. */
+:root.native-glass .sidebar .nav-row:hover:not(.active) {
+  background: var(--control-hover);
+}

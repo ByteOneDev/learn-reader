@@ -24,6 +24,7 @@ import { contextOf } from '@shared/anchor'
 import type { Highlight, HighlightColor, LinkedBoard } from '@shared/types'
 import BoardPicker from './boards/BoardPicker'
 import { useApp } from '../lib/store'
+import { useKeyLabel } from '../lib/shortcuts'
 import { useT } from '../lib/i18n'
 import { fullDate } from '../lib/time'
 import { sanitize } from '../lib/sanitize'
@@ -56,6 +57,19 @@ type Anchor = { x: number; y: number; bottom: number }
 
 export default function Reader(): React.JSX.Element {
   const t = useT()
+  // Infobulles et aide : les touches suivent les raccourcis personnalisés.
+  const keys = {
+    next: useKeyLabel('next'),
+    prev: useKeyLabel('prev'),
+    later: useKeyLabel('later'),
+    bookmark: useKeyLabel('bookmark'),
+    favorite: useKeyLabel('favorite'),
+    open: useKeyLabel('open'),
+    tags: useKeyLabel('tags'),
+    focus: useKeyLabel('focus'),
+    panel: useKeyLabel('panel')
+  }
+  const withKey = (label: string, k: string): string => (k ? `${label} (${k})` : label)
   const item = useApp((s) => s.item)
   const sources = useApp((s) => s.sources)
   const highlights = useApp((s) => s.highlights)
@@ -232,7 +246,17 @@ export default function Reader(): React.JSX.Element {
           <div>
             <BookOpenText size={42} strokeWidth={1.4} />
             <div className="big">{t.emptyReader}</div>
-            <div className="kbd">{t.emptyReaderHint}</div>
+            <div className="kbd">
+              {[
+                keys.next && keys.prev && `${keys.next} / ${keys.prev} ${t.hintNavigate}`,
+                keys.later && `${keys.later} ${t.hintLater}`,
+                keys.bookmark && `${keys.bookmark} ${t.hintBookmark}`,
+                keys.favorite && `${keys.favorite} ${t.hintFavorite}`,
+                keys.open && `${keys.open} ${t.hintBrowser}`
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </div>
           </div>
         </div>
       </main>
@@ -249,33 +273,33 @@ export default function Reader(): React.JSX.Element {
         </button>
         <span className="spacer" />
         <div className="pill">
-          <button ref={tagBtn} onClick={(e) => setTagAnchor(anchorOf(e))} title={`${t.tagsLabel} (t)`} aria-label={t.tagsLabel} className={item.tags.length ? 'on' : ''}>
+          <button ref={tagBtn} onClick={(e) => setTagAnchor(anchorOf(e))} title={withKey(t.tagsLabel, keys.tags)} aria-label={t.tagsLabel} className={item.tags.length ? 'on' : ''}>
             <Tag size={17} />
           </button>
-          <button onClick={() => void patchItem(item.id, { later: !item.later })} className={item.later ? 'on' : ''} title={`${t.later} (l)`} aria-pressed={item.later}>
+          <button onClick={() => void patchItem(item.id, { later: !item.later })} className={item.later ? 'on' : ''} title={withKey(t.later, keys.later)} aria-pressed={item.later}>
             <Layers size={17} />
           </button>
           <button
             onClick={() => void patchItem(item.id, { bookmarked: !item.bookmarked })}
             className={item.bookmarked ? 'on' : ''}
-            title={`${t.bookmarks} (b)`}
+            title={withKey(t.bookmarks, keys.bookmark)}
             aria-pressed={item.bookmarked}
           >
             <motion.span key={String(item.bookmarked)} initial={{ scale: 0.6 }} animate={{ scale: 1 }} style={{ display: 'grid' }}>
               <Bookmark size={17} fill={item.bookmarked ? 'currentColor' : 'none'} />
             </motion.span>
           </button>
-          <button onClick={() => void patchItem(item.id, { favorite: !item.favorite })} className={item.favorite ? 'on' : ''} title={`${t.favorites} (f)`} aria-pressed={item.favorite}>
+          <button onClick={() => void patchItem(item.id, { favorite: !item.favorite })} className={item.favorite ? 'on' : ''} title={withKey(t.favorites, keys.favorite)} aria-pressed={item.favorite}>
             <motion.span key={String(item.favorite)} initial={{ scale: 0.6 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 600, damping: 15 }} style={{ display: 'grid' }}>
               <Heart size={17} fill={item.favorite ? 'currentColor' : 'none'} />
             </motion.span>
           </button>
         </div>
         <div className="pill">
-          <button onClick={() => toggleFocus()} className={focusMode ? 'on' : ''} title={`${t.focus} (z)`} aria-pressed={focusMode}>
+          <button onClick={() => toggleFocus()} className={focusMode ? 'on' : ''} title={withKey(t.focus, keys.focus)} aria-pressed={focusMode}>
             {focusMode ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
           </button>
-          <button onClick={() => togglePanel()} className={panelOpen ? 'on' : ''} title={`${t.highlightsOf} (h)`} aria-pressed={panelOpen}>
+          <button onClick={() => togglePanel()} className={panelOpen ? 'on' : ''} title={withKey(t.highlightsOf, keys.panel)} aria-pressed={panelOpen}>
             <Highlighter size={17} />
           </button>
           <button onClick={(e) => setShareAnchor(anchorOf(e))} title={t.exportObsidian} aria-label={t.exportObsidian}>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FolderOpen } from 'lucide-react'
+import { FolderOpen, Keyboard } from 'lucide-react'
 import type { Settings } from '@shared/types'
 import { useApp } from '../lib/store'
 import { useT } from '../lib/i18n'
@@ -28,6 +28,19 @@ export default function SettingsDialog({ onClose }: { onClose(): void }): React.
           {(['system', 'dark', 'light'] as const).map((th) => (
             <button key={th} className={settings.theme === th ? 'on' : ''} onClick={() => set({ theme: th })}>
               {th === 'system' ? t.themeSystem : th === 'dark' ? t.themeDark : t.themeLight}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="field row-between">
+        <span>
+          <span className="field-label" style={{ margin: 0 }}>{t.glass}</span>
+          <p className="hint" style={{ margin: '2px 0 0' }}>{t.glassHint}</p>
+        </span>
+        <div className="segmented">
+          {(['off', 'subtle', 'strong'] as const).map((g) => (
+            <button key={g} className={(settings.glass ?? 'subtle') === g ? 'on' : ''} onClick={() => set({ glass: g })}>
+              {g === 'off' ? t.glassOff : g === 'subtle' ? t.glassSubtle : t.glassStrong}
             </button>
           ))}
         </div>
@@ -82,6 +95,15 @@ export default function SettingsDialog({ onClose }: { onClose(): void }): React.
             {t.howTo}
           </a>
         </p>
+      </div>
+      <div className="field row-between">
+        <span>
+          <span style={{ fontSize: 14.5, fontWeight: 600 }}>{t.shortcutsTitle}</span>
+          <p className="hint" style={{ margin: '2px 0 0' }}>{t.shortcutsSummary}</p>
+        </span>
+        <button className="btn" onClick={() => useApp.getState().setDialog('shortcuts')}>
+          <Keyboard size={15} /> {t.shortcutsCustomize}
+        </button>
       </div>
       <div className="field">
         <label>{t.gestures}</label>

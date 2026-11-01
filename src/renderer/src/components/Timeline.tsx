@@ -35,7 +35,7 @@ function viewTitle(view: View, t: Dict, sources: Source[]): [string, string] {
       if (view.kind === 'youtube') return [t.video, t.youtube]
       return [t.kinds[view.kind] ?? view.kind, t.feeds]
     case 'category':
-      return [view.category ? categoryLabel(view.category, t === dictionaries.en ? 'en' : 'fr') : t.otherCategory, t[view.section]]
+      return [view.category ? categoryLabel(view.category, t === dictionaries.en ? 'en' : 'fr') : t.otherCategory, view.section === 'all' ? t.allMedia : t[view.section]]
     case 'source': {
       const s = sources.find((x) => x.id === view.sourceId)
       return [s?.title ?? '', s ? t.kinds[s.kind] : '']

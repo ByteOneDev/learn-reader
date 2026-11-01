@@ -1,6 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, net, safeStorage, session, shell } from 'electron'
 import { readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { release } from 'node:os'
 import { API_METHODS, type ApiMethod, type BoardExportFormat, type LearnEvent } from '@shared/types'
 import { LearnCore } from './core'
 import { openDatabase } from './db'
@@ -38,8 +39,34 @@ function isSafeExternal(url: string): boolean {
   }
 }
 
+/**
+ * Transparence native : vibrancy sur Mac, Mica sur Windows 11 (22H2, build 22621 et plus). Ailleurs (Linux,
+ * Windows 10), l'effet verre reste dessiné par l'interface seule.
+ */
+function nativeGlassSupported(): boolean {
+  if (isMac) return true
+  if (process.platform === 'win32') return Number(release().split('.')[2] ?? 0) >= 22621
+  return false
+}
+
+function nativeGlassActive(): boolean {
+  const level = core?.store.getSettings().glass ?? 'subtle'
+  return level !== 'off' && nativeGlassSupported() && !nativeTheme.prefersReducedTransparency
+}
+
+const opaqueBackground = (): string => (nativeTheme.shouldUseDarkColors ? '#1c1c1e' : '#f5f5f4')
+
+function applyGlass(): void {
+  if (!win) return
+  const on = nativeGlassActive()
+  if (isMac) win.setVibrancy(on ? 'sidebar' : null)
+  else if (process.platform === 'win32' && nativeGlassSupported()) win.setBackgroundMaterial(on ? 'mica' : 'none')
+  win.setBackgroundColor(on ? '#00000000' : opaqueBackground())
+}
+
 function createWindow(): void {
   const dark = nativeTheme.shouldUseDarkColors
+  const glass = nativeGlassActive()
   win = new BrowserWindow({
     width: 1440,
     height: 900,
@@ -47,7 +74,9 @@ function createWindow(): void {
     minHeight: 560,
     show: false,
     title: 'Learn',
-    backgroundColor: dark ? '#1c1c1e' : '#f5f5f4',
+    backgroundColor: glass ? '#00000000' : opaqueBackground(),
+    ...(glass && isMac ? { vibrancy: 'sidebar' as const, visualEffectState: 'followWindow' as const } : {}),
+    ...(glass && process.platform === 'win32' ? { backgroundMaterial: 'mica' as const } : {}),
     titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
     trafficLightPosition: { x: 18, y: 18 },
     ...(isMac ? {} : { titleBarOverlay: { color: '#00000000', symbolColor: dark ? '#e5e5e5' : '#333333', height: 44 } }),
@@ -160,6 +189,7 @@ function registerIpc(): void {
       const s = core.store.updateSettings(patch)
       if ('refreshMinutes' in patch) scheduleRefresh()
       if ('theme' in patch) nativeTheme.themeSource = s.theme
+      if ('glass' in patch || 'theme' in patch) applyGlass()
       if ('obsidianSync' in patch || 'obsidianVault' in patch || 'obsidianFolder' in patch) sync.restart()
       if ('notionSync' in patch) notion.restart()
       // Nouvelle clé YouTube : on remonte tout de suite l'année des chaînes suivies.
@@ -233,6 +263,7 @@ function registerIpc(): void {
     addToBoard: (boardId: string, node: Parameters<LearnCore['addToBoard']>[1]) => core.addToBoard(boardId, node),
     allHighlights: () => core.store.allHighlights(),
     boardsForItem: (itemId: string) => core.boardsForItem(itemId),
+    nativeGlass: () => nativeGlassActive(),
     saveFile: async (defaultName: string, data: string | Uint8Array) => {
       const ext = defaultName.split('.').pop() ?? ''
       const r = await dialog.showSaveDialog(win!, { defaultPath: defaultName, filters: ext ? [{ name: ext.toUpperCase(), extensions: [ext] }] : [] })
@@ -357,6 +388,10 @@ app.whenReady().then(async () => {
   registerIpc()
   Menu.setApplicationMenu(buildMenu(send))
   createWindow()
+  nativeTheme.on('updated', () => {
+    applyGlass()
+    send({ type: 'glass-changed' })
+  })
   scheduleRefresh()
   try {
     sync.restart()

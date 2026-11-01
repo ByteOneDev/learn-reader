@@ -4,7 +4,7 @@ import { dictionaries } from './strings'
 
 export const PAGE = 80
 
-type Dialog = null | 'add' | 'settings' | 'catalog' | 'balance'
+type Dialog = null | 'add' | 'settings' | 'catalog' | 'balance' | 'shortcuts'
 
 interface Toast {
   id: number

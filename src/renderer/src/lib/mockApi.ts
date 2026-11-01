@@ -520,6 +520,7 @@ export const mockApi: LearnAPI = {
     return delay(b)
   },
   boardsForItem: async (itemId) => delay(boards.filter((b) => boardCitesItem(b.data, itemId)).map((b) => ({ id: b.id, title: b.title, mode: b.mode }))),
+  nativeGlass: async () => delay(new URLSearchParams(location.search).has('native-glass') && settings.glass !== 'off'),
   saveFile: async (name) => {
     console.info('[mock] saveFile', name)
     return delay(`/Users/moi/Documents/${name}`, 200)

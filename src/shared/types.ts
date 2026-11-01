@@ -210,7 +210,7 @@ export type View =
   | { type: 'source'; sourceId: string }
   | { type: 'board'; boardId: string }
   /** Catégorie au sein d'une section de la barre latérale (flux, Reddit, YouTube…) : `kinds` la délimite. */
-  | { type: 'category'; category: string; kinds: SourceKind[]; section: 'feeds' | 'podcasts' | 'youtube' | 'social' | 'reddit' | 'forums' }
+  | { type: 'category'; category: string; kinds: SourceKind[]; section: 'all' | 'feeds' | 'podcasts' | 'youtube' | 'social' | 'reddit' | 'forums' }
 
 export interface ItemQuery {
   view: View
@@ -257,6 +257,12 @@ export interface Settings {
   /** Synchronisation automatique avec Notion (relève toutes les 5 minutes, envoi après chaque modification). */
   notionSync?: boolean
   notionLastPull?: number
+  /** Barre latérale : sources rangées par type de média (défaut) ou par catégorie. */
+  sidebarGroup?: 'type' | 'category'
+  /** Raccourcis personnalisés : action → combinaison (« k », « Cmd+Shift+j »…). Absents : valeurs par défaut. */
+  shortcuts?: Record<string, string>
+  /** Effet verre : réduit (opaque), subtil (défaut) ou marqué. */
+  glass?: 'off' | 'subtle' | 'strong'
   /** Modèle d'adresse pour X, ex. `https://rsshub.mondomaine.fr/twitter/user/{user}`. */
   xBridge?: string
 }
@@ -324,6 +330,8 @@ export interface ExportResult {
 
 export type LearnEvent =
   | { type: 'refresh-started' }
+  /** Thème système ou réglage « Réduire la transparence » modifié : l'effet verre natif a pu changer. */
+  | { type: 'glass-changed' }
   | { type: 'refresh-finished'; result: RefreshResult }
   | { type: 'items-changed' }
   | { type: 'highlights-changed'; itemId: string; message?: string }
@@ -386,6 +394,8 @@ export interface LearnAPI {
   allHighlights(): Promise<HighlightWithItem[]>
   /** Boards qui citent ce document (dans un nœud, un élément de schéma ou en attente d'insertion). */
   boardsForItem(itemId: string): Promise<LinkedBoard[]>
+  /** La fenêtre est-elle translucide (vibrancy macOS, Mica Windows 11) ? Sinon l'effet verre est dessiné par l'interface. */
+  nativeGlass(): Promise<boolean>
   /** Enregistre un fichier choisi par l'utilisateur (export de schéma, etc.). */
   saveFile(defaultName: string, data: string | Uint8Array): Promise<string | null>
   exportBoardToObsidian(id: string): Promise<{ path: string }>
@@ -452,6 +462,7 @@ export const API_METHODS = [
   'addToBoard',
   'allHighlights',
   'boardsForItem',
+  'nativeGlass',
   'saveFile',
   'exportBoardToObsidian',
   'exportBoardFile',

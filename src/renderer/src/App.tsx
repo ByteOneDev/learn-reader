@@ -11,6 +11,7 @@ import SettingsDialog from './components/SettingsDialog'
 import Toasts from './components/Toasts'
 import Onboarding from './onboarding/Onboarding'
 import BalanceDialog from './components/BalanceDialog'
+import ShortcutsDialog from './components/ShortcutsDialog'
 import BoardView from './components/boards/BoardView'
 import PlayerBar from './components/media/PlayerBar'
 import { useT } from './lib/i18n'
@@ -66,6 +67,27 @@ export default function App(): React.JSX.Element {
     }
   }, [api, importBooks])
 
+  // Effet verre : niveau choisi (réduit si le système demande moins de transparence), et fenêtre
+  // translucide ou non (vibrancy macOS, Mica Windows 11). Sans translucidité native, l'interface l'imite.
+  const glass = settings?.glass ?? 'subtle'
+  useEffect(() => {
+    const root = document.documentElement
+    const reduced = window.matchMedia?.('(prefers-reduced-transparency: reduce)')
+    let alive = true
+    const sync = (): void => {
+      root.dataset.glass = reduced?.matches ? 'off' : glass
+      void api.nativeGlass().then((on) => alive && root.classList.toggle('native-glass', on))
+    }
+    sync()
+    reduced?.addEventListener('change', sync)
+    const off = api.onEvent((e) => e.type === 'glass-changed' && sync())
+    return () => {
+      alive = false
+      reduced?.removeEventListener('change', sync)
+      off()
+    }
+  }, [api, glass])
+
   useEffect(() => {
     const root = document.documentElement
     if (!settings || settings.theme === 'system') delete root.dataset.theme
@@ -83,6 +105,7 @@ export default function App(): React.JSX.Element {
           {sidebarOpen && !focusMode && (
             <motion.div
               key="sidebar"
+              className="sidebar-wrap"
               style={{ display: 'flex', overflow: 'hidden', flex: 'none' }}
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: 'auto', opacity: 1 }}
@@ -115,6 +138,7 @@ export default function App(): React.JSX.Element {
         {dialog === 'add' && <AddSourceDialog key="add" onClose={() => setDialog(null)} />}
         {dialog === 'settings' && <SettingsDialog key="settings" onClose={() => setDialog(null)} />}
         {dialog === 'balance' && <BalanceDialog key="balance" onClose={() => setDialog(null)} />}
+        {dialog === 'shortcuts' && <ShortcutsDialog key="shortcuts" onClose={() => setDialog('settings')} />}
       </AnimatePresence>
 
       <AnimatePresence>

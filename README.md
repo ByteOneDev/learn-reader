@@ -14,6 +14,12 @@ Direction graphique inspirée de [Reeder](https://reederapp.com) (2024), avec sa
 | Livre EPUB | PDF surligné |
 | ![](docs/screenshots/livre-epub.png) | ![](docs/screenshots/livre-pdf.png) |
 
+## En préparation (prochaine release)
+
+- **Ranger les sources par type ou par catégorie** : sélecteur *Ranger par : Type | Catégorie* dans la barre latérale (touche **g**). Par catégorie, chaque thème (Tech, Sciences, Sport & échecs…) regroupe articles, Reddit, vidéos et podcasts, avec un pictogramme pour le type ; le titre du thème ouvre une timeline de tous ses médias. Au-delà de 10 sources, elles se rangent en sous-dossiers par type.
+- **Raccourcis clavier modifiables** : *Réglages → Raccourcis clavier → Personnaliser…*. Clique sur une touche, appuie sur la nouvelle (combinaisons ⌘/Ctrl/⌥/⇧ acceptées) ; une touche déjà prise est échangée, Retour arrière désactive, un bouton remet les valeurs par défaut. Les touches qui servent à taper un symbole sur un clavier AZERTY (« [ » = ⌥⇧( sur Mac) fonctionnent désormais.
+- **Effet verre** : liste et lecteur deviennent des volets flottants aux coins arrondis, menus, notifications, lecteur audio et dialogues sont en verre dépoli avec reflet. Sur Mac (vibrancy) et Windows 11 (Mica), la fenêtre elle-même est translucide ; sur Linux et Windows 10, l'effet est dessiné par l'interface. *Réglages → Effet verre : Réduit / Subtil / Marqué* ; « Réduire la transparence » du système est respecté.
+
 ## Nouveautés de la v0.10
 
 - **Schémas Excalidraw** : *Nouveau board → Schéma (Excalidraw)* ouvre une feuille de dessin libre (formes, flèches, croquis, images collées). **Surlignages** et **Lier un document** y posent des cartes qui gardent un lien vers leur source : un article, une vidéo, un podcast, un livre, un passage précis ou un surlignage. Clic sur l'icône 🔗 d'une carte : Learn ouvre le passage. Le bouton **Board** du lecteur fonctionne aussi vers un schéma : le passage y apparaît à l'ouverture. Export **PNG** ou fichier **.excalidraw** (rouvrable sur excalidraw.com).

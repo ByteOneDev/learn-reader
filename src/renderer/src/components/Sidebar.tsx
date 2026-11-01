@@ -7,6 +7,9 @@ import {
   Headphones,
   Heart,
   Highlighter,
+  AtSign,
+  MessagesSquare,
+  Rss,
   LayoutGrid,
   Layers,
   Link2,
@@ -33,10 +36,12 @@ function sameView(a: View, b: View): boolean {
   return JSON.stringify(a) === JSON.stringify(b)
 }
 
-function NavRow({ view, icon, label, badge, disabled, soon, error, onContext }: {
+function NavRow({ view, icon, label, badge, disabled, soon, error, onContext, trail }: {
   view?: View
   icon: ReactNode
   label: string
+  /** Petit pictogramme à droite (type de média, dans le tri par catégorie). */
+  trail?: ReactNode
   badge?: number
   disabled?: boolean
   soon?: string
@@ -58,6 +63,7 @@ function NavRow({ view, icon, label, badge, disabled, soon, error, onContext }: 
       {icon}
       <span className="label">{label}</span>
       {error && <span className="error-dot" />}
+      {trail && <span className="nav-trail">{trail}</span>}
       {soon && <span className="soon">{soon}</span>}
       {!!badge && (
         <motion.span key={badge} className="badge" initial={{ scale: 0.6, opacity: 0.4 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 600, damping: 18 }}>
@@ -68,7 +74,7 @@ function NavRow({ view, icon, label, badge, disabled, soon, error, onContext }: 
   )
 }
 
-function Section({ id, title, children }: { id: string; title: string; children: ReactNode }): React.JSX.Element {
+function Section({ id, title, children, onOpen, active }: { id: string; title: string; children: ReactNode; onOpen?: () => void; active?: boolean }): React.JSX.Element {
   const [open, setOpen] = useState(() => {
     try {
       return localStorage.getItem(`section:${id}`) !== 'closed'
@@ -86,10 +92,22 @@ function Section({ id, title, children }: { id: string; title: string; children:
   }
   return (
     <div>
-      <button className={`section-head${open ? '' : ' closed'}`} onClick={toggle} aria-expanded={open}>
-        <span className="label">{title}</span>
-        <ChevronDown size={18} />
-      </button>
+      {onOpen ? (
+        // Titre cliquable (tri par catégorie) : le titre ouvre la timeline du thème, la flèche replie.
+        <div className={`section-head split${open ? '' : ' closed'}${active ? ' active' : ''}`}>
+          <button className="label" onClick={onOpen}>
+            {title}
+          </button>
+          <button className="chev" onClick={toggle} aria-expanded={open} aria-label={title}>
+            <ChevronDown size={18} />
+          </button>
+        </div>
+      ) : (
+        <button className={`section-head${open ? '' : ' closed'}`} onClick={toggle} aria-expanded={open}>
+          <span className="label">{title}</span>
+          <ChevronDown size={18} />
+        </button>
+      )}
       <AnimatePresence initial={false}>
         {open && (
           <motion.div
@@ -113,11 +131,17 @@ export function categoryLabel(id: string, lang: 'fr' | 'en'): string {
   return c ? c[lang] : id
 }
 
+/** Rang d'une catégorie : ordre du catalogue, puis les catégories personnelles, « Autres » en dernier. */
+function categoryOrder(c: string): number {
+  return c ? catalog.categories.findIndex((x) => x.id === c) + 1 || 50 : 99
+}
+
 /** Groupe de sources d'une même catégorie, repliable, comme un dossier de Reeder. */
 type SectionId = Extract<View, { type: 'category' }>['section']
 
 /** Types de sources de chaque section de la barre latérale. */
 const SECTION_KINDS: Record<SectionId, SourceKind[]> = {
+  all: ['rss', 'podcast', 'youtube', 'mastodon', 'bluesky', 'x', 'reddit', 'forum'],
   feeds: ['rss'],
   podcasts: ['podcast'],
   youtube: ['youtube'],
@@ -126,7 +150,14 @@ const SECTION_KINDS: Record<SectionId, SourceKind[]> = {
   forums: ['forum']
 }
 
-function CategoryGroup({ section, kinds, category, label, children }: { section: SectionId; kinds: SourceKind[]; category: string; label: string; children: ReactNode }): React.JSX.Element {
+function CategoryGroup({ section, kinds, category, label, icon, children }: {
+  section: SectionId
+  kinds: SourceKind[]
+  category: string
+  label: string
+  icon?: ReactNode
+  children: ReactNode
+}): React.JSX.Element {
   const key = `group:${section}:${category}`
   const [open, setOpen] = useState(() => {
     try {
@@ -157,7 +188,7 @@ function CategoryGroup({ section, kinds, category, label, children }: { section:
           <ChevronDown size={14} />
         </button>
         <button className="cat-label" onClick={() => setView({ type: 'category', category, kinds, section })}>
-          <Folder size={14} /> {label}
+          {icon ?? <Folder size={14} />} {label}
         </button>
       </div>
       <AnimatePresence initial={false}>
@@ -187,6 +218,7 @@ export default function Sidebar(): React.JSX.Element {
   const settings = useApp((s) => s.settings)
   const setView = useApp((s) => s.setView)
   const setDialog = useApp((s) => s.setDialog)
+  const updateSettings = useApp((s) => s.updateSettings)
   const api = useApp((s) => s.api)
   const reloadMeta = useApp((s) => s.reloadMeta)
   const toast = useApp((s) => s.toast)
@@ -206,12 +238,13 @@ export default function Sidebar(): React.JSX.Element {
   const unread = (id: string): number | undefined => (settings?.showUnread ? counts?.unreadBySource[id] : undefined)
   const byKind = (kinds: SourceKind[]): Source[] => sources.filter((s) => kinds.includes(s.kind))
 
-  const plainRows = (list: Source[]): ReactNode =>
+  const plainRows = (list: Source[], withKind = false): ReactNode =>
     list.map((s) => (
       <NavRow
         key={s.id}
         view={{ type: 'source', sourceId: s.id }}
         icon={<SourceIcon source={s} />}
+        trail={withKind ? <KindIcon kind={s.kind} /> : undefined}
         label={s.title}
         badge={unread(s.id)}
         error={s.error}
@@ -222,14 +255,25 @@ export default function Sidebar(): React.JSX.Element {
       />
     ))
 
-  /** Sources regroupées par catégorie dès qu'il y en a plusieurs ; sans catégorie : « Autres », en dernier. */
+  /** Ordre des sections en tri par type, et dans une catégorie (sous-groupes). */
+const TYPE_SECTIONS = ['podcasts', 'youtube', 'social', 'reddit', 'forums', 'feeds'] as const
+
+function KindIcon({ kind }: { kind: SourceKind }): React.JSX.Element {
+  const size = 13
+  if (kind === 'podcast') return <Headphones size={size} />
+  if (kind === 'youtube') return <Tv size={size} />
+  if (kind === 'reddit' || kind === 'forum') return <MessagesSquare size={size} />
+  if (kind === 'mastodon' || kind === 'bluesky' || kind === 'x') return <AtSign size={size} />
+  return <Rss size={size} />
+}
+
+/** Sources regroupées par catégorie dès qu'il y en a plusieurs ; sans catégorie : « Autres », en dernier. */
   const sourceRows = (list: Source[], section: SectionId, kinds: SourceKind[]): ReactNode => {
     const groups = new Map<string, Source[]>()
     for (const s of list) groups.set(s.category ?? '', [...(groups.get(s.category ?? '') ?? []), s])
     if (groups.size <= 1) return plainRows(list)
-    const order = (c: string): number => (c ? catalog.categories.findIndex((x) => x.id === c) + 1 || 50 : 99)
     return [...groups.entries()]
-      .sort(([a], [b]) => order(a) - order(b) || a.localeCompare(b))
+      .sort(([a], [b]) => categoryOrder(a) - categoryOrder(b) || a.localeCompare(b))
       .map(([cat, items]) => (
         <CategoryGroup key={cat || '_'} section={section} kinds={kinds} category={cat} label={cat ? categoryLabel(cat, lang) : t.otherCategory}>
           {plainRows(items)}
@@ -244,6 +288,56 @@ export default function Sidebar(): React.JSX.Element {
   const podcasts = byKind(SECTION_KINDS.podcasts)
   const videos = byKind(SECTION_KINDS.youtube)
   const tags = Object.entries(counts?.tags ?? {})
+  const grouping = settings?.sidebarGroup ?? 'type'
+  const sectionTitle: Record<(typeof TYPE_SECTIONS)[number], string> = {
+    podcasts: t.podcasts,
+    youtube: t.youtube,
+    social: t.social,
+    reddit: t.reddit,
+    forums: t.forums,
+    feeds: t.feeds
+  }
+  const lists: Record<(typeof TYPE_SECTIONS)[number], Source[]> = { podcasts, youtube: videos, social, reddit, forums, feeds }
+
+  /** Tri par type : une section par type de média, des dossiers par catégorie dedans. */
+  const byTypeSections = (): ReactNode =>
+    TYPE_SECTIONS.filter((id) => lists[id].length > 0).map((id) => (
+      <Section key={id} id={id} title={sectionTitle[id]}>
+        {sourceRows(lists[id], id, SECTION_KINDS[id])}
+      </Section>
+    ))
+
+  /**
+   * Tri par catégorie : une section par thème, tous médias confondus (le pictogramme indique le type).
+   * Au-delà de 10 sources, elles se rangent en sous-dossiers par type.
+   */
+  const byCategorySections = (): ReactNode => {
+    const all = byKind(SECTION_KINDS.all)
+    const groups = new Map<string, Source[]>()
+    for (const s of all) groups.set(s.category ?? '', [...(groups.get(s.category ?? '') ?? []), s])
+    return [...groups.entries()]
+      .sort(([a], [b]) => categoryOrder(a) - categoryOrder(b) || a.localeCompare(b))
+      .map(([cat, list]) => {
+        const label = cat ? categoryLabel(cat, lang) : t.otherCategory
+        const target: View = { type: 'category', category: cat, kinds: SECTION_KINDS.all, section: 'all' }
+        const body =
+          list.length <= 10
+            ? plainRows(list, true)
+            : TYPE_SECTIONS.map((id) => {
+                const sub = list.filter((s) => SECTION_KINDS[id].includes(s.kind))
+                return sub.length ? (
+                  <CategoryGroup key={id} section={id} kinds={SECTION_KINDS[id]} category={cat} label={sectionTitle[id]} icon={<KindIcon kind={SECTION_KINDS[id][0]} />}>
+                    {plainRows(sub)}
+                  </CategoryGroup>
+                ) : null
+              })
+        return (
+          <Section key={cat || '_'} id={`cat:${cat}`} title={label} onOpen={() => setView(target)} active={sameView(target, view)}>
+            {body}
+          </Section>
+        )
+      })
+  }
 
   return (
     <aside className="sidebar">
@@ -309,36 +403,23 @@ export default function Sidebar(): React.JSX.Element {
           </button>
         </Section>
 
-        {podcasts.length > 0 && (
-          <Section id="podcasts" title={t.podcasts}>
-            {sourceRows(podcasts, 'podcasts', SECTION_KINDS.podcasts)}
-          </Section>
+        {byKind(SECTION_KINDS.all).length > 0 && (
+          <div className="group-switch" role="radiogroup" aria-label={t.sortSources}>
+            <span>{t.sortSources}</span>
+            <div className="segmented small">
+              {(['type', 'category'] as const).map((g) => (
+                <button key={g} role="radio" aria-checked={grouping === g} className={grouping === g ? 'on' : ''} onClick={() => void updateSettings({ sidebarGroup: g })}>
+                  {g === 'type' ? t.groupByType : t.groupByCategory}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
-        {videos.length > 0 && (
-          <Section id="youtube" title={t.youtube}>
-            {sourceRows(videos, 'youtube', SECTION_KINDS.youtube)}
-          </Section>
-        )}
-        {social.length > 0 && (
-          <Section id="social" title={t.social}>
-            {sourceRows(social, 'social', SECTION_KINDS.social)}
-          </Section>
-        )}
-        {reddit.length > 0 && (
-          <Section id="reddit" title={t.reddit}>
-            {sourceRows(reddit, 'reddit', SECTION_KINDS.reddit)}
-          </Section>
-        )}
-        {forums.length > 0 && (
-          <Section id="forums" title={t.forums}>
-            {sourceRows(forums, 'forums', SECTION_KINDS.forums)}
-          </Section>
-        )}
-        {feeds.length > 0 && (
-          <Section id="feeds" title={t.feeds}>
-            {sourceRows(feeds, 'feeds', SECTION_KINDS.feeds)}
-          </Section>
-        )}
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div key={grouping} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.16 }}>
+            {grouping === 'category' ? byCategorySections() : byTypeSections()}
+          </motion.div>
+        </AnimatePresence>
       </nav>
 
       <AnimatePresence>
