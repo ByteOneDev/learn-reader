@@ -16,6 +16,8 @@ Direction graphique inspirée de [Reeder](https://reederapp.com) (2024), avec sa
 
 ## Nouveautés de la v0.11
 
+- **v0.11.2 — bilan d'abonnement** : après l'accueil ou le catalogue, Learn affiche les sources ajoutées et, pour chaque échec, le motif en clair (site injoignable, proxy, DNS, certificat, pare-feu…), avec un bouton pour réessayer. Catalogue vérifié par l'app réelle sur macOS (FR 115/116, EN 157/157 après corrections).
+- **v0.11.1** : corrige l'écran blanc au démarrage des versions 0.10.0 à 0.11.0.
 - **Ranger les sources par type ou par catégorie** : sélecteur *Ranger par : Type | Catégorie* dans la barre latérale (touche **g**). Par catégorie, chaque thème (Tech, Sciences, Sport & échecs…) regroupe articles, Reddit, vidéos et podcasts, avec un pictogramme pour le type ; le titre du thème ouvre une timeline de tous ses médias. Au-delà de 10 sources, elles se rangent en sous-dossiers par type.
 - **Raccourcis clavier modifiables** : *Réglages → Raccourcis clavier → Personnaliser…*. Clique sur une touche, appuie sur la nouvelle (combinaisons ⌘/Ctrl/⌥/⇧ acceptées) ; une touche déjà prise est échangée, Retour arrière désactive, un bouton remet les valeurs par défaut. Les touches qui servent à taper un symbole sur un clavier AZERTY (« [ » = ⌥⇧( sur Mac) fonctionnent désormais.
 - **Effet verre** : liste et lecteur deviennent des volets flottants aux coins arrondis, menus, notifications, lecteur audio et dialogues sont en verre dépoli avec reflet. Sur Mac (vibrancy) et Windows 11 (Mica), la fenêtre elle-même est translucide ; sur Linux et Windows 10, l'effet est dessiné par l'interface. *Réglages → Effet verre : Réduit / Subtil / Marqué* ; « Réduire la transparence » du système est respecté.
