@@ -5,6 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       lang:
+        description: 'fr, en, ou un fichier de candidats (scripts/candidates/….json)'
         default: fr
 
 permissions:

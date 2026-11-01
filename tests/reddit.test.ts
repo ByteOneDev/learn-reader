@@ -20,6 +20,23 @@ describe('Reddit et limite de requêtes', () => {
     expect(calls[1].at - calls[0].at).toBeGreaterThanOrEqual(900)
   }, 15_000)
 
+  it('réessaie une fois en navigateur quand un site refuse le lecteur RSS (403)', async () => {
+    const uas: string[] = []
+    const fetchFn = async (_u: string, init?: RequestInit): Promise<Response> => {
+      const ua = (init?.headers as Record<string, string>)['User-Agent']
+      uas.push(ua)
+      return ua.includes('Safari') ? new Response(RSS) : new Response('', { status: 403 })
+    }
+    const r = await fetchText(fetchFn, 'https://www.exemple.fr/rss.xml')
+    expect(r.body).toContain('Bonjour')
+    expect(uas).toHaveLength(2)
+    expect(uas[0]).toContain('Learn')
+    // Un 404 n'est pas un refus : pas de nouvel essai.
+    const calls: string[] = []
+    await expect(fetchText(async (u) => (calls.push(u), new Response('', { status: 404 })), 'https://www.exemple.fr/x')).rejects.toThrow('HTTP 404')
+    expect(calls).toHaveLength(1)
+  })
+
   it('s’abonne quand même si Reddit refuse encore, sans perdre l’abonnement', async () => {
     const store = await openDatabase(null)
     const core = new LearnCore(store, async () => new Response('', { status: 429, headers: { 'retry-after': '0' } }))

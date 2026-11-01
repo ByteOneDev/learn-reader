@@ -8,9 +8,11 @@ import { createRequire } from 'node:module'
 import { _electron } from 'playwright-core'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-const lang = process.argv[2] ?? 'fr'
+const arg = process.argv[2] ?? 'fr'
+// Mode « candidats » : un fichier JSON [{ title, kind?, inputs: [...] }] ; on garde la première adresse qui marche.
+const candidates = arg.endsWith('.json') ? JSON.parse(readFileSync(arg, 'utf8')) : null
 const catalog = JSON.parse(readFileSync(join(root, 'src/shared/catalog.json'), 'utf8'))
-const entries = catalog.entries.filter((e) => e.lang === lang)
+const entries = candidates ? [] : catalog.entries.filter((e) => e.lang === arg)
 const profile = mkdtempSync(join(tmpdir(), 'learn-catalog-'))
 const app = await _electron.launch({
   executablePath: createRequire(import.meta.url)('electron'),
@@ -19,6 +21,23 @@ const app = await _electron.launch({
 try {
   const w = await app.firstWindow()
   await w.waitForFunction(() => !!window.learn)
+  if (candidates) {
+    for (const c of candidates) {
+      const tried = []
+      let ok = null
+      for (const input of c.inputs) {
+        const r = await w.evaluate((n) => window.learn.addSources([n]).catch((e) => ({ added: [], failed: [{ error: e.message }] })), { input, kind: c.kind, title: c.title })
+        if (r.added.length) {
+          const items = await w.evaluate((id) => window.learn.listItems({ view: { type: 'source', sourceId: id }, limit: 200 }), r.added[0].id)
+          ok = `${input} → ${r.added[0].url} (${items.length} articles)`
+          break
+        }
+        tried.push(`${input} : ${r.failed[0]?.error}`)
+      }
+      console.log(ok ? `OK  ${c.title} ← ${ok}` : `KO  ${c.title}\n${tried.map((x) => '      ' + x).join('\n')}`)
+    }
+    process.exitCode = 0
+  }
   const t0 = Date.now()
   const failed = []
   for (let i = 0; i < entries.length; i += 6) {
