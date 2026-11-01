@@ -1,0 +1,24 @@
+name: Diagnostic catalogue
+
+# Lancé à la main : abonne l'app réelle à tout le catalogue et liste les échecs.
+on:
+  workflow_dispatch:
+    inputs:
+      lang:
+        default: fr
+
+permissions:
+  contents: read
+
+jobs:
+  catalog:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: node scripts/catalog-check.mjs ${{ inputs.lang }}
