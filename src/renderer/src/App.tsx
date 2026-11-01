@@ -12,6 +12,7 @@ import Toasts from './components/Toasts'
 import Onboarding from './onboarding/Onboarding'
 import BalanceDialog from './components/BalanceDialog'
 import ShortcutsDialog from './components/ShortcutsDialog'
+import ReportDialog from './components/ReportDialog'
 import BoardView from './components/boards/BoardView'
 import PlayerBar from './components/media/PlayerBar'
 import { useT } from './lib/i18n'
@@ -138,6 +139,7 @@ export default function App(): React.JSX.Element {
         {dialog === 'add' && <AddSourceDialog key="add" onClose={() => setDialog(null)} />}
         {dialog === 'settings' && <SettingsDialog key="settings" onClose={() => setDialog(null)} />}
         {dialog === 'balance' && <BalanceDialog key="balance" onClose={() => setDialog(null)} />}
+        {dialog === 'report' && <ReportDialog key="report" />}
         {dialog === 'shortcuts' && <ShortcutsDialog key="shortcuts" onClose={() => setDialog('settings')} />}
       </AnimatePresence>
 

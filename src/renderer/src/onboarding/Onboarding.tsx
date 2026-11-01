@@ -3,7 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Atom, BookOpen, Check, Cpu, FolderOpen, Gamepad2, Globe, HeartPulse, Landmark, Scroll, TrendingUp, Trophy, Upload, X, Zap } from 'lucide-react'
 import { catalog, type CatalogEntry } from '@shared/catalog'
 import type { Lang, NewSource } from '@shared/types'
-import { useApp } from '../lib/store'
+import { useApp, type SubscribeReport } from '../lib/store'
+import { subscribeAll } from '../lib/subscribe'
 import { dictionaries } from '../lib/i18n'
 import Hemicycle, { LEAN_COLORS } from './Hemicycle'
 
@@ -33,6 +34,7 @@ export default function Onboarding({ mode, onClose }: { mode: 'first' | 'catalog
   const api = useApp((s) => s.api)
   const updateSettings = useApp((s) => s.updateSettings)
   const toast = useApp((s) => s.toast)
+  const showReport = useApp((s) => s.showReport)
   const reloadMeta = useApp((s) => s.reloadMeta)
   const loadItems = useApp((s) => s.loadItems)
 
@@ -74,33 +76,31 @@ export default function Onboarding({ mode, onClose }: { mode: 'first' | 'catalog
     })
   }
 
-  const subscribe = async (): Promise<void> => {
+  const subscribe = async (): Promise<SubscribeReport> => {
     const list: NewSource[] = entries
       .filter((e) => selected.has(e.id))
       .map((e) => ({ input: e.input, kind: e.kind, title: e.title, category: e.category, lang: e.lang, leaning: e.leaning, owner: e.owner }))
-    let failed = 0
     setProgress({ done: 0, total: list.length })
-    for (let i = 0; i < list.length; i += 6) {
-      const chunk = list.slice(i, i + 6)
-      const r = await api.addSources(chunk)
-      failed += r.failed.length
-      setProgress({ done: Math.min(list.length, i + chunk.length), total: list.length })
-    }
+    const report = await subscribeAll(api, list, (done) => setProgress({ done, total: list.length }))
     setProgress(null)
-    if (failed) toast(t.errorsCount(failed), 'error')
+    return report
   }
 
   const finish = async (): Promise<void> => {
+    let report: SubscribeReport
     if (mode === 'first') {
       await updateSettings({ language: lang })
-      await subscribe()
+      report = await subscribe()
       await updateSettings({ onboarded: true, obsidianVault: vault })
     } else {
-      await subscribe()
+      report = await subscribe()
       onClose()
     }
     await reloadMeta()
     await loadItems(true)
+    // Échecs : un bilan qui reste affiché, avec le motif de chacun (un message éphémère passait inaperçu).
+    if (report.failed.length) showReport(report)
+    else if (report.added) toast(t.subscribedCount(report.added))
   }
 
   const canNext = step !== 'categories' || cats.size > 0

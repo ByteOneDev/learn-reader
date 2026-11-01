@@ -58,6 +58,11 @@ try {
   if (toasts.length) console.log(`  messages : ${toasts.join(' | ')}`)
   if (process.env.SMOKE_NETWORK === '1' && subscribed.length === 0) throw new Error('aucune source abonnée après le premier lancement')
   if (subscribed.length) step('sources abonnées')
+  // Bilan d'abonnement (échecs) : on le relève puis on le ferme.
+  if (await w.locator('.report-row').count()) {
+    console.log(`  bilan : ${(await w.locator('.report-row').allInnerTexts()).map((x) => x.replace(/\n/g, ' : ')).join(' | ')}`)
+    await w.locator('.dialog .btn.primary').click()
+  }
 
   // 3. Réglages et raccourcis.
   current = 'réglages et raccourcis'

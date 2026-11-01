@@ -3263,3 +3263,74 @@ kbd {
 :root.native-glass .sidebar .nav-row:hover:not(.active) {
   background: var(--control-hover);
 }
+
+/* ── Bilan d'abonnement ─────────────────────────────────────────────── */
+.report-summary {
+  display: flex;
+  gap: 18px;
+  font-weight: 700;
+  font-size: 14.5px;
+}
+.report-summary span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.report-summary .ok {
+  color: var(--accent);
+}
+.report-summary .ko {
+  color: var(--danger);
+}
+.report-hint {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  color: var(--text);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+.report-hint svg {
+  color: var(--danger);
+  flex: none;
+  margin-top: 2px;
+}
+.report-hint p {
+  margin: 0;
+}
+.report-list {
+  margin-top: 12px;
+  max-height: 46vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.report-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--control);
+}
+.report-name {
+  font-weight: 650;
+  font-size: 13.5px;
+}
+.report-error {
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

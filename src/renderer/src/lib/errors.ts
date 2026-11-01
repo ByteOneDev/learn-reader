@@ -14,10 +14,30 @@ const HTTP_MESSAGES: Record<string, string> = {
   '503': 'Le site est momentanément indisponible (503).'
 }
 
+// Erreurs réseau de Chromium (net::ERR_…) : ce que l'utilisateur peut en faire.
+const NET_MESSAGES: [RegExp, string][] = [
+  [/INTERNET_DISCONNECTED|NETWORK_CHANGED|ADDRESS_UNREACHABLE/, 'Pas de connexion Internet.'],
+  [/NAME_NOT_RESOLVED|NAME_RESOLUTION_FAILED/, 'Site introuvable (adresse inconnue, ou DNS bloqué).'],
+  [/PROXY|TUNNEL_CONNECTION/, 'Le proxy réseau refuse la connexion.'],
+  [/CERT_|SSL_/, 'Certificat du site refusé (connexion non sécurisée, ou inspection par un antivirus/pare-feu).'],
+  [/BLOCKED/, 'Connexion bloquée sur cet ordinateur.'],
+  [/CONNECTION_(REFUSED|RESET|CLOSED|TIMED_OUT|FAILED|ABORTED)|TIMED_OUT|EMPTY_RESPONSE/, 'Connexion impossible (site injoignable, ou bloqué par un pare-feu ou un VPN).']
+]
+
+/** Erreur due à la connexion de l'ordinateur plutôt qu'au site ? */
+export function isNetworkError(raw: string): boolean {
+  return /net::ERR_/.test(raw) || raw === 'Délai dépassé'
+}
+
 export function friendlyError(raw: string): string {
   const msg = raw.replace(/^Error invoking remote method '[^']+':\s*/, '').replace(/^(\w*Error):\s*/, '')
   const http = msg.match(/^HTTP (\d{3})$/)
-  return http ? (HTTP_MESSAGES[http[1]] ?? `Erreur du site (HTTP ${http[1]}).`) : msg
+  if (http) return HTTP_MESSAGES[http[1]] ?? `Erreur du site (HTTP ${http[1]}).`
+  if (/net::ERR_/.test(msg)) {
+    const known = NET_MESSAGES.find(([re]) => re.test(msg))
+    return known ? `${known[1]} (${msg.match(/net::ERR_\w+/)![0]})` : msg
+  }
+  return msg
 }
 
 /**

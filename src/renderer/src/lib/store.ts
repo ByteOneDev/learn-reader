@@ -1,10 +1,16 @@
 import { create } from 'zustand'
-import type { BoardMode, BoardSummary, Counts, Highlight, Item, LearnAPI, Settings, Source, View } from '@shared/types'
+import type { NewSource, BoardMode, BoardSummary, Counts, Highlight, Item, LearnAPI, Settings, Source, View } from '@shared/types'
 import { dictionaries } from './strings'
 
 export const PAGE = 80
 
-type Dialog = null | 'add' | 'settings' | 'catalog' | 'balance' | 'shortcuts'
+type Dialog = null | 'add' | 'settings' | 'catalog' | 'balance' | 'shortcuts' | 'report'
+
+/** Bilan d'un abonnement groupé (accueil, catalogue, OPML) : reste affiché tant qu'on ne le ferme pas. */
+export interface SubscribeReport {
+  added: number
+  failed: { input: string; error: string; source: NewSource }[]
+}
 
 interface Toast {
   id: number
@@ -41,6 +47,8 @@ interface AppState {
   dialog: Dialog
   refreshing: boolean
   toasts: Toast[]
+  report: SubscribeReport | null
+  showReport(r: SubscribeReport | null): void
 
   init(api: LearnAPI): Promise<void>
   reloadMeta(): Promise<void>
@@ -98,6 +106,10 @@ export const useApp = create<AppState>((set, get) => ({
   dialog: null,
   refreshing: false,
   toasts: [],
+  report: null,
+  showReport(r) {
+    set({ report: r, dialog: r ? 'report' : null })
+  },
 
   async init(api) {
     set({ api })

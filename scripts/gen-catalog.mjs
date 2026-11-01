@@ -61,9 +61,7 @@ const rows = [
   ['politique', 'fr', 'rss', 'Libération', 'https://www.liberation.fr/arc/outboundfeeds/rss-all/?outputType=xml', 1, -2],
   ['politique', 'fr', 'rss', 'Le Monde — Politique', 'https://www.lemonde.fr/politique/rss_full.xml', 1, -1],
   ['politique', 'fr', 'rss', 'franceinfo — Politique', 'https://www.francetvinfo.fr/politique.rss', 1, 0],
-  ['politique', 'fr', 'rss', 'Marianne', 'https://www.marianne.net/rss.xml', 0, 0],
   ['politique', 'fr', 'rss', "L'Express", 'https://www.lexpress.fr/arc/outboundfeeds/rss/alaune.xml', 0, 1],
-  ['politique', 'fr', 'rss', 'Le Point — Politique', 'https://www.lepoint.fr/politique/rss.xml', 1, 1],
   ['politique', 'fr', 'rss', 'Contrepoints', 'https://www.contrepoints.org/feed', 0, 1],
   ['politique', 'fr', 'rss', 'Le Figaro — Politique', 'https://www.lefigaro.fr/rss/figaro_politique.xml', 1, 2],
   ['politique', 'fr', 'rss', 'Causeur', 'https://www.causeur.fr/feed', 0, 2],
@@ -106,7 +104,6 @@ const rows = [
   ['sciences', 'en', 'bluesky', 'Nature', '@nature.com', 0],
 
   // ── Économie
-  ['economie', 'fr', 'rss', 'Les Échos', 'https://syndication.lesechos.fr/rss/rss_une.xml', 1],
   ['economie', 'fr', 'rss', 'Le Monde — Économie', 'https://www.lemonde.fr/economie/rss_full.xml', 1],
   ['economie', 'fr', 'rss', 'Alternatives Économiques', 'https://www.alternatives-economiques.fr/rss.xml', 0],
   ['economie', 'fr', 'rss', 'La Tribune', 'https://www.latribune.fr/feed.xml', 0],
@@ -135,9 +132,6 @@ const rows = [
   ['geopolitique', 'en', 'reddit', 'r/geopolitics', 'r/geopolitics', 0],
 
   // ── Histoire
-  ['histoire', 'fr', 'rss', "L'Histoire", 'https://www.lhistoire.fr/rss.xml', 1],
-  ['histoire', 'fr', 'rss', 'Hérodote.net', 'https://www.herodote.net/rss.xml', 1],
-  ['histoire', 'fr', 'rss', 'RetroNews', 'https://www.retronews.fr/rss.xml', 0],
   ['histoire', 'en', 'rss', 'History Today', 'https://www.historytoday.com/feed/rss.xml', 1],
   ['histoire', 'en', 'rss', 'JSTOR Daily', 'https://daily.jstor.org/feed/', 1],
   ['histoire', 'en', 'rss', 'Smithsonian — History', 'https://www.smithsonianmag.com/rss/history/', 0],
@@ -146,12 +140,11 @@ const rows = [
 
   // ── Sport & échecs
   ['sport', 'fr', 'rss', "L'Équipe", 'https://dwh.lequipe.fr/api/edito/rss?path=/', 1],
-  ['sport', 'fr', 'rss', 'RMC Sport', 'https://rmcsport.bfmtv.com/rss/info/flux-rss/flux-toutes-les-actualites/', 0],
-  ['sport', 'fr', 'rss', 'So Foot', 'https://www.sofoot.com/rss.xml', 0],
+  ['sport', 'fr', 'rss', 'RMC Sport', 'https://rmcsport.bfmtv.com/rss/football/', 0],
+  ['sport', 'fr', 'rss', 'So Foot', 'https://www.sofoot.com/rss', 0],
   ['sport', 'fr', 'reddit', 'r/Ligue1', 'r/Ligue1', 0],
   ['sport', 'en', 'rss', 'BBC Sport', 'https://feeds.bbci.co.uk/sport/rss.xml', 1],
   ['sport', 'en', 'rss', 'The Guardian — Sport', 'https://www.theguardian.com/sport/rss', 0],
-  ['sport', 'en', 'rss', 'ESPN', 'https://www.espn.com/espn/rss/news', 0],
   ['sport', 'en', 'rss', 'Chess.com — News', 'https://www.chess.com/rss/news', 1],
   ['sport', 'en', 'rss', 'ChessBase', 'https://en.chessbase.com/feed', 0],
   ['sport', 'en', 'reddit', 'r/chess', 'r/chess', 1],
@@ -180,7 +173,6 @@ const rows = [
   ['jeux', 'fr', 'reddit', 'r/jeuxvideo', 'r/jeuxvideo', 0],
   ['jeux', 'en', 'rss', 'Rock Paper Shotgun', 'https://www.rockpapershotgun.com/feed', 1],
   ['jeux', 'en', 'rss', 'Eurogamer', 'https://www.eurogamer.net/feed', 1],
-  ['jeux', 'en', 'rss', 'Polygon', 'https://www.polygon.com/rss/index.xml', 0],
   ['jeux', 'en', 'reddit', 'r/Games', 'r/Games', 0]
 ]
 
@@ -241,7 +233,7 @@ const nicheRows = [
   // ── Politique
   ['politique', 'fr', 'rss', 'Le Vent Se Lève', 'https://lvsl.fr/feed/', 0, -2],
   ['politique', 'fr', 'rss', "L'Incorrect", 'https://lincorrect.org/feed/', 0, 2],
-  ['politique', 'fr', 'youtube', 'HugoDécrypte', 'https://www.youtube.com/@HugoDecrypte', 0],
+  ['politique', 'fr', 'youtube', 'HugoDécrypte', 'https://www.youtube.com/channel/UCAcAnMF0OrCtUep3Y4M-ZPw', 0],
   ['politique', 'en', 'rss', 'Slow Boring', 'https://www.slowboring.com/feed', 0, -1],
   ['politique', 'en', 'rss', 'The Free Press', 'https://www.thefp.com/feed', 0, 1],
   ['politique', 'en', 'podcast', 'The Daily (NYT)', 'https://feeds.simplecast.com/54nAGcIl', 0],
@@ -279,7 +271,7 @@ const nicheRows = [
 
   // ── Histoire
   ['histoire', 'fr', 'rss', 'Actuel Moyen Âge', 'https://actuelmoyenage.wordpress.com/feed/', 0],
-  ['histoire', 'fr', 'youtube', 'Nota Bene', 'https://www.youtube.com/@NotaBeneMovies', 0],
+  ['histoire', 'fr', 'youtube', 'Nota Bene', 'https://www.youtube.com/@NotaBeneMovies', 1],
   ['histoire', 'fr', 'youtube', 'Histony', 'https://www.youtube.com/@Histony', 0],
   ['histoire', 'en', 'rss', 'A Collection of Unmitigated Pedantry', 'https://acoup.blog/feed/', 0],
   ['histoire', 'en', 'rss', 'The Public Domain Review', 'https://publicdomainreview.org/rss.xml', 0],
@@ -337,22 +329,19 @@ const nicheRows = [
   ['tech', 'en', 'reddit', 'r/macapps', 'r/macapps', 0],
   ['tech', 'en', 'reddit', 'r/apple', 'r/apple', 0],
   ['politique', 'fr', 'podcast', 'HugoDécrypte — Actus du jour', 'podcast:HugoDécrypte Actus du jour', 0],
-  ['histoire', 'fr', 'podcast', "Entrez dans l'Histoire", "podcast:Entrez dans l'Histoire", 0],
+  ['histoire', 'fr', 'podcast', "Entrez dans l'Histoire", "podcast:Entrez dans l'Histoire", 1],
   ['histoire', 'fr', 'youtube', 'La Folle Histoire', 'https://www.youtube.com/@LaFolleHistoire', 0],
   ['culture', 'fr', 'podcast', 'ÊTRE ÉTUDIANT — Le Podcast', 'podcast:ÊTRE ÉTUDIANT Le Podcast', 0],
   ['culture', 'fr', 'youtube', 'Fabien Olicard', 'https://www.youtube.com/@FabienOlicard', 0],
   ['culture', 'fr', 'youtube', 'Abrège', 'https://www.youtube.com/@Abrege', 0],
-  ['culture', 'fr', 'youtube', 'Adrien Boulisset', 'https://www.youtube.com/@AdrienBoulisset', 0],
 
   // ── Échecs : articles, vidéos, podcasts. Sans flux documenté, on donne le site (Learn trouve son flux).
   ['sport', 'en', 'rss', 'Chess.com — Articles', 'https://www.chess.com/rss/articles', 0],
-  ['sport', 'en', 'rss', 'New in Chess — Blog', 'https://www.newinchess.com/blog/rss/feed', 0],
   ['sport', 'en', 'rss', 'ChessTech News', 'https://www.chesstech.org/rss/', 0],
   ['sport', 'en', 'rss', 'The Week in Chess', 'https://theweekinchess.com/', 0],
-  ['sport', 'fr', 'rss', 'ChessBase France', 'https://fr.chessbase.com/', 0],
-  ['sport', 'fr', 'rss', 'Europe Échecs', 'https://www.europe-echecs.com/', 0],
+  ['sport', 'fr', 'rss', 'ChessBase France', 'https://fr.chessbase.com/feed', 0],
   ['sport', 'fr', 'rss', 'Fédération Française des Échecs', 'https://www.ffechecs.org/', 0],
-  ['sport', 'fr', 'youtube', 'Kevin Bordi', 'https://www.youtube.com/@KevinBordi', 0],
+  ['sport', 'fr', 'youtube', 'Kevin Bordi (Blitzstream)', 'https://www.youtube.com/@Blitzstream', 0],
   ['sport', 'en', 'youtube', 'Hikaru Nakamura', 'https://www.youtube.com/@GMHikaru', 0],
   ['sport', 'en', 'youtube', 'Eric Rosen', 'https://www.youtube.com/@EricRosen', 0],
   ['sport', 'en', 'youtube', 'Saint Louis Chess Club', 'https://www.youtube.com/@STLChessClub', 0],
@@ -361,7 +350,7 @@ const nicheRows = [
   ['sport', 'en', 'reddit', 'r/chessbeginners', 'r/chessbeginners', 0],
 
   // ── Maths et Kurzgesagt (Tout Simplement en français, Dinge Erklärt en allemand)
-  ['sciences', 'fr', 'youtube', 'Tout Simplement — Kurzgesagt', 'https://www.youtube.com/@KurzgesagtFR', 1],
+  ['sciences', 'fr', 'youtube', 'Tout Simplement — Kurzgesagt', 'https://www.youtube.com/channel/UCzMHLUJ8xTqDq6xsk0N5IdQ', 1],
   ['sciences', 'en', 'youtube', 'Dinge Erklärt — Kurzgesagt (allemand)', 'https://www.youtube.com/@KurzgesagtDE', 0],
   ['sciences', 'fr', 'youtube', 'Micmaths (Mickaël Launay)', 'https://www.youtube.com/@Micmaths', 0],
   ['sciences', 'fr', 'youtube', 'El Jj', 'https://www.youtube.com/@ElJj', 0],
@@ -372,17 +361,13 @@ const nicheRows = [
   ['sciences', 'en', 'rss', 'Quanta — Mathematics', 'https://www.quantamagazine.org/mathematics/', 0],
 
   // ── Histoire : fondations, musées, archives (sites : Learn trouve le flux qu'ils annoncent)
-  ['histoire', 'fr', 'rss', 'Fondation Napoléon', 'https://www.napoleon.org/', 0],
-  ['histoire', 'fr', 'rss', 'Fondation Charles de Gaulle', 'https://www.charles-de-gaulle.org/', 0],
+  ['histoire', 'fr', 'rss', 'Fondation Napoléon', 'https://www.napoleon.org/feed/', 0],
+  ['histoire', 'fr', 'rss', 'Fondation Charles de Gaulle', 'https://www.charles-de-gaulle.org/feed/', 0],
   ['histoire', 'fr', 'rss', "Musée de l'Armée — Actualités", 'https://actualites.musee-armee.fr/', 0],
-  ['histoire', 'fr', 'rss', 'Gallica — Le blog', 'https://gallica.bnf.fr/blog', 0],
-  ['histoire', 'fr', 'rss', "L'Histoire par l'image", 'https://histoire-image.org/', 0],
-  ['histoire', 'fr', 'rss', 'Comité d’histoire — Ministère des Armées (Chemins de mémoire)', 'https://www.cheminsdememoire.gouv.fr/', 0],
 
   // ── Newsletters (Substack et consorts publient un flux)
   ['tech', 'en', 'rss', "Pragmatic Engineer (newsletter)", 'https://newsletter.pragmaticengineer.com/', 0],
   ['tech', 'en', 'rss', 'Platformer (newsletter)', 'https://www.platformer.news/', 0],
-  ['culture', 'en', 'rss', 'Garbage Day (newsletter)', 'https://www.garbageday.email/', 0]
 ]
 
 const slug = (s) =>
