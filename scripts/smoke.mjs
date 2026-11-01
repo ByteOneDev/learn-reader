@@ -13,6 +13,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const electronPath = createRequire(import.meta.url)('electron')
 const profile = mkdtempSync(join(tmpdir(), 'learn-smoke-'))
 const errors = []
+let current = 'démarrage'
 const step = (msg) => console.log(`✓ ${msg}`)
 
 const app = await _electron.launch({
@@ -32,17 +33,25 @@ try {
   await w.waitForFunction(() => (document.getElementById('root')?.children.length ?? 0) > 0, null, { timeout: 30_000 })
   step('interface affichée')
 
-  // 2. Premier lancement : on choisit un thème léger et on va au bout.
-  for (let i = 0; i < 12 && (await w.locator('.onboarding').count()); i++) {
-    if (await w.getByText(/Qu’est-ce qui t’intéresse|What are you into/).count()) await w.getByText(/^(Santé|Health)$/).first().click()
-    await w.locator('.onboarding button').filter({ hasText: /Commencer|Continuer|C’est parti|Get started|Continue|Let’s go/ }).last().click()
-    await w.waitForTimeout(800)
+  // 2. Premier lancement : on choisit un thème léger et on va au bout. Le dernier bouton reste grisé
+  //    pendant l'abonnement aux sources (réseau réel en CI) : on attend qu'il redevienne cliquable.
+  current = 'premier lancement'
+  for (let i = 0; i < 90 && (await w.locator('.onboarding').count()); i++) {
+    const btn = w.locator('.onboarding button').filter({ hasText: /Commencer|Continuer|C’est parti|Get started|Continue|Let’s go/ }).last()
+    const enabled = (await btn.count()) > 0 && (await btn.isEnabled().catch(() => false))
+    if (!enabled && (await w.getByText(/Qu’est-ce qui t’intéresse|What are you into/).count())) {
+      await w.locator('.onboarding button').filter({ hasText: /^(Santé|Health)/ }).first().click({ timeout: 5000 }).catch(() => {})
+    } else if (enabled) {
+      await btn.click({ timeout: 5000 }).catch(() => {})
+    }
+    await w.waitForTimeout(1500)
   }
-  await w.locator('.onboarding').waitFor({ state: 'detached', timeout: 60_000 })
+  await w.locator('.onboarding').waitFor({ state: 'detached', timeout: 120_000 })
   await w.locator('.sidebar').waitFor()
   step('premier lancement terminé, barre latérale visible')
 
   // 3. Réglages et raccourcis.
+  current = 'réglages et raccourcis'
   await w.locator('.sidebar-top button').first().click()
   await w.locator('.dialog').waitFor()
   await w.locator('.dialog .btn').filter({ hasText: /Personnaliser|Customize/ }).click()
@@ -52,6 +61,7 @@ try {
   step('réglages et raccourcis')
 
   // 4. Schéma Excalidraw (chargé à la demande, polices servies par l'app).
+  current = 'schéma Excalidraw'
   await w.locator('.nav-row').filter({ hasText: /Nouveau board|New board/ }).click()
   await w.locator('.menu button').filter({ hasText: /Excalidraw/ }).click()
   await w.locator('.excalidraw').waitFor({ timeout: 30_000 })
@@ -59,7 +69,7 @@ try {
 
   await w.waitForTimeout(1000)
 } catch (e) {
-  errors.unshift(`Étape échouée : ${String(e?.message ?? e).split('\n')[0]}`)
+  errors.unshift(`Étape « ${current} » échouée : ${String(e?.message ?? e).split('\n')[0]}`)
 } finally {
   await app.close().catch(() => {})
   rmSync(profile, { recursive: true, force: true })
