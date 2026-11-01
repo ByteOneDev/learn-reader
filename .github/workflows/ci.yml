@@ -22,4 +22,6 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      # L'app réelle (Electron) doit démarrer et afficher son interface : pas d'écran blanc.
+      - run: xvfb-run -a npm run smoke
       - run: npm run plugin:build

@@ -35,3 +35,18 @@ describe('Reddit et limite de requêtes', () => {
     expect(friendlyError('HTTP 418')).toBe('Erreur du site (HTTP 418).')
   })
 })
+
+describe('enveloppe des erreurs de l’API', () => {
+  it('fonctionne sur une API figée, comme celle qu’expose le preload Electron', async () => {
+    const { withFriendlyErrors } = await import('../src/renderer/src/lib/errors')
+    const frozen = Object.freeze({
+      platform: 'darwin',
+      getSettings: () => Promise.resolve({ ok: true }),
+      addSource: () => Promise.reject(new Error("Error invoking remote method 'learn:addSource': Error: HTTP 429"))
+    })
+    const api = withFriendlyErrors(frozen as never) as unknown as typeof frozen
+    expect(api.platform).toBe('darwin')
+    await expect(api.getSettings()).resolves.toEqual({ ok: true })
+    await expect(api.addSource()).rejects.toThrow(/limite le nombre de requêtes/)
+  })
+})

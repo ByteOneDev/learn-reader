@@ -20,16 +20,23 @@ export function friendlyError(raw: string): string {
   return http ? (HTTP_MESSAGES[http[1]] ?? `Erreur du site (HTTP ${http[1]}).`) : msg
 }
 
-/** Enveloppe l'API pour que toute erreur rejetée porte un message lisible. */
+/**
+ * Enveloppe l'API pour que toute erreur rejetée porte un message lisible.
+ * Copie dans un objet neuf, pas de Proxy : dans Electron, l'API exposée par le preload (contextBridge) est
+ * figée, et un Proxy n'a pas le droit d'y renvoyer autre chose que les fonctions d'origine.
+ */
 export function withFriendlyErrors(api: LearnAPI): LearnAPI {
-  return new Proxy(api, {
-    get(target, key, receiver) {
-      const v = Reflect.get(target, key, receiver)
-      if (typeof v !== 'function' || key === 'onEvent' || key === 'pathForFile') return v
-      return (...args: unknown[]) => {
-        const r = (v as (...a: unknown[]) => unknown).apply(target, args)
-        return r instanceof Promise ? r.catch((e: unknown) => Promise.reject(new Error(friendlyError((e as Error)?.message ?? String(e))))) : r
-      }
+  const out: Record<string, unknown> = {}
+  for (const key of Object.keys(api)) {
+    const v = (api as unknown as Record<string, unknown>)[key]
+    if (typeof v !== 'function' || key === 'onEvent' || key === 'pathForFile') {
+      out[key] = v
+      continue
     }
-  })
+    out[key] = (...args: unknown[]) => {
+      const r = (v as (...a: unknown[]) => unknown).apply(api, args)
+      return r instanceof Promise ? r.catch((e: unknown) => Promise.reject(new Error(friendlyError((e as Error)?.message ?? String(e))))) : r
+    }
+  }
+  return out as unknown as LearnAPI
 }

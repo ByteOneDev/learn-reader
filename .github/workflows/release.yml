@@ -63,6 +63,12 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      # Lance l'app réelle sur chaque système (vibrancy macOS, Mica Windows) : rien n'est publié si elle ne s'affiche pas.
+      - run: npm run build
+      - name: Test de fumée
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then xvfb-run -a npm run smoke; else npm run smoke; fi
       - name: Package
         shell: bash
         env:

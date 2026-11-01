@@ -31,6 +31,7 @@ import { useT } from '../lib/i18n'
 import SourceIcon from './SourceIcon'
 import { catalog } from '@shared/catalog'
 import Popover from './Popover'
+import { useKeyLabel } from '../lib/shortcuts'
 
 function sameView(a: View, b: View): boolean {
   return JSON.stringify(a) === JSON.stringify(b)
@@ -219,6 +220,7 @@ export default function Sidebar(): React.JSX.Element {
   const setView = useApp((s) => s.setView)
   const setDialog = useApp((s) => s.setDialog)
   const updateSettings = useApp((s) => s.updateSettings)
+  const tagKey = useKeyLabel('tags')
   const api = useApp((s) => s.api)
   const reloadMeta = useApp((s) => s.reloadMeta)
   const toast = useApp((s) => s.toast)
@@ -378,7 +380,7 @@ function KindIcon({ kind }: { kind: SourceKind }): React.JSX.Element {
           {tags.map(([tag, n]) => (
             <NavRow key={tag} view={{ type: 'tag', tag }} icon={<Tag size={19} />} label={tag} badge={n} />
           ))}
-          {!tags.length && <div className="nav-hint">{t.tagsHint}</div>}
+          {!tags.length && <div className="nav-hint">{t.tagsHint(tagKey)}</div>}
         </Section>
 
         <Section id="boards" title={t.boards}>
