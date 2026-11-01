@@ -50,6 +50,15 @@ try {
   await w.locator('.sidebar').waitFor()
   step('premier lancement terminé, barre latérale visible')
 
+  // 2 bis. Les sources choisies sont bien abonnées (avec le réseau, en CI : SMOKE_NETWORK=1).
+  current = 'abonnement aux sources'
+  const subscribed = await w.evaluate(async () => (await window.learn.listSources()).map((x) => `${x.title}${x.error ? ` [${x.error}]` : ''}`))
+  const toasts = await w.locator('.toast').allTextContents()
+  console.log(`  ${subscribed.length} source(s) abonnée(s)${subscribed.length ? ' : ' + subscribed.join(', ') : ''}`)
+  if (toasts.length) console.log(`  messages : ${toasts.join(' | ')}`)
+  if (process.env.SMOKE_NETWORK === '1' && subscribed.length === 0) throw new Error('aucune source abonnée après le premier lancement')
+  if (subscribed.length) step('sources abonnées')
+
   // 3. Réglages et raccourcis.
   current = 'réglages et raccourcis'
   await w.locator('.sidebar-top button').first().click()

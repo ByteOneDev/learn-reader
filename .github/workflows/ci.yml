@@ -24,4 +24,6 @@ jobs:
       - run: npm run build
       # L'app réelle (Electron) doit démarrer et afficher son interface : pas d'écran blanc.
       - run: xvfb-run -a npm run smoke
+        env:
+          SMOKE_NETWORK: '1'
       - run: npm run plugin:build

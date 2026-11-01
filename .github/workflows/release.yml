@@ -67,6 +67,8 @@ jobs:
       - run: npm run build
       - name: Test de fumée
         shell: bash
+        env:
+          SMOKE_NETWORK: '1'
         run: |
           if [ "$RUNNER_OS" = "Linux" ]; then xvfb-run -a npm run smoke; else npm run smoke; fi
       - name: Package
