@@ -22,8 +22,26 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
-      # L'app réelle (Electron) doit démarrer et afficher son interface : pas d'écran blanc.
-      - run: xvfb-run -a npm run smoke
+      - run: npm run plugin:build
+
+  # L'app réelle (Electron) sur chaque système : elle démarre, s'abonne aux sources, ouvre réglages et schémas.
+  smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Test de fumée
+        shell: bash
         env:
           SMOKE_NETWORK: '1'
-      - run: npm run plugin:build
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then xvfb-run -a npm run smoke; else npm run smoke; fi
