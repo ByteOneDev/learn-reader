@@ -3,6 +3,7 @@ import type { ResolvedInput } from '@shared/types'
 import { useApp } from '../lib/store'
 import { useT } from '../lib/i18n'
 import Dialog from './Dialog'
+import ImportPanel from './ImportPanel'
 
 export default function AddSourceDialog({ onClose }: { onClose(): void }): React.JSX.Element {
   const t = useT()
@@ -10,7 +11,7 @@ export default function AddSourceDialog({ onClose }: { onClose(): void }): React
   const setView = useApp((s) => s.setView)
   const reloadMeta = useApp((s) => s.reloadMeta)
   const toast = useApp((s) => s.toast)
-  const [tab, setTab] = useState<'feed' | 'link' | 'book' | 'newsletter'>('feed')
+  const [tab, setTab] = useState<'feed' | 'link' | 'book' | 'newsletter' | 'import'>('feed')
   const importBooks = useApp((s) => s.importBooks)
   const [input, setInput] = useState('')
   const [detected, setDetected] = useState<ResolvedInput | null>(null)
@@ -96,7 +97,11 @@ export default function AddSourceDialog({ onClose }: { onClose(): void }): React
         <button className={tab === 'newsletter' ? 'on' : ''} onClick={() => setTab('newsletter')}>
           {t.newsletterTab}
         </button>
+        <button className={tab === 'import' ? 'on' : ''} onClick={() => setTab('import')}>
+          {t.importTab}
+        </button>
       </div>
+      {tab === 'import' && <ImportPanel onDone={onClose} />}
       {tab === 'newsletter' && (
         <div className="field newsletter-help">
           <p>

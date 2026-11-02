@@ -14,6 +14,10 @@ Direction graphique inspirée de [Reeder](https://reederapp.com) (2024), avec sa
 | Livre EPUB | PDF surligné |
 | ![](docs/screenshots/livre-epub.png) | ![](docs/screenshots/livre-pdf.png) |
 
+## Nouveautés de la v0.12
+
+- **Importer ses abonnements** : *Ajouter une source → Importer*. Abonnements YouTube depuis Google Takeout (fichier `subscriptions.csv`), fichier OPML (Reeder, Feedly, NetNewsWire…), ou une liste collée, une source par ligne (`r/linux`, une adresse, `@compte@instance`). Learn devine une catégorie pour chacune (catalogue, puis mots-clés), modifiable avant de valider, et signale celles déjà suivies.
+
 ## Nouveautés de la v0.11
 
 - **v0.11.2 — bilan d'abonnement** : après l'accueil ou le catalogue, Learn affiche les sources ajoutées et, pour chaque échec, le motif en clair (site injoignable, proxy, DNS, certificat, pare-feu…), avec un bouton pour réessayer. Catalogue vérifié par l'app réelle sur macOS (FR 115/116, EN 157/157 après corrections).
@@ -219,6 +223,7 @@ L'orientation politique (−3 à +3) est une estimation de Learn à partir des l
 - ~~**v0.8** : extension Obsidian~~ ✓
 - ~~**v0.10** : schémas Excalidraw liés aux documents, catégories, tags, export MindNode/PDF~~ ✓
 - ~~**v0.11** : tri par type ou catégorie, raccourcis modifiables, effet verre~~ ✓
+- ~~**v0.12** : import des abonnements (YouTube Takeout, OPML, liste)~~ ✓
 - **Ensuite** : app native
 
 ## Licence
