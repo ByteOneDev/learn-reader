@@ -5,6 +5,7 @@ import { useApp } from '../lib/store'
 import { useT } from '../lib/i18n'
 import Dialog from './Dialog'
 import NotionSettings from './NotionSettings'
+import { GESTURES } from '../lib/gestures'
 
 export default function SettingsDialog({ onClose }: { onClose(): void }): React.JSX.Element {
   const t = useT()
@@ -108,6 +109,23 @@ export default function SettingsDialog({ onClose }: { onClose(): void }): React.
       <div className="field">
         <label>{t.gestures}</label>
         <p className="hint" style={{ margin: 0 }}>{t.gesturesHint}</p>
+        <div className="gesture-list">
+          {GESTURES.map((g) => {
+            const on = settings.gestures?.[g] !== false
+            return (
+              <div key={g} className="row-between gesture-row">
+                <span>{t.gestureLabels[g]}</span>
+                <button
+                  className={`switch${on ? ' on' : ''}`}
+                  role="switch"
+                  aria-checked={on}
+                  aria-label={t.gestureLabels[g]}
+                  onClick={() => set({ gestures: { ...settings.gestures, [g]: !on } })}
+                />
+              </div>
+            )
+          })}
+        </div>
       </div>
       <div className="field row-between">
         <span style={{ fontSize: 14.5, fontWeight: 600 }}>{t.readerFont}</span>

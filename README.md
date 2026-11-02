@@ -14,6 +14,17 @@ Direction graphique inspirée de [Reeder](https://reederapp.com) (2024), avec sa
 | Livre EPUB | PDF surligné |
 | ![](docs/screenshots/livre-epub.png) | ![](docs/screenshots/livre-pdf.png) |
 
+## Nouveautés de la v0.13 : gestes
+
+- **Tirer pour actualiser** : tout en haut de la liste, deux doigts vers le bas ; « Relâche pour actualiser » s'affiche au bon moment.
+- **Balayer une carte** à deux doigts : vers la gauche « Plus tard », vers la droite « Lu / non lu » (comme dans Mail ou Reeder).
+- **Balayer dans le lecteur** : vers la gauche l'article suivant, vers la droite le précédent (pas dans les livres, ni sur un bloc de code qui défile).
+- **Pincer** dans le lecteur pour changer la taille du texte (retenue).
+- **Double-clic sur une image** : plein écran (clic ou Échap pour fermer).
+- **« N nouveaux »** : après une actualisation, si tu lis plus bas, une pastille te ramène en haut.
+- **Trois doigts** (déjà là) : replient les volets un à un jusqu'au lecteur seul, et les rouvrent. Sur Mac, *Réglages Système → Trackpad → Autres gestes → Balayer entre les pages → Balayer avec trois doigts*.
+- Chaque geste se désactive dans *Réglages → Gestes*.
+
 ## Nouveautés de la v0.12
 
 - **Importer ses abonnements** : *Ajouter une source → Importer*. Abonnements YouTube depuis Google Takeout (fichier `subscriptions.csv`), fichier OPML (Reeder, Feedly, NetNewsWire…), ou une liste collée, une source par ligne (`r/linux`, une adresse, `@compte@instance`). Learn devine une catégorie pour chacune (catalogue, puis mots-clés), modifiable avant de valider, et signale celles déjà suivies.
@@ -224,6 +235,7 @@ L'orientation politique (−3 à +3) est une estimation de Learn à partir des l
 - ~~**v0.10** : schémas Excalidraw liés aux documents, catégories, tags, export MindNode/PDF~~ ✓
 - ~~**v0.11** : tri par type ou catégorie, raccourcis modifiables, effet verre~~ ✓
 - ~~**v0.12** : import des abonnements (YouTube Takeout, OPML, liste)~~ ✓
+- ~~**v0.13** : gestes (tirer pour actualiser, balayer cartes et articles, pincer, images plein écran)~~ ✓
 - **Ensuite** : app native
 
 ## Licence

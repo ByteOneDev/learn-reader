@@ -3442,3 +3442,163 @@ kbd {
 .link-btn:hover {
   text-decoration: underline;
 }
+
+/* ── Gestes de la liste ─────────────────────────────────────────────── */
+.list {
+  position: relative;
+}
+.list-scroll {
+  position: relative;
+}
+.pull-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  overflow: hidden;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--text-3);
+  transition: color 0.15s;
+}
+.pull-indicator.armed {
+  color: var(--accent);
+}
+.pull-indicator svg {
+  flex: none;
+}
+.card.swiping {
+  z-index: 1;
+  background: var(--list);
+  border-radius: var(--radius);
+  box-shadow: var(--card-selected-shadow);
+}
+.swipe-bg {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  z-index: 0;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  padding: 0 22px;
+  font-weight: 750;
+  font-size: 13.5px;
+  color: var(--text-2);
+  background: var(--control);
+  transition:
+    background 0.18s,
+    color 0.18s;
+}
+.swipe-bg span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.swipe-bg .right {
+  margin-left: auto;
+}
+.swipe-bg.armed span {
+  transform: scale(1.12);
+}
+.swipe-bg.later.armed {
+  background: #3b82f6;
+  color: #fff;
+}
+.swipe-bg.read.armed {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.fresh-pill {
+  position: absolute;
+  top: calc(var(--bar-h) + 6px);
+  /* Centrée sans transform : framer-motion anime déjà transform. */
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: max-content;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 750;
+  color: var(--accent-text);
+  background: var(--accent);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+
+/* ── Gestes du lecteur ──────────────────────────────────────────────── */
+.swipe-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 6;
+  width: 44px;
+  height: 44px;
+  margin-top: -22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--text-2);
+  background: var(--glass-sheen, none), var(--overlay);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-pop);
+  pointer-events: none;
+  transform: scale(calc(0.7 + var(--p, 0) * 0.3));
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.swipe-nav.prev {
+  left: 14px;
+}
+.swipe-nav.next {
+  right: 14px;
+}
+.swipe-nav.armed {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: transparent;
+}
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 40px;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  cursor: zoom-out;
+}
+.lightbox img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+}
+.article img {
+  cursor: zoom-in;
+}
+.gesture-list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.gesture-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 36px;
+  font-size: 13.5px;
+  font-weight: 550;
+}

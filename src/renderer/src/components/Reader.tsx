@@ -25,6 +25,8 @@ import type { Highlight, HighlightColor, LinkedBoard } from '@shared/types'
 import BoardPicker from './boards/BoardPicker'
 import { useApp } from '../lib/store'
 import { useKeyLabel } from '../lib/shortcuts'
+import { gestureOn } from '../lib/gestures'
+import { Lightbox, SwipeNavHint, useReaderGestures } from './ReaderGestures'
 import { useT } from '../lib/i18n'
 import { fullDate } from '../lib/time'
 import { sanitize } from '../lib/sanitize'
@@ -91,6 +93,9 @@ export default function Reader(): React.JSX.Element {
 
   const contentRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const navOffset = useReaderGestures(scrollRef, item)
+  const [lightbox, setLightbox] = useState<string | null>(null)
+  const closeLightbox = useCallback(() => setLightbox(null), [])
   const navRef = useRef<BookNav | null>(null)
   const [orphans, setOrphans] = useState<Set<string>>(new Set())
   const [pending, setPending] = useState<PendingSelection | null>(null)
@@ -322,7 +327,18 @@ export default function Reader(): React.JSX.Element {
         )}
       </AnimatePresence>
 
-      <div className={`reader-scroll${item.format === 'pdf' ? ' pdf-scroll' : ''}`} ref={scrollRef}>
+      <div
+        className={`reader-scroll${item.format === 'pdf' ? ' pdf-scroll' : ''}`}
+        ref={scrollRef}
+        onDoubleClick={(e) => {
+          const img = (e.target as HTMLElement).closest('img')
+          if (img && gestureOn('imageZoom') && !img.closest('.pdf-page')) {
+            e.preventDefault()
+            window.getSelection()?.removeAllRanges()
+            setLightbox(img.currentSrc || img.src)
+          }
+        }}
+      >
         {item.format === 'epub' && (
           <EpubView key={item.id} item={item} highlights={highlights} scrollRef={scrollRef} navRef={navRef} onOrphans={setOrphans} onMouseUp={onMouseUp} onClick={onClickContent} />
         )}
@@ -502,6 +518,8 @@ export default function Reader(): React.JSX.Element {
           </Popover>
         )}
       </AnimatePresence>
+      <SwipeNavHint offset={navOffset} />
+      <Lightbox src={lightbox} onClose={closeLightbox} />
     </main>
   )
 }

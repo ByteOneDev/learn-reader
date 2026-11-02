@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowUp, Bookmark, BookPlus, CheckCheck, Headphones, Heart, Highlighter, Layers, PanelLeft, Play, RefreshCw, Search, Tv, X } from 'lucide-react'
+import { ArrowUp, Bookmark, BookPlus, Check, CheckCheck, Headphones, Heart, Highlighter, Layers, PanelLeft, Play, RefreshCw, Search, Tv, X } from 'lucide-react'
 import { formatTime } from '@shared/media'
 import { categoryLabel } from './Sidebar'
 import { dictionaries } from '../lib/i18n'
@@ -9,6 +9,86 @@ import { useApp } from '../lib/store'
 import { useT, type Dict } from '../lib/i18n'
 import { relativeTime } from '../lib/time'
 import SourceIcon from './SourceIcon'
+import { gestureOn, WheelTracker } from '../lib/gestures'
+
+const PULL_THRESHOLD = 110
+const SWIPE_THRESHOLD = 90
+
+interface SwipeState {
+  top: number
+  height: number
+  offset: number
+  later: boolean
+  read: boolean
+}
+
+/**
+ * Gestes de la liste au trackpad :
+ * - deux doigts vers le bas, déjà tout en haut : tirer pour actualiser ;
+ * - deux doigts à l'horizontale sur une carte : ← plus tard, → lu / non lu.
+ */
+function useListGestures(scrollRef: React.RefObject<HTMLDivElement | null>): { pull: number; swipe: SwipeState | null } {
+  const [pull, setPull] = useState(0)
+  const [swipe, setSwipe] = useState<SwipeState | null>(null)
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    let card: HTMLElement | null = null
+    let offset = 0
+    let pulled = 0
+    let cooldown = 0
+    const tracker = new WheelTracker(() => {
+      if (card) {
+        const c = card
+        c.style.transition = 'transform 0.34s cubic-bezier(0.22, 1, 0.36, 1)'
+        c.style.transform = ''
+        setTimeout(() => c.classList.remove('swiping'), 340)
+        const s = useApp.getState()
+        const item = s.items.find((i) => i.id === c.dataset.id)
+        if (item && Math.abs(offset) >= SWIPE_THRESHOLD) {
+          if (offset < 0) void s.patchItem(item.id, { later: !item.later })
+          else void s.patchItem(item.id, { read: !item.read })
+        }
+        card = null
+        offset = 0
+        setSwipe(null)
+      }
+      if (pulled > 0) {
+        if (pulled >= PULL_THRESHOLD && Date.now() > cooldown) {
+          cooldown = Date.now() + 1500
+          void useApp.getState().refresh()
+        }
+        pulled = 0
+        setPull(0)
+      }
+    })
+    const onWheel = (e: WheelEvent): void => {
+      if (e.ctrlKey) return
+      tracker.push(e)
+      if (tracker.axis === 'x' && gestureOn('cardSwipe')) {
+        if (!card) {
+          const found = (e.target as HTMLElement).closest<HTMLElement>('.card[data-id]')
+          if (!found || found.classList.contains('book-card')) return
+          card = found
+          card.classList.add('swiping')
+          card.style.transition = 'none'
+        }
+        e.preventDefault()
+        // Les doigts vers la gauche poussent la carte vers la gauche.
+        offset = Math.max(-170, Math.min(170, -tracker.dx))
+        card.style.transform = `translateX(${offset}px)`
+        const item = useApp.getState().items.find((i) => i.id === card!.dataset.id)
+        setSwipe({ top: card.offsetTop, height: card.offsetHeight, offset, later: !!item?.later, read: !!item?.read })
+      } else if (tracker.axis === 'y' && gestureOn('pullRefresh') && el.scrollTop <= 0 && (e.deltaY < 0 || pulled > 0)) {
+        pulled = Math.max(0, pulled - e.deltaY)
+        setPull(pulled)
+      }
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [scrollRef])
+  return { pull, swipe }
+}
 
 const SOCIAL = new Set(['mastodon', 'bluesky', 'x'])
 
@@ -202,6 +282,26 @@ export default function Timeline(): React.JSX.Element {
   const scrollRef = useRef<HTMLDivElement>(null)
   const sentinel = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const { pull, swipe } = useListGestures(scrollRef)
+
+  // « N nouveaux » : des articles sont arrivés au-dessus pendant qu'on lisait plus bas dans la liste.
+  const [fresh, setFresh] = useState(0)
+  const knownIds = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    const before = knownIds.current
+    const firstKnown = items.findIndex((i) => before.has(i.id))
+    if (before.size && firstKnown > 0 && (scrollRef.current?.scrollTop ?? 0) > 150) setFresh((n) => n + firstKnown)
+    knownIds.current = new Set(items.map((i) => i.id))
+  }, [items])
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const onScroll = (): void => {
+      if (el.scrollTop < 60) setFresh(0)
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [])
 
   const sourceMap = useMemo(() => new Map(sources.map((s) => [s.id, s])), [sources])
   const [title, subtitle] = viewTitle(view, t, sources)
@@ -223,6 +323,8 @@ export default function Timeline(): React.JSX.Element {
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 })
+    knownIds.current = new Set()
+    setFresh(0)
     setQ('')
     setSearching(false)
   }, [view])
@@ -331,7 +433,46 @@ export default function Timeline(): React.JSX.Element {
         </AnimatePresence>
       </div>
 
+      <AnimatePresence>
+        {fresh > 0 && (
+          <motion.button
+            className="fresh-pill"
+            initial={{ opacity: 0, y: -10, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 32 }}
+            onClick={() => {
+              scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+              setFresh(0)
+            }}
+          >
+            <ArrowUp size={14} /> {t.newAbove(fresh)}
+          </motion.button>
+        )}
+      </AnimatePresence>
       <div className="list-scroll" ref={scrollRef}>
+        {pull > 0 && (
+          <div className={`pull-indicator${pull >= PULL_THRESHOLD ? ' armed' : ''}`} style={{ height: Math.min(pull, 150) * 0.55 }}>
+            <RefreshCw size={17} style={{ transform: `rotate(${pull * 2.4}deg)` }} />
+            <span>{pull >= PULL_THRESHOLD ? t.releaseToRefresh : t.pullToRefresh}</span>
+          </div>
+        )}
+        {swipe && (
+          <div
+            className={`swipe-bg ${swipe.offset < 0 ? 'later' : 'read'}${Math.abs(swipe.offset) >= SWIPE_THRESHOLD ? ' armed' : ''}`}
+            style={{ top: swipe.top, height: swipe.height }}
+          >
+            {swipe.offset < 0 ? (
+              <span className="right">
+                <Layers size={18} /> {swipe.later ? t.swipeUnlater : t.later}
+              </span>
+            ) : (
+              <span className="left">
+                <Check size={18} /> {swipe.read ? t.swipeUnread : t.swipeRead}
+              </span>
+            )}
+          </div>
+        )}
         {items.length === 0 && !loading && <div className="list-empty">{view.type === 'library' ? t.emptyLibrary : t.emptyList}</div>}
         {items.map((item, i) => (
           <Card

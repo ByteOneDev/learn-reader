@@ -261,6 +261,8 @@ export interface Settings {
   sidebarGroup?: 'type' | 'category'
   /** Raccourcis personnalisés : action → combinaison (« k », « Cmd+Shift+j »…). Absents : valeurs par défaut. */
   shortcuts?: Record<string, string>
+  /** Gestes au trackpad désactivés (absents ou true : activés). */
+  gestures?: Partial<Record<'pullRefresh' | 'cardSwipe' | 'readerSwipe' | 'pinchZoom' | 'imageZoom', boolean>>
   /** Effet verre : réduit (opaque), subtil (défaut) ou marqué. */
   glass?: 'off' | 'subtle' | 'strong'
   /** Modèle d'adresse pour X, ex. `https://rsshub.mondomaine.fr/twitter/user/{user}`. */
