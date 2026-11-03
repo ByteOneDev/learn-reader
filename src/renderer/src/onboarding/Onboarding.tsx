@@ -54,10 +54,11 @@ export default function Onboarding({ mode, onClose }: { mode: 'first' | 'catalog
 
   const go = (delta: 1 | -1): void => {
     if (steps[index + delta] === 'sources') {
-      // Pré-coche la sélection de départ des nouvelles catégories, sans écraser les choix déjà faits.
+      // Choisir un thème, c'est prendre toutes ses sources, les plus pointues comprises (Micode avec Tech…) :
+      // tout est pré-coché, sans écraser les choix déjà faits ; on décoche ce qui n'intéresse pas.
       setSelected((prev) => {
         const next = new Set(prev)
-        for (const e of entries) if (e.preselected && !touched.has(e.id)) next.add(e.id)
+        for (const e of entries) if (!touched.has(e.id)) next.add(e.id)
         for (const id of prev) if (!entries.some((e) => e.id === id)) next.delete(id)
         return next
       })
@@ -113,7 +114,6 @@ export default function Onboarding({ mode, onClose }: { mode: 'first' | 'catalog
         <span className={`checkbox${on ? ' on' : ''}`}>{on && <Check size={14} strokeWidth={3} />}</span>
         {e.leaning !== undefined && <i className="lean-dot" style={{ background: LEAN_COLORS[e.leaning] }} />}
         <span className="t">{e.title}</span>
-        {e.niche && <span className="niche">{t.niche}</span>}
         <span className="k">{t.kinds[e.kind]}</span>
       </button>
     )

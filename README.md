@@ -16,6 +16,7 @@ Direction graphique inspirée de [Reeder](https://reederapp.com) (2024), avec sa
 
 ## Nouveautés de la v0.15
 
+- **v0.15.1** : au premier lancement (et dans le catalogue), choisir un thème coche toutes ses sources, les plus pointues comprises (Micode avec Tech…) ; on décoche ce qui n'intéresse pas.
 - **Rechercher partout** : touche **/** ou loupe en haut de la barre latérale. Articles, livres, vidéos, podcasts, surlignages et notes, texte complet compris, sans tenir compte des accents ni des majuscules ; les mots trouvés sont surlignés dans l'extrait ; ↑ ↓ et Entrée pour ouvrir. La recherche de la liste utilise le même index.
 - **Lecture hors ligne** : les articles Plus tard, Signets et Favoris sont préparés en arrière-plan (texte complet et images, jusqu'à 6 Mo par article) ; un nuage coché sur la carte indique qu'ils sont prêts. Sans connexion, un bandeau le signale et ces articles restent lisibles. *Réglages → Lecture hors ligne*.
 - **Relecture complète du code**, corrections :
