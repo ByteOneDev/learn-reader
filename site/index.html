@@ -1,0 +1,823 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Learn — Lis tout, retiens l’essentiel</title>
+    <meta name="description" content="Learn réunit tes flux RSS, chaînes YouTube, podcasts, Reddit et livres dans un seul lecteur. Surligne, annote, relie tes idées en mind maps, exporte vers Obsidian et Notion. Gratuit, open source, tes données restent chez toi." />
+    <meta property="og:title" content="Learn — Lis tout, retiens l’essentiel" />
+    <meta property="og:description" content="Flux, vidéos, podcasts et livres dans un seul lecteur, pour lire, surligner et relier tes idées." />
+    <meta property="og:image" content="assets/reader-light.webp" />
+    <meta name="theme-color" content="#0f9b6c" />
+    <link rel="icon" href="assets/favicon.png" />
+    <style>
+      :root {
+        --bg: #fbfbf9;
+        --bg-2: #f2f2ef;
+        --card: #ffffff;
+        --text: #1d1d1f;
+        --text-2: #55555b;
+        --text-3: #8b8b91;
+        --border: rgba(0, 0, 0, 0.08);
+        --accent: #0f9b6c;
+        --accent-2: #12b981;
+        --accent-soft: rgba(15, 155, 108, 0.1);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 40px rgba(0, 0, 0, 0.08);
+        --shadow-big: 0 30px 80px rgba(16, 24, 20, 0.18), 0 6px 18px rgba(16, 24, 20, 0.08);
+        --radius: 22px;
+        --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #121214;
+          --bg-2: #18181b;
+          --card: #1d1d20;
+          --text: #ececee;
+          --text-2: #a8a8ae;
+          --text-3: #75757b;
+          --border: rgba(255, 255, 255, 0.08);
+          --accent: #3ddc97;
+          --accent-2: #3ddc97;
+          --accent-soft: rgba(61, 220, 151, 0.12);
+          --shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 12px 40px rgba(0, 0, 0, 0.4);
+          --shadow-big: 0 30px 90px rgba(0, 0, 0, 0.6), 0 6px 18px rgba(0, 0, 0, 0.4);
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        font-family: var(--font);
+        background: var(--bg);
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+        line-height: 1.55;
+      }
+      a {
+        color: inherit;
+      }
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+      .wrap {
+        width: min(1160px, 100% - 40px);
+        margin: 0 auto;
+      }
+
+      /* ── Navigation ── */
+      nav {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        backdrop-filter: blur(18px) saturate(1.6);
+        -webkit-backdrop-filter: blur(18px) saturate(1.6);
+        background: color-mix(in srgb, var(--bg) 78%, transparent);
+        border-bottom: 1px solid var(--border);
+      }
+      nav .wrap {
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        height: 64px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 800;
+        font-size: 19px;
+        text-decoration: none;
+        letter-spacing: -0.01em;
+      }
+      .brand img {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+      }
+      nav .links {
+        display: flex;
+        gap: 22px;
+        margin-left: auto;
+        font-size: 14.5px;
+        font-weight: 600;
+        color: var(--text-2);
+      }
+      nav .links a {
+        text-decoration: none;
+      }
+      nav .links a:hover {
+        color: var(--text);
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 46px;
+        padding: 0 22px;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 15.5px;
+        text-decoration: none;
+        border: 1px solid var(--border);
+        background: var(--card);
+        transition:
+          transform 0.15s,
+          box-shadow 0.2s;
+      }
+      .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow);
+      }
+      .btn.primary {
+        background: linear-gradient(180deg, var(--accent-2), var(--accent));
+        color: #fff;
+        border-color: transparent;
+        box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 35%, transparent);
+      }
+      @media (prefers-color-scheme: dark) {
+        .btn.primary {
+          color: #0b1f16;
+        }
+      }
+      .btn.small {
+        height: 38px;
+        padding: 0 16px;
+        font-size: 14px;
+      }
+      .btn svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      /* ── Hero ── */
+      .hero {
+        position: relative;
+        padding: 88px 0 40px;
+        text-align: center;
+        overflow: hidden;
+      }
+      .hero::before {
+        content: '';
+        position: absolute;
+        inset: -40% -20% auto;
+        height: 900px;
+        background:
+          radial-gradient(closest-side, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%) 50% 30% / 70% 60% no-repeat,
+          radial-gradient(closest-side, rgba(96, 165, 250, 0.16), transparent 70%) 15% 50% / 50% 50% no-repeat,
+          radial-gradient(closest-side, rgba(244, 114, 182, 0.12), transparent 70%) 85% 45% / 45% 45% no-repeat;
+        pointer-events: none;
+        z-index: -1;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 13.5px;
+      }
+      h1 {
+        font-size: clamp(42px, 7vw, 76px);
+        line-height: 1.02;
+        letter-spacing: -0.035em;
+        font-weight: 850;
+        margin: 22px auto 18px;
+        max-width: 900px;
+      }
+      h1 em {
+        font-style: normal;
+        background: linear-gradient(120deg, var(--accent), #3b82f6);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .lead {
+        font-size: clamp(17px, 2vw, 20px);
+        color: var(--text-2);
+        max-width: 680px;
+        margin: 0 auto;
+      }
+      .cta {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin: 34px 0 12px;
+      }
+      .note {
+        font-size: 13px;
+        color: var(--text-3);
+      }
+      .shot {
+        margin: 56px auto 0;
+        max-width: 1100px;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: var(--shadow-big);
+        border: 1px solid var(--border);
+        background: var(--card);
+      }
+      .shot .bar {
+        display: flex;
+        gap: 7px;
+        padding: 11px 14px;
+        background: var(--bg-2);
+        border-bottom: 1px solid var(--border);
+      }
+      .shot .bar span {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: #ff5f57;
+      }
+      .shot .bar span:nth-child(2) {
+        background: #febc2e;
+      }
+      .shot .bar span:nth-child(3) {
+        background: #28c840;
+      }
+
+      /* ── Sources ── */
+      .sources {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        margin: 56px auto 0;
+        max-width: 860px;
+      }
+      .sources span {
+        padding: 8px 16px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: var(--card);
+        font-weight: 650;
+        font-size: 14px;
+        color: var(--text-2);
+      }
+
+      /* ── Sections ── */
+      section {
+        padding: 96px 0;
+      }
+      .kicker {
+        color: var(--accent);
+        font-weight: 800;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      h2 {
+        font-size: clamp(30px, 4.2vw, 46px);
+        line-height: 1.08;
+        letter-spacing: -0.03em;
+        margin: 10px 0 14px;
+        font-weight: 820;
+      }
+      .center {
+        text-align: center;
+      }
+      .center .lead {
+        margin-bottom: 48px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 16px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 26px;
+        box-shadow: var(--shadow);
+        transition: transform 0.25s;
+      }
+      .card:hover {
+        transform: translateY(-3px);
+      }
+      .card .ic {
+        width: 44px;
+        height: 44px;
+        border-radius: 13px;
+        display: grid;
+        place-items: center;
+        background: var(--accent-soft);
+        color: var(--accent);
+        margin-bottom: 16px;
+      }
+      .card .ic svg {
+        width: 22px;
+        height: 22px;
+      }
+      .card h3 {
+        margin: 0 0 6px;
+        font-size: 18px;
+        letter-spacing: -0.01em;
+      }
+      .card p {
+        margin: 0;
+        color: var(--text-2);
+        font-size: 15px;
+      }
+      .split {
+        display: grid;
+        grid-template-columns: 1fr 1.35fr;
+        gap: 56px;
+        align-items: center;
+      }
+      .split.reverse {
+        grid-template-columns: 1.35fr 1fr;
+      }
+      .split.reverse .text {
+        order: 2;
+      }
+      .split img {
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-big);
+      }
+      .split ul {
+        padding: 0;
+        margin: 18px 0 0;
+        list-style: none;
+        display: grid;
+        gap: 10px;
+        color: var(--text-2);
+      }
+      .split li {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+      }
+      .split li::before {
+        content: '';
+        flex: none;
+        width: 18px;
+        height: 18px;
+        margin-top: 3px;
+        border-radius: 50%;
+        background:
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / 11px no-repeat,
+          var(--accent);
+      }
+      .alt {
+        background: var(--bg-2);
+      }
+
+      /* ── Téléchargement ── */
+      .downloads {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 40px;
+      }
+      .dl {
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .dl.current {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow);
+      }
+      .dl h3 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .dl .files {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: auto;
+      }
+      .dl .files a {
+        justify-content: space-between;
+      }
+      .dl small {
+        color: var(--text-3);
+        font-weight: 600;
+      }
+
+      /* ── Bêta ── */
+      .beta {
+        border-radius: 28px;
+        padding: 56px;
+        background:
+          radial-gradient(circle at 15% 20%, color-mix(in srgb, var(--accent) 25%, transparent), transparent 55%),
+          radial-gradient(circle at 85% 80%, rgba(96, 165, 250, 0.2), transparent 55%),
+          var(--card);
+        border: 1px solid var(--border);
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 40px;
+        align-items: center;
+      }
+      .beta h2 {
+        margin-top: 6px;
+      }
+
+      /* ── FAQ ── */
+      .faq {
+        max-width: 760px;
+        margin: 40px auto 0;
+        display: grid;
+        gap: 10px;
+      }
+      details {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 18px 22px;
+      }
+      summary {
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 16px;
+        list-style: none;
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      summary::-webkit-details-marker {
+        display: none;
+      }
+      summary::after {
+        content: '+';
+        color: var(--accent);
+        font-size: 22px;
+        line-height: 1;
+        transition: transform 0.2s;
+      }
+      details[open] summary::after {
+        transform: rotate(45deg);
+      }
+      details p {
+        color: var(--text-2);
+        margin: 12px 0 0;
+      }
+
+      footer {
+        padding: 40px 0 56px;
+        border-top: 1px solid var(--border);
+        color: var(--text-3);
+        font-size: 14px;
+      }
+      footer .wrap {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      footer .wrap span:first-child {
+        margin-right: auto;
+      }
+
+      /* Apparition au défilement (désactivée si l'utilisateur réduit les animations). */
+      .reveal {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+          transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .reveal.in {
+        opacity: 1;
+        transform: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .reveal {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+        html {
+          scroll-behavior: auto;
+        }
+      }
+
+      @media (max-width: 860px) {
+        nav .links {
+          display: none;
+        }
+        nav .btn {
+          margin-left: auto;
+        }
+        .split,
+        .split.reverse,
+        .beta {
+          grid-template-columns: 1fr;
+        }
+        .split.reverse .text {
+          order: 0;
+        }
+        .downloads {
+          grid-template-columns: 1fr;
+        }
+        .beta {
+          padding: 32px 24px;
+        }
+        section {
+          padding: 72px 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="wrap">
+        <a class="brand" href="#"><img src="assets/icon.png" alt="" />Learn</a>
+        <div class="links">
+          <a href="#fonctionnalites">Fonctionnalités</a>
+          <a href="#idees">Relier ses idées</a>
+          <a href="#telecharger">Télécharger</a>
+          <a href="#faq">Questions</a>
+        </div>
+        <a class="btn primary small" href="#telecharger">Télécharger</a>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <div class="wrap">
+        <span class="pill">Gratuit · Open source · Mac, Windows, Linux</span>
+        <h1>Lis tout.<br /><em>Retiens l’essentiel.</em></h1>
+        <p class="lead">
+          Learn réunit tes flux RSS, chaînes YouTube, podcasts, Reddit et livres dans un seul lecteur. Surligne, annote, relie tes idées en mind maps et
+          exporte vers Obsidian ou Notion. Sans pub, sans compte : tes données restent chez toi.
+        </p>
+        <div class="cta">
+          <a class="btn primary" id="hero-download" href="#telecharger">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12" /><path d="m7 10 5 5 5-5" /><path d="M5 21h14" /></svg>
+            <span>Télécharger Learn</span>
+          </a>
+          <a class="btn" href="https://github.com/ByteOneDev/learn-reader">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.17 1.18a10.9 10.9 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.62 1.58.23 2.75.11 3.04.74.8 1.18 1.83 1.18 3.08 0 4.41-2.69 5.39-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z" /></svg>
+            Code source
+          </a>
+        </div>
+        <div class="note" id="version-note">Dernière version sur GitHub · mises à jour automatiques</div>
+        <div class="shot reveal">
+          <div class="bar"><span></span><span></span><span></span></div>
+          <picture>
+            <source srcset="assets/reader-dark.webp" media="(prefers-color-scheme: dark)" />
+            <img src="assets/reader-light.webp" alt="Learn : la liste des articles et le lecteur" width="1800" height="1125" />
+          </picture>
+        </div>
+        <div class="sources reveal">
+          <span>Flux RSS et Atom</span><span>YouTube</span><span>Podcasts</span><span>Reddit</span><span>Mastodon</span><span>Bluesky</span><span>Forums</span><span>Newsletters</span><span>Livres EPUB</span><span>PDF</span>
+        </div>
+      </div>
+    </header>
+
+    <section id="fonctionnalites">
+      <div class="wrap center">
+        <div class="kicker">Fonctionnalités</div>
+        <h2 class="reveal">Un lecteur qui t’aide à penser</h2>
+        <p class="lead reveal">Pas seulement pour faire défiler : Learn est fait pour lire en profondeur, garder ce qui compte et le retrouver.</p>
+        <div class="grid">
+          <div class="card reveal">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H2z" /><path d="M22 4h-7a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h8z" /></svg></div>
+            <h3>Lire sans distraction</h3>
+            <p>Texte complet extrait de la page, typographie soignée, vidéos et podcasts intégrés, livres EPUB et PDF.</p>
+          </div>
+          <div class="card reveal">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11-6 6v3h9l3-3" /><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4" /></svg></div>
+            <h3>Surligner et annoter</h3>
+            <p>Cinq couleurs, des notes en Markdown, des tags. Même sur une vidéo ou un podcast, à l’instant près.</p>
+          </div>
+          <div class="card reveal">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.5" /><circle cx="5" cy="19" r="2.5" /><circle cx="19" cy="19" r="2.5" /><path d="M12 7.5v4M12 11.5 6.5 17M12 11.5l5.5 5.5" /></svg></div>
+            <h3>Relier ses idées</h3>
+            <p>Mind maps, canvas et schémas Excalidraw : tes surlignages deviennent des cartes reliées à leur source.</p>
+          </div>
+          <div class="card reveal">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5" /><path d="M21 3 13 11" /><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" /></svg></div>
+            <h3>Obsidian et Notion</h3>
+            <p>Un fichier Markdown par document, synchronisé dans les deux sens avec ton coffre Obsidian. Export Notion en un clic.</p>
+          </div>
+          <div class="card reveal">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18a9 9 0 0 1 18 0" /><path d="M12 18 8 11" /><circle cx="12" cy="18" r="1.5" /></svg></div>
+            <h3>Sortir de sa bulle</h3>
+            <p>Les médias politiques placés sur un hémicycle, avec leurs propriétaires, et ton équilibre de lecture au fil des semaines.</p>
+          </div>
+          <div class="card reveal">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg></div>
+            <h3>Tout retrouver</h3>
+            <p>Recherche plein texte dans les articles, livres, surlignages et notes, sans te soucier des accents.</p>
+          </div>
+          <div class="card reveal">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 1 0-1.4-8.8A6 6 0 1 0 6 17" /><path d="m9 16 2 2 4-4" /></svg></div>
+            <h3>Lire hors ligne</h3>
+            <p>Tes articles « Plus tard », signets et favoris sont préparés avec leurs images, pour le train ou l’avion.</p>
+          </div>
+          <div class="card reveal">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M7 12h10M10 18h4" /></svg></div>
+            <h3>Filtres et catégories</h3>
+            <p>Range tes sources par thème ou par type, masque les Shorts, les « bons plans » ou ce qui ne t’intéresse pas.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="alt" id="idees">
+      <div class="wrap">
+        <div class="split">
+          <div class="text reveal">
+            <div class="kicker">Boards</div>
+            <h2>Tes lectures deviennent une carte de tes idées</h2>
+            <p class="lead" style="margin: 0">Envoie un passage vers un board d’un clic : il garde le lien vers sa source, et Learn te montre dans quels boards un article est cité.</p>
+            <ul>
+              <li>Mind map rangée automatiquement, ou canvas libre</li>
+              <li>Schémas à main levée avec Excalidraw</li>
+              <li>Export vers MindNode, PDF, OPML, Obsidian Canvas</li>
+            </ul>
+          </div>
+          <img class="reveal" src="assets/mindmap.webp" alt="Une mind map construite à partir de surlignages" loading="lazy" width="1800" height="1125" />
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="split reverse">
+          <div class="text reveal">
+            <div class="kicker">Pluralisme</div>
+            <h2>Lis plusieurs bords, pas un seul</h2>
+            <p class="lead" style="margin: 0">Dès le premier lancement, l’hémicycle te montre l’orientation des médias que tu choisis. Une indication pour diversifier tes lectures, pas un verdict.</p>
+            <ul>
+              <li>Près de 300 sources proposées, en français et en anglais</li>
+              <li>Propriétaires des médias affichés</li>
+              <li>Bilan de lecture sur 7, 30 ou 90 jours</li>
+            </ul>
+          </div>
+          <img class="reveal" src="assets/hemicycle.webp" alt="L’hémicycle des médias politiques" loading="lazy" width="1800" height="1125" />
+        </div>
+      </div>
+    </section>
+
+    <section class="alt">
+      <div class="wrap">
+        <div class="split">
+          <div class="text reveal">
+            <div class="kicker">Rapide</div>
+            <h2>Au clavier, au trackpad, comme tu préfères</h2>
+            <p class="lead" style="margin: 0">Raccourcis personnalisables, recherche partout avec <b>/</b>, et des gestes naturels pour garder le rythme.</p>
+            <ul>
+              <li>Tirer la liste pour actualiser, balayer une carte pour la garder</li>
+              <li>Trois doigts pour replier les volets et ne garder que le texte</li>
+              <li>Mises à jour automatiques, effet verre sur Mac et Windows 11</li>
+            </ul>
+          </div>
+          <img class="reveal" src="assets/search.webp" alt="La recherche plein texte" loading="lazy" width="1800" height="1125" />
+        </div>
+      </div>
+    </section>
+
+    <section id="telecharger">
+      <div class="wrap center">
+        <div class="kicker">Télécharger</div>
+        <h2 class="reveal">Gratuit, pour toujours</h2>
+        <p class="lead reveal" style="margin-bottom: 0">Une fois installé, Learn se met à jour tout seul.</p>
+        <div class="downloads">
+          <div class="card dl reveal" data-os="mac">
+            <h3>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M16.4 12.6c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.7-2-1.6-.2-3.1.9-3.9.9-.8 0-2-.9-3.4-.9-1.7 0-3.3 1-4.2 2.6-1.8 3.1-.5 7.7 1.3 10.2.9 1.2 1.9 2.6 3.2 2.6 1.3-.1 1.8-.8 3.3-.8 1.6 0 2 .8 3.4.8 1.4 0 2.3-1.3 3.1-2.5 1-1.4 1.4-2.8 1.4-2.9-.1 0-2.7-1-2.7-4.1ZM13.9 4.9c.7-.9 1.2-2 1-3.2-1 0-2.3.7-3 1.6-.7.8-1.2 2-1.1 3.1 1.2.1 2.3-.6 3.1-1.5Z" /></svg>
+              macOS
+            </h3>
+            <p style="color: var(--text-2); margin: 0">macOS 11 et plus.</p>
+            <div class="files">
+              <a class="btn small" data-asset="arm64.dmg" href="https://github.com/ByteOneDev/learn-reader/releases/latest">Apple Silicon (M1 et +) <small>.dmg</small></a>
+              <a class="btn small" data-asset="mac-intel" href="https://github.com/ByteOneDev/learn-reader/releases/latest">Intel <small>.dmg</small></a>
+            </div>
+          </div>
+          <div class="card dl reveal" data-os="windows">
+            <h3>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2 4.5 10 3.4v7.7H2zM11 3.3 22 1.8v9.3H11zM2 12.1h8v7.7l-8-1.1zM11 12.1h11v9.3l-11-1.5z" /></svg>
+              Windows
+            </h3>
+            <p style="color: var(--text-2); margin: 0">Windows 10 et 11, 64 bits.</p>
+            <div class="files">
+              <a class="btn small" data-asset=".exe" href="https://github.com/ByteOneDev/learn-reader/releases/latest">Installeur <small>.exe</small></a>
+            </div>
+          </div>
+          <div class="card dl reveal" data-os="linux">
+            <h3>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="m7 9 3 3-3 3M12 15h5" /></svg>
+              Linux
+            </h3>
+            <p style="color: var(--text-2); margin: 0">Toutes distributions, 64 bits.</p>
+            <div class="files">
+              <a class="btn small" data-asset=".AppImage" href="https://github.com/ByteOneDev/learn-reader/releases/latest">AppImage <small>universel</small></a>
+              <a class="btn small" data-asset=".deb" href="https://github.com/ByteOneDev/learn-reader/releases/latest">Debian, Ubuntu <small>.deb</small></a>
+            </div>
+          </div>
+        </div>
+        <p class="note" style="margin-top: 18px">
+          Mac : l’app n’est pas encore signée par Apple. Au premier lancement, clic droit sur Learn → <b>Ouvrir</b>. Extension Obsidian disponible sur la même page.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="beta reveal">
+          <div>
+            <div class="kicker">Bientôt</div>
+            <h2>Tes lectures sur tous tes appareils</h2>
+            <p class="lead" style="margin: 0">La synchronisation entre ordinateurs arrive, puis une app native. Deviens bêta-testeur pour l’essayer en premier et aider à la façonner.</p>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <a class="btn primary" href="https://github.com/ByteOneDev/learn-reader/issues/new?title=Je%20veux%20%C3%AAtre%20b%C3%AAta-testeur&body=Mon%20syst%C3%A8me%20(Mac%2C%20Windows%2C%20Linux)%20%3A%0A%0ACe%20que%20je%20lis%20le%20plus%20%3A%0A">Devenir bêta-testeur</a>
+            <a class="btn" href="https://github.com/ByteOneDev/learn-reader">Suivre le projet</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="alt" id="faq">
+      <div class="wrap center">
+        <div class="kicker">Questions</div>
+        <h2>Bon à savoir</h2>
+        <div class="faq" style="text-align: left">
+          <details>
+            <summary>Learn est-il vraiment gratuit ?</summary>
+            <p>Oui. Learn est open source, sans publicité ni abonnement. Le code est sur GitHub.</p>
+          </details>
+          <details>
+            <summary>Où sont stockées mes données ?</summary>
+            <p>Sur ton ordinateur, dans une base locale. Aucun compte n’est nécessaire. Seules tes exportations (Obsidian, Notion) en sortent, et seulement si tu les actives.</p>
+          </details>
+          <details>
+            <summary>Puis-je importer mes abonnements ?</summary>
+            <p>Oui : fichier OPML (Reeder, Feedly, NetNewsWire…), abonnements YouTube via Google Takeout, ou une simple liste collée (r/linux, une adresse, @compte@instance).</p>
+          </details>
+          <details>
+            <summary>Comment fonctionne le placement politique des médias ?</summary>
+            <p>C’est une estimation à partir des lignes éditoriales publiques, pour t’aider à varier tes lectures. Ce n’est pas un jugement : compare avec AllSides ou Ad Fontes Media et fais-toi ton avis.</p>
+          </details>
+          <details>
+            <summary>Et sur iPhone ou iPad ?</summary>
+            <p>Une app native est prévue, après la synchronisation entre appareils. Inscris-toi à la bêta pour être prévenu.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <span>© 2026 Learn · ByteOneDev</span>
+        <a href="https://github.com/ByteOneDev/learn-reader">GitHub</a>
+        <a href="https://github.com/ByteOneDev/learn-reader/releases">Versions</a>
+        <a href="https://github.com/ByteOneDev/learn-reader/issues">Signaler un problème</a>
+      </div>
+    </footer>
+
+    <script>
+      // Apparition au défilement.
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) if (e.isIntersecting) (e.target.classList.add('in'), io.unobserve(e.target))
+        },
+        { threshold: 0.12 }
+      )
+      document.querySelectorAll('.reveal').forEach((el) => io.observe(el))
+
+      // Système du visiteur : sa carte de téléchargement est mise en avant, le bouton principal pointe dessus.
+      const ua = navigator.userAgent
+      const os = /Mac/.test(ua) ? 'mac' : /Win/.test(ua) ? 'windows' : /Linux|X11/.test(ua) ? 'linux' : null
+      if (os) document.querySelector(`.dl[data-os="${os}"]`)?.classList.add('current')
+      const heroLabel = { mac: 'Télécharger pour Mac', windows: 'Télécharger pour Windows', linux: 'Télécharger pour Linux' }
+      if (os) document.querySelector('#hero-download span').textContent = heroLabel[os]
+
+      // Liens directs vers les fichiers de la dernière version (repli : la page des versions).
+      fetch('https://api.github.com/repos/ByteOneDev/learn-reader/releases/latest')
+        .then((r) => (r.ok ? r.json() : Promise.reject()))
+        .then((release) => {
+          const version = release.tag_name.replace(/^v/, '')
+          const find = (key) =>
+            release.assets.find((a) => (key === 'mac-intel' ? a.name.endsWith('.dmg') && !a.name.includes('arm64') : a.name.endsWith(key)))
+          document.querySelectorAll('[data-asset]').forEach((a) => {
+            const asset = find(a.dataset.asset)
+            if (asset) a.href = asset.browser_download_url
+          })
+          document.querySelector('#version-note').textContent = `Version ${version} · mises à jour automatiques`
+          if (os) {
+            const first = document.querySelector(`.dl[data-os="${os}"] [data-asset]`)
+            if (first) document.querySelector('#hero-download').href = first.href
+          }
+        })
+        .catch(() => {})
+    </script>
+  </body>
+</html>
