@@ -11,6 +11,7 @@ import { boardToFreeMind, boardToOpml, boardToSvg } from '@shared/boardExport'
 import { execFile } from 'node:child_process'
 import { ObsidianSync } from './sync/obsidianSync'
 import { Updater } from './updater'
+import { CloudSync } from './cloud/cloudSync'
 import { NotionSync, type SecretBox } from './notion/notionSync'
 
 let win: BrowserWindow | null = null
@@ -18,6 +19,7 @@ let core: LearnCore
 let sync: ObsidianSync
 let notion: NotionSync
 let updater: Updater
+let cloud: CloudSync
 
 /** Le jeton Notion est chiffré par le trousseau du système (Keychain, DPAPI, libsecret) quand il est disponible. */
 const secretBox: SecretBox = {
@@ -209,39 +211,66 @@ function registerIpc(): void {
     },
     listSources: () => core.store.listSources(),
     resolveInput: (input: string) => core.resolve(input),
-    addSource: (n: Parameters<LearnCore['addSource']>[0]) => core.addSource(n),
-    addSources: (list: Parameters<LearnCore['addSources']>[0]) => core.addSources(list),
-    updateSource: (id: string, patch: { title?: string; category?: string }) => core.store.updateSource(id, patch),
-    removeSource: (id: string) => core.removeSource(id),
+    addSource: async (n: Parameters<LearnCore['addSource']>[0]) => {
+      const s = await core.addSource(n)
+      cloud.touchSource(s.url)
+      return s
+    },
+    addSources: async (list: Parameters<LearnCore['addSources']>[0]) => {
+      const r = await core.addSources(list)
+      for (const s of r.added) cloud.touchSource(s.url)
+      return r
+    },
+    updateSource: (id: string, patch: { title?: string; category?: string }) => {
+      const s = core.store.updateSource(id, patch)
+      cloud.touchSource(s.url)
+      return s
+    },
+    removeSource: (id: string) => {
+      // L'adresse d'abord : après la suppression, la source n'existe plus.
+      const url = core.store.getSource(id)?.url
+      core.removeSource(id)
+      if (url) cloud.touchSource(url)
+    },
     listItems: (q: Parameters<typeof core.store.listItems>[0]) => core.store.listItems(q),
     getItem: (id: string) => core.store.getItem(id),
     updateItem: (id: string, patch: Parameters<typeof core.store.updateItem>[1]) => {
       const item = core.store.updateItem(id, patch)
       if (patch.tags) touch(id)
+      cloud.touchItem(id)
       // Gardé pour plus tard : on prépare sa version hors ligne.
       if (patch.later || patch.bookmarked || patch.favorite) void core.prepareOffline()
       return item
     },
     markAllRead: (view: Parameters<typeof core.store.markAllRead>[0]) => core.store.markAllRead(view),
     extractFullText: (id: string) => core.extractFullText(id),
-    saveLink: (url: string) => core.saveLink(url),
+    saveLink: async (url: string) => {
+      const item = await core.saveLink(url)
+      cloud.touchItem(item.id)
+      return item
+    },
     counts: () => core.store.counts(),
     allTags: () => core.store.allTags(),
     listHighlights: (itemId?: string) => core.store.listHighlights(itemId),
     addHighlight: (h: Parameters<LearnCore['addHighlight']>[0]) => {
       const created = core.addHighlight(h)
       touch(h.itemId)
+      cloud.touchHighlight(created.id, h.itemId)
       return created
     },
     updateHighlight: (id: string, patch: Parameters<typeof core.store.updateHighlight>[1]) => {
       const updated = core.store.updateHighlight(id, patch)
       touch(updated.itemId)
+      cloud.touchHighlight(id, updated.itemId)
       return updated
     },
     removeHighlight: (id: string) => {
       const h = core.store.listHighlights().find((x) => x.id === id)
       core.store.removeHighlight(id)
-      if (h) touch(h.itemId)
+      if (h) {
+        touch(h.itemId)
+        cloud.touchHighlight(id, h.itemId)
+      }
     },
     refresh: (sourceId?: string) => core.refresh(sourceId),
     importBooks: async (paths?: string[]) => {
@@ -260,17 +289,35 @@ function registerIpc(): void {
     bookToc: (itemId: string) => core.bookToc(itemId),
     bookChapter: (itemId: string, index: number) => core.bookChapter(itemId, index),
     readBookFile: (itemId: string) => core.readBookFile(itemId),
-    savePosition: (itemId: string, position: string, progress: number) => core.store.savePosition(itemId, position, progress),
+    savePosition: (itemId: string, position: string, progress: number) => {
+      core.store.savePosition(itemId, position, progress)
+      cloud.touchItem(itemId)
+    },
     updateBook: (itemId: string, patch: { title?: string; author?: string; imageUrl?: string }) => core.store.updateItem(itemId, patch),
     readingBalance: (days: number) => core.store.readingBalance(days),
     transcript: (itemId: string) => core.transcript(itemId),
     searchPodcasts: (term: string) => core.searchPodcasts(term),
     listBoards: () => core.store.listBoards(),
-    createBoard: (title: string, mode: Parameters<LearnCore['createBoard']>[1]) => core.createBoard(title, mode),
+    createBoard: (title: string, mode: Parameters<LearnCore['createBoard']>[1]) => {
+      const b = core.createBoard(title, mode)
+      cloud.touchBoard(b.id)
+      return b
+    },
     getBoard: (id: string) => core.store.getBoard(id),
-    saveBoard: (id: string, patch: Parameters<typeof core.store.updateBoard>[1]) => core.store.updateBoard(id, patch),
-    deleteBoard: (id: string) => core.store.deleteBoard(id),
-    addToBoard: (boardId: string, node: Parameters<LearnCore['addToBoard']>[1]) => core.addToBoard(boardId, node),
+    saveBoard: (id: string, patch: Parameters<typeof core.store.updateBoard>[1]) => {
+      const b = core.store.updateBoard(id, patch)
+      cloud.touchBoard(id)
+      return b
+    },
+    deleteBoard: (id: string) => {
+      core.store.deleteBoard(id)
+      cloud.touchBoard(id)
+    },
+    addToBoard: (boardId: string, node: Parameters<LearnCore['addToBoard']>[1]) => {
+      const b = core.addToBoard(boardId, node)
+      cloud.touchBoard(boardId)
+      return b
+    },
     allHighlights: () => core.store.allHighlights(),
     boardsForItem: (itemId: string) => core.boardsForItem(itemId),
     nativeGlass: () => nativeGlassActive(),
@@ -280,7 +327,16 @@ function registerIpc(): void {
     downloadUpdate: () => updater.download(),
     installUpdate: () => updater.install(),
     previewSourceFilter: (sourceId: string, filter: Parameters<LearnCore['previewSourceFilter']>[1]) => core.previewSourceFilter(sourceId, filter),
-    setSourceFilter: (sourceId: string, filter: Parameters<LearnCore['setSourceFilter']>[1]) => core.setSourceFilter(sourceId, filter),
+    setSourceFilter: (sourceId: string, filter: Parameters<LearnCore['setSourceFilter']>[1]) => {
+      const r = core.setSourceFilter(sourceId, filter)
+      const url = core.store.getSource(sourceId)?.url
+      if (url) cloud.touchSource(url)
+      return r
+    },
+    cloudStatus: () => cloud.status(),
+    cloudConnect: (opts: Parameters<CloudSync['connect']>[0]) => cloud.connect(opts),
+    cloudDisconnect: () => cloud.disconnect(),
+    cloudSyncNow: () => cloud.sync(),
     saveFile: async (defaultName: string, data: string | Uint8Array) => {
       const ext = defaultName.split('.').pop() ?? ''
       const r = await dialog.showSaveDialog(win!, { defaultPath: defaultName, filters: ext ? [{ name: ext.toUpperCase(), extensions: [ext] }] : [] })
@@ -323,6 +379,7 @@ function registerIpc(): void {
       const r = await dialog.showOpenDialog(win!, { properties: ['openFile'], filters: [{ name: 'OPML', extensions: ['opml', 'xml'] }] })
       if (r.canceled || !r.filePaths[0]) return null
       const out = await core.importOpml(readFileSync(r.filePaths[0], 'utf8'))
+      for (const s of out.added) cloud.touchSource(s.url)
       return { added: out.added.length, failed: out.failed.length }
     },
     exportOpml: async () => {
@@ -408,6 +465,7 @@ app.whenReady().then(async () => {
 
   sync = new ObsidianSync(core, send)
   notion = new NotionSync(core, (url, init) => net.fetch(url, init), secretBox, send)
+  cloud = new CloudSync(core, (url, init) => net.fetch(url, init), secretBox, send)
   registerIpc()
   Menu.setApplicationMenu(buildMenu(send))
   createWindow()
@@ -450,6 +508,9 @@ app.whenReady().then(async () => {
     /* coffre indisponible au démarrage */
   }
   notion.restart()
+  // Synchronisation entre appareils : relève peu après le démarrage, puis chaque minute.
+  cloud.restart()
+  setTimeout(() => void cloud.sync(), 5000)
   if (store.getSettings().onboarded) setTimeout(() => void core.refresh(), 1500)
 
   app.on('activate', () => {
@@ -466,6 +527,7 @@ app.on('window-all-closed', () => {
 })
 
 app.on('before-quit', () => {
+  cloud?.stop()
   sync?.stop()
   notion?.stop()
   core?.store.flush()

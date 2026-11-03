@@ -93,8 +93,16 @@ const MIGRATIONS = [
    CREATE TRIGGER highlights_fts_ai AFTER INSERT ON highlights BEGIN INSERT INTO highlights_fts (docid, quote, note) VALUES (new.rowid, new.quote, new.note); END;
    INSERT INTO highlights_fts (highlights_fts) VALUES ('rebuild');`,
   // v0.15 : lecture hors ligne (texte complet et images enregistrés).
-  `ALTER TABLE items ADD COLUMN offline_at INTEGER;`
+  `ALTER TABLE items ADD COLUMN offline_at INTEGER;`,
+  // v0.16 : synchronisation (Supabase). Date de dernière modification de chaque élément et état d'envoi.
+  `CREATE TABLE IF NOT EXISTS cloud_state (
+     kind TEXT NOT NULL, key TEXT NOT NULL, updated_at INTEGER NOT NULL, synced INTEGER NOT NULL DEFAULT 0,
+     PRIMARY KEY (kind, key)
+   );
+   CREATE INDEX IF NOT EXISTS cloud_state_dirty ON cloud_state (synced);`
 ]
+
+export type CloudKind = 'source' | 'item' | 'highlight' | 'board'
 
 export interface NotionState {
   itemId: string
@@ -622,6 +630,67 @@ export class Store {
     if (fullHtml !== undefined) this.run('UPDATE items SET full_html = ? WHERE id = ?', [fullHtml, id])
     // 0 : échec (page inaccessible, payante…) ; on ne réessaie pas à chaque actualisation.
     this.run('UPDATE items SET offline_at = ? WHERE id = ?', [ok ? Date.now() : 0, id])
+  }
+
+  // ── Synchronisation (Supabase) ────────────────────────────────────────────
+
+  /** Modification locale d'un élément : à envoyer. */
+  cloudTouch(kind: CloudKind, key: string, at = Date.now()): void {
+    this.run(
+      'INSERT INTO cloud_state (kind, key, updated_at, synced) VALUES (?, ?, ?, 0) ON CONFLICT(kind, key) DO UPDATE SET updated_at = MAX(excluded.updated_at, cloud_state.updated_at + 1), synced = 0',
+      [kind, key, at]
+    )
+  }
+
+  cloudDirty(limit = 500): { kind: CloudKind; key: string; updatedAt: number }[] {
+    return this.all('SELECT kind, key, updated_at FROM cloud_state WHERE synced = 0 LIMIT ?', [limit]).map((r) => ({
+      kind: r.kind as CloudKind,
+      key: r.key as string,
+      updatedAt: r.updated_at as number
+    }))
+  }
+
+  /** Envoyé : seulement si rien n'a changé depuis (sinon il repartira au prochain envoi). */
+  cloudMarkSynced(kind: CloudKind, key: string, updatedAt: number): void {
+    this.run('UPDATE cloud_state SET synced = 1 WHERE kind = ? AND key = ? AND updated_at = ?', [kind, key, updatedAt])
+  }
+
+  cloudUpdatedAt(kind: CloudKind, key: string): number | undefined {
+    return (this.one('SELECT updated_at FROM cloud_state WHERE kind = ? AND key = ?', [kind, key])?.updated_at as number) ?? undefined
+  }
+
+  /** Version venue d'un autre appareil, appliquée ici : déjà à jour, rien à renvoyer. */
+  cloudSetRemote(kind: CloudKind, key: string, updatedAt: number): void {
+    this.run('INSERT INTO cloud_state (kind, key, updated_at, synced) VALUES (?, ?, ?, 1) ON CONFLICT(kind, key) DO UPDATE SET updated_at = excluded.updated_at, synced = 1', [
+      kind,
+      key,
+      updatedAt
+    ])
+  }
+
+  /** Changement de compte : tout repart de zéro (chaque élément local sera renvoyé). */
+  cloudReset(): void {
+    this.run('DELETE FROM cloud_state')
+  }
+
+  /** Articles qui portent un état à synchroniser : marques, tags, surlignages, position, ou lus depuis `since`. */
+  cloudCandidates(since: number): { sourceUrl: string; guid: string }[] {
+    return this.all(
+      `SELECT s.url AS source_url, i.guid FROM items i JOIN sources s ON s.id = i.source_id
+       WHERE s.kind != 'book' AND (i.later = 1 OR i.bookmarked = 1 OR i.favorite = 1 OR i.position IS NOT NULL
+         OR i.read_at >= ? OR i.id IN (SELECT item_id FROM item_tags) OR i.id IN (SELECT item_id FROM highlights))`,
+      [since]
+    ).map((r) => ({ sourceUrl: r.source_url as string, guid: r.guid as string }))
+  }
+
+  findItemByGuid(sourceId: string, guid: string): Item | null {
+    const r = this.one('SELECT id FROM items WHERE source_id = ? AND guid = ?', [sourceId, guid])
+    return r ? this.getItem(r.id as string) : null
+  }
+
+  getHighlight(id: string): Highlight | undefined {
+    const r = this.one('SELECT * FROM highlights WHERE id = ?', [id])
+    return r ? this.toHighlight(r) : undefined
   }
 
   /** Purge les vieux articles lus sans marque ni surlignage, pour garder une base légère. */

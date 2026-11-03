@@ -22,7 +22,7 @@ describe('mise à niveau d’une base existante', () => {
     const db = new SQL.Database(readFileSync(file))
     db.run(`DROP TRIGGER items_fts_ai; DROP TRIGGER items_fts_au; DROP TRIGGER items_fts_bu; DROP TRIGGER items_fts_bd;
             DROP TRIGGER highlights_fts_ai; DROP TRIGGER highlights_fts_au; DROP TRIGGER highlights_fts_bu; DROP TRIGGER highlights_fts_bd;
-            DROP TABLE items_fts; DROP TABLE highlights_fts; ALTER TABLE items DROP COLUMN offline_at; PRAGMA user_version = 8;`)
+            DROP TABLE items_fts; DROP TABLE highlights_fts; ALTER TABLE items DROP COLUMN offline_at; DROP TABLE cloud_state; PRAGMA user_version = 8;`)
     writeFileSync(file, Buffer.from(db.export()))
     db.close()
 

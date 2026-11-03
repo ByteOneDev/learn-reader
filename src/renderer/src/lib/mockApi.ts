@@ -1,6 +1,6 @@
 // API simulée, en mémoire : permet de développer et tester l'interface dans un simple navigateur
 // (npm run web), sans Electron ni réseau. Jamais utilisée dans l'application réelle.
-import type { UpdateStatus, Board, NotionStatus, Counts, Highlight, Item, ItemQuery, LearnAPI, LearnEvent, NewSource, ReadingBalance, Settings, Source, TocEntry, View } from '@shared/types'
+import type { CloudStatus, UpdateStatus, Board, NotionStatus, Counts, Highlight, Item, ItemQuery, LearnAPI, LearnEvent, NewSource, ReadingBalance, Settings, Source, TocEntry, View } from '@shared/types'
 import { layoutMindmap } from '@shared/boardLayout'
 import { boardCitesItem, boardSize } from '@shared/boardExport'
 import { itemPasses } from '@shared/filters'
@@ -327,6 +327,7 @@ const boards: Board[] = [
 for (const b of boards) if (b.mode === 'mindmap') for (const [id, p] of layoutMindmap(b.data)) Object.assign(b.data.nodes.find((n) => n.id === id)!, p)
 let settings: Settings = { ...DEFAULT_SETTINGS, onboarded: new URLSearchParams(location.search).get('onboarding') === null, obsidianVault: '/Users/moi/Obsidian' }
 let update: UpdateStatus = { state: 'idle', current: '0.13.0' }
+let cloud: CloudStatus = { connected: false, pending: 0 }
 const listeners = new Set<(e: LearnEvent) => void>()
 const emit = (e: LearnEvent): void => listeners.forEach((l) => l(e))
 const delay = <T,>(v: T, ms = 60): Promise<T> => new Promise((r) => setTimeout(() => r(structuredClone(v)), ms))
@@ -545,6 +546,15 @@ export const mockApi: LearnAPI = {
       highlights: highlights.filter((h) => hit(`${h.quote} ${h.note}`)).map((h) => ({ highlight: h, itemTitle: items.find((i) => i.id === h.itemId)?.title ?? '', snippet: mark(h.quote) }))
     })
   },
+  cloudStatus: async () => delay(cloud),
+  cloudConnect: async (opts) => {
+    await delay(null, 600)
+    cloud = { connected: true, email: opts.email, url: opts.url, lastSync: Date.now(), pending: 0 }
+    emit({ type: 'cloud-status', status: cloud })
+    return cloud
+  },
+  cloudDisconnect: async () => delay((cloud = { connected: false, pending: 0 })),
+  cloudSyncNow: async () => delay((cloud = { ...cloud, lastSync: Date.now(), pending: 0 }), 500),
   updateStatus: async () => delay(update),
   checkForUpdates: async () => {
     // ?update dans l'adresse : simule une nouvelle version, téléchargée en quelques secondes.

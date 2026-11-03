@@ -3924,3 +3924,35 @@ kbd {
   font-weight: 650;
   flex: none;
 }
+
+/* ── Synchronisation ────────────────────────────────────────────────── */
+.beta-badge {
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.cloud-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.cloud-state {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.cloud-state > svg {
+  color: var(--accent);
+}
+.cloud-state > span {
+  display: flex;
+  flex-direction: column;
+  font-size: 13.5px;
+}

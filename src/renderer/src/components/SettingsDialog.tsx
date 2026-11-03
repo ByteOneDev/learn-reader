@@ -7,6 +7,7 @@ import Dialog from './Dialog'
 import NotionSettings from './NotionSettings'
 import { GESTURES } from '../lib/gestures'
 import { TermsInput } from './FilterDialog'
+import CloudSettings from './CloudSettings'
 
 /** Mises à jour : version installée, automatique ou non, vérification manuelle. */
 function UpdateSettings(): React.JSX.Element {
@@ -153,6 +154,7 @@ export default function SettingsDialog({ onClose }: { onClose(): void }): React.
         </button>
       </div>
       <UpdateSettings />
+      <CloudSettings />
       <div className="field">
         <label>{t.offlineLabel}</label>
         <div className="row-between gesture-row">

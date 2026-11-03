@@ -182,6 +182,17 @@ export interface SearchResults {
   highlights: { highlight: Highlight; itemTitle: string; snippet: string }[]
 }
 
+/** État de la synchronisation entre appareils. */
+export interface CloudStatus {
+  connected: boolean
+  email?: string
+  url?: string
+  lastSync?: number
+  /** Modifications locales pas encore envoyées. */
+  pending: number
+  error?: string
+}
+
 /** État de la mise à jour automatique. */
 export interface UpdateStatus {
   state: 'idle' | 'checking' | 'none' | 'available' | 'downloading' | 'ready' | 'error'
@@ -301,6 +312,13 @@ export interface Settings {
   /** Synchronisation automatique avec Notion (relève toutes les 5 minutes, envoi après chaque modification). */
   notionSync?: boolean
   notionLastPull?: number
+  /** Synchronisation (bêta) : projet Supabase, compte, appareil, dernière relève. */
+  cloudUrl?: string
+  cloudAnonKey?: string
+  cloudEmail?: string
+  cloudDevice?: string
+  cloudLastPull?: string
+  cloudLastSync?: number
   /** Mise à jour automatique (vérifiée au démarrage et toutes les 6 h). Absent : activée. */
   autoUpdate?: boolean
   /** Lecture hors ligne : préparer Plus tard, Signets et Favoris (absent : activée), avec les images. */
@@ -386,6 +404,7 @@ export type LearnEvent =
   /** Thème système ou réglage « Réduire la transparence » modifié : l'effet verre natif a pu changer. */
   | { type: 'glass-changed' }
   | { type: 'update-status'; status: UpdateStatus }
+  | { type: 'cloud-status'; status: CloudStatus }
   | { type: 'refresh-finished'; result: RefreshResult }
   | { type: 'items-changed' }
   | { type: 'highlights-changed'; itemId: string; message?: string }
@@ -450,6 +469,11 @@ export interface LearnAPI {
   boardsForItem(itemId: string): Promise<LinkedBoard[]>
   /** Recherche plein texte dans tous les articles, livres, surlignages et notes. */
   search(text: string): Promise<SearchResults>
+  /** Synchronisation (bêta, Supabase) : état, connexion ou création de compte, déconnexion, synchro immédiate. */
+  cloudStatus(): Promise<CloudStatus>
+  cloudConnect(opts: { url: string; anonKey: string; email: string; password: string; create?: boolean }): Promise<CloudStatus>
+  cloudDisconnect(): Promise<CloudStatus>
+  cloudSyncNow(): Promise<CloudStatus>
   /** Mise à jour automatique : état, vérification (et téléchargement), installation puis redémarrage. */
   updateStatus(): Promise<UpdateStatus>
   checkForUpdates(): Promise<UpdateStatus>
@@ -529,6 +553,10 @@ export const API_METHODS = [
   'nativeGlass',
   'previewSourceFilter',
   'updateStatus',
+  'cloudStatus',
+  'cloudConnect',
+  'cloudDisconnect',
+  'cloudSyncNow',
   'search',
   'checkForUpdates',
   'downloadUpdate',

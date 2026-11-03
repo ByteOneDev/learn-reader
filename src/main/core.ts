@@ -331,6 +331,11 @@ export class LearnCore {
     return this.store.updateItem(id, { fullHtml: ex.contentHtml, imageUrl: item.imageUrl ?? ex.imageUrl, author: item.author ?? ex.byline })
   }
 
+  /** Section « Liens enregistrés » (créée au besoin). */
+  linksSourcePublic(): Source {
+    return this.linksSource()
+  }
+
   private linksSource(): Source {
     return (
       this.store.findSourceByUrl(LINKS_SOURCE_URL) ??
