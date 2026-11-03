@@ -14,6 +14,22 @@ Direction graphique inspirée de [Reeder](https://reederapp.com) (2024), avec sa
 | Livre EPUB | PDF surligné |
 | ![](docs/screenshots/livre-epub.png) | ![](docs/screenshots/livre-pdf.png) |
 
+## Nouveautés de la v0.15
+
+- **Rechercher partout** : touche **/** ou loupe en haut de la barre latérale. Articles, livres, vidéos, podcasts, surlignages et notes, texte complet compris, sans tenir compte des accents ni des majuscules ; les mots trouvés sont surlignés dans l'extrait ; ↑ ↓ et Entrée pour ouvrir. La recherche de la liste utilise le même index.
+- **Lecture hors ligne** : les articles Plus tard, Signets et Favoris sont préparés en arrière-plan (texte complet et images, jusqu'à 6 Mo par article) ; un nuage coché sur la carte indique qu'ils sont prêts. Sans connexion, un bandeau le signale et ces articles restent lisibles. *Réglages → Lecture hors ligne*.
+- **Relecture complète du code**, corrections :
+  - la bibliothèque (livres importés) n'est plus traitée comme un flux à chaque actualisation (« 1 source en erreur » à tort) ;
+  - macOS : plus d'erreur quand une actualisation de fond arrive fenêtre fermée ; un lien learn:// rouvre la fenêtre ;
+  - Windows, Linux : boutons de fenêtre lisibles après un changement de thème ;
+  - mise à jour : la base est enregistrée avant de redémarrer, une version prête n'est plus retéléchargée, l'AppImage se remplace aussi quand /tmp est sur un autre disque, un double clic n'installe qu'une fois ;
+  - un même flux ajouté deux fois en même temps (import) ne provoque plus d'erreur SQL ;
+  - l'export OPML n'inclut plus la bibliothèque ; les podcasts du catalogue anglais sont cherchés dans l'annuaire américain ;
+  - liste : plus de doublons quand des articles arrivent pendant le défilement ; une marque qui échoue est annulée avec un message ;
+  - glisser une image dans un schéma Excalidraw n'est plus intercepté par l'import de livres ;
+  - synchronisation Obsidian : un fichier momentanément illisible (iCloud) ne provoque plus d'erreur ;
+  - une mise à jour de la base qui échoue laisse la base intacte.
+
 ## Nouveautés de la v0.14
 
 - **Mise à jour automatique** : Learn vérifie les nouvelles versions au démarrage puis toutes les 6 heures, les télécharge en arrière-plan (empreinte SHA-256 vérifiée) et propose « Redémarrer » en bas de la barre latérale. Sur Mac, la nouvelle Learn.app remplace l'ancienne (il faut que Learn soit dans le dossier Applications) ; sur Windows, l'installeur se lance en silencieux ; sur Linux, l'AppImage est remplacée (paquet .deb : l'installeur du système s'ouvre). *Réglages → Mises à jour* pour vérifier à la main ou désactiver.
@@ -246,7 +262,8 @@ L'orientation politique (−3 à +3) est une estimation de Learn à partir des l
 - ~~**v0.12** : import des abonnements (YouTube Takeout, OPML, liste)~~ ✓
 - ~~**v0.13** : gestes (tirer pour actualiser, balayer cartes et articles, pincer, images plein écran)~~ ✓
 - ~~**v0.14** : mise à jour automatique, filtres, YouTube fiable, médias de chercheurs~~ ✓
-- **Ensuite** : app native
+- ~~**v0.15** : recherche plein texte, lecture hors ligne, relecture complète du code~~ ✓
+- **Ensuite** : synchronisation entre ordinateurs, puis l'app native une fois qu'il n'y aura plus de bug connu
 
 ## Licence
 

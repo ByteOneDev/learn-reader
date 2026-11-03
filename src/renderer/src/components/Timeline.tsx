@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowUp, Bookmark, BookPlus, Check, CheckCheck, Filter, Headphones, Heart, Highlighter, Layers, PanelLeft, Play, RefreshCw, Search, Tv, X } from 'lucide-react'
+import { ArrowUp, Bookmark, BookPlus, Check, CheckCheck, CloudCheck, CloudOff, Filter, Headphones, Heart, Highlighter, Layers, PanelLeft, Play, RefreshCw, Search, Tv, X } from 'lucide-react'
 import { formatTime } from '@shared/media'
 import { categoryLabel } from './Sidebar'
 import { dictionaries } from '../lib/i18n'
@@ -10,6 +10,7 @@ import { useT, type Dict } from '../lib/i18n'
 import { relativeTime } from '../lib/time'
 import SourceIcon from './SourceIcon'
 import { gestureOn, WheelTracker } from '../lib/gestures'
+import { useOnline } from '../lib/online'
 
 const PULL_THRESHOLD = 110
 const SWIPE_THRESHOLD = 90
@@ -136,6 +137,7 @@ const Card = memo(function Card({ item, index, source, selected, beforeSelected,
   onSelect(id: string): void
 }) {
   const social = source && SOCIAL.has(source.kind)
+  const offlineLabel = dictionaries[lang].offlineReady
   const [imgOk, setImgOk] = useState(true)
   const ref = useRef<HTMLButtonElement>(null)
 
@@ -238,6 +240,11 @@ const Card = memo(function Card({ item, index, source, selected, beforeSelected,
         )}
         {(item.later || item.bookmarked || item.favorite || !!item.highlightCount || item.tags.length > 0) && (
           <div className="card-flags">
+            {!!item.offlineAt && (
+              <span title={offlineLabel} aria-label={offlineLabel} style={{ display: 'inline-flex' }}>
+                <CloudCheck size={13} />
+              </span>
+            )}
             {item.later && <Layers size={13} className="flag-on" />}
             {item.bookmarked && <Bookmark size={13} className="flag-on" />}
             {item.favorite && <Heart size={13} className="flag-on" />}
@@ -306,6 +313,7 @@ export default function Timeline(): React.JSX.Element {
   const sourceMap = useMemo(() => new Map(sources.map((s) => [s.id, s])), [sources])
   const [title, subtitle] = viewTitle(view, t, sources)
   const showHidden = useApp((s) => s.showHidden)
+  const online = useOnline()
   const setShowHidden = useApp((s) => s.setShowHidden)
   const filteredSource = view.type === 'source' ? sources.find((x) => x.id === view.sourceId && x.filter) : undefined
   const selectedIndex = items.findIndex((i) => i.id === selectedId)
@@ -455,6 +463,12 @@ export default function Timeline(): React.JSX.Element {
           </motion.button>
         )}
       </AnimatePresence>
+      {!online && (
+        <div className="offline-bar">
+          <CloudOff size={13} />
+          <span>{t.offlineNow}</span>
+        </div>
+      )}
       {filteredSource && (
         <div className="filter-bar">
           <Filter size={13} />

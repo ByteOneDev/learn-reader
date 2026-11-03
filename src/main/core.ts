@@ -7,6 +7,7 @@ import { boardCitesItem } from '@shared/boardExport'
 import { filterIsActive, itemPasses, looksLikeShort, type SourceFilter } from '@shared/filters'
 import { hostOf, uid } from '@shared/util'
 import { fetchArticle } from './article'
+import { embedImages } from './offline'
 import { Epub } from './books/epub'
 import type { Store, SyncBase } from './db'
 import { buildMarkdown, mergeWithExisting, safeFileName } from './export/markdown'
@@ -61,7 +62,8 @@ export class LearnCore {
 
     if (resolved.url.startsWith('podcast:')) {
       const name = resolved.url.slice(8)
-      const found = pickPodcast(await searchPodcasts(this.fetchFn, name), name)
+      // Annuaire Apple du pays de la langue de la source : un podcast anglais se trouve mieux sur l'annuaire américain.
+      const found = pickPodcast(await searchPodcasts(this.fetchFn, name, n.lang === 'en' ? 'US' : 'FR'), name)
       if (!found) throw new Error(`Podcast introuvable : ${name}`)
       resolved.url = found.feedUrl
       const known = this.store.findSourceByUrl(found.feedUrl)
@@ -99,6 +101,9 @@ export class LearnCore {
     if (again) return again
 
     const siteUrl = resolved.siteUrl ?? feed.siteUrl
+    // Deux ajouts simultanés du même flux (doublon dans un import) : le second retrouve le premier.
+    const raced = this.store.findSourceByUrl(feedUrl)
+    if (raced) return raced
     const source = this.store.insertSource({
       id: uid('s_'),
       kind: resolved.kind,
@@ -250,7 +255,8 @@ export class LearnCore {
 
   private async doRefresh(sourceId?: string): Promise<RefreshResult> {
     this.emit({ type: 'refresh-started' })
-    const sources = this.store.listSources().filter((s) => s.kind !== 'links' && (!sourceId || s.id === sourceId))
+    // Liens enregistrés et bibliothèque sont des sources internes, sans flux à télécharger.
+    const sources = this.store.listSources().filter((s) => s.kind !== 'links' && s.kind !== 'book' && (!sourceId || s.id === sourceId))
     const result: RefreshResult = { sources: sources.length, newItems: 0, errors: [] }
     await pool(sources, CONCURRENCY, async (s) => {
       try {
@@ -273,7 +279,47 @@ export class LearnCore {
     }
     this.emit({ type: 'refresh-finished', result })
     this.emit({ type: 'items-changed' })
+    if (!sourceId) void this.prepareOffline()
     return result
+  }
+
+  // ── Lecture hors ligne ────────────────────────────────────────────────────
+
+  private offlineRunning: Promise<number> | null = null
+
+  /**
+   * Prépare en arrière-plan les articles gardés (plus tard, signets, favoris) : texte complet et images,
+   * pour les lire sans réseau. Deux à la fois ; un seul passage en cours.
+   */
+  prepareOffline(): Promise<number> {
+    const settings = this.store.getSettings()
+    if (settings.offline === false) return Promise.resolve(0)
+    if (this.offlineRunning) return this.offlineRunning
+    const withImages = settings.offlineImages !== false
+    this.offlineRunning = (async () => {
+      let done = 0
+      for (let round = 0; round < 10; round++) {
+        const batch = this.store.offlineQueue(10)
+        if (!batch.length) break
+        await pool(batch, 2, async (item) => {
+          try {
+            // Un lien enregistré a déjà son texte complet (extrait à l'enregistrement).
+            const saved = this.store.getSource(item.sourceId)?.kind === 'links' ? item.contentHtml : undefined
+            const html = item.fullHtml ?? saved ?? (await fetchArticle(this.fetchFn, item.url!)).contentHtml
+            const final = withImages ? (await embedImages(this.fetchFn, html, item.url!, item.imageUrl)).html : html
+            this.store.setOffline(item.id, final)
+            done++
+          } catch {
+            this.store.setOffline(item.id, undefined, false)
+          }
+        })
+      }
+      if (done) this.emit({ type: 'items-changed' })
+      return done
+    })().finally(() => {
+      this.offlineRunning = null
+    })
+    return this.offlineRunning
   }
 
   // ── Articles ──────────────────────────────────────────────────────────────
@@ -350,11 +396,12 @@ export class LearnCore {
     const size = statSync(file).size
     if (size > MAX_BOOK_BYTES) throw new Error('Fichier trop volumineux (500 Mo maximum)')
     const format = ext as BookFormat
-    const data = readFileSync(file)
     const guid = `${basename(file)}|${size}`
     const source = this.librarySource()
+    // Déjà dans la bibliothèque : inutile de lire le fichier (jusqu'à 500 Mo).
     const already = this.store.listItems({ view: { type: 'library' }, limit: 10_000 }).find((i) => i.guid === guid)
     if (already) return already
+    const data = readFileSync(file)
 
     let title = basename(file, extname(file)).replace(/[_]+/g, ' ').trim()
     let author: string | undefined

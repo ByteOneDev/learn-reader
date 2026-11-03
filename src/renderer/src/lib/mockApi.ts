@@ -4,6 +4,7 @@ import type { UpdateStatus, Board, NotionStatus, Counts, Highlight, Item, ItemQu
 import { layoutMindmap } from '@shared/boardLayout'
 import { boardCitesItem, boardSize } from '@shared/boardExport'
 import { itemPasses } from '@shared/filters'
+import { HIT_CLOSE, HIT_OPEN } from '@shared/search'
 import { DEFAULT_SETTINGS } from '@shared/types'
 import { uid } from '@shared/util'
 
@@ -527,6 +528,23 @@ export const mockApi: LearnAPI = {
     return delay(b)
   },
   boardsForItem: async (itemId) => delay(boards.filter((b) => boardCitesItem(b.data, itemId)).map((b) => ({ id: b.id, title: b.title, mode: b.mode }))),
+  search: async (text) => {
+    const words = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/\s+/).filter(Boolean)
+    const fold = (x: string): string => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    const mark = (x: string): string => {
+      const f = fold(x)
+      const w = words.find((k) => f.includes(k))
+      if (!w) return x.slice(0, 160)
+      const at = f.indexOf(w)
+      const start = Math.max(0, at - 60)
+      return `${start ? '…' : ''}${x.slice(start, at)}${HIT_OPEN}${x.slice(at, at + w.length)}${HIT_CLOSE}${x.slice(at + w.length, at + 100)}…`
+    }
+    const hit = (x: string): boolean => words.every((w) => fold(x).includes(w))
+    return delay({
+      items: items.filter((i) => hit(`${i.title} ${i.summary ?? ''} ${i.author ?? ''}`)).map((item) => ({ item, snippet: mark(item.summary || item.title) })),
+      highlights: highlights.filter((h) => hit(`${h.quote} ${h.note}`)).map((h) => ({ highlight: h, itemTitle: items.find((i) => i.id === h.itemId)?.title ?? '', snippet: mark(h.quote) }))
+    })
+  },
   updateStatus: async () => delay(update),
   checkForUpdates: async () => {
     // ?update dans l'adresse : simule une nouvelle version, téléchargée en quelques secondes.

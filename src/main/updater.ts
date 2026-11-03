@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { execFile, spawn } from 'node:child_process'
-import { chmodSync, createWriteStream, existsSync, mkdtempSync, renameSync, rmSync } from 'node:fs'
+import { chmodSync, copyFileSync, createWriteStream, existsSync, mkdtempSync, renameSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { promisify } from 'node:util'
@@ -85,6 +85,7 @@ export class Updater {
   async check(download: boolean): Promise<UpdateStatus> {
     if (this.busy) return this.status
     this.busy = true
+    const previous = this.status
     try {
       this.set({ state: 'checking', error: undefined })
       const res = await this.fetchFn(RELEASES_API, { headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'Learn' } })
@@ -92,6 +93,11 @@ export class Updater {
       const release = (await res.json()) as Release
       if (!newerThan(release.tag_name, this.current)) {
         this.set({ state: 'none', checkedAt: Date.now() })
+        return this.status
+      }
+      // Déjà téléchargée et vérifiée : on garde « Redémarrer » au lieu de tout reprendre.
+      if (this.file && previous.state === 'ready' && previous.version === release.tag_name.replace(/^v/, '')) {
+        this.set({ ...previous, checkedAt: Date.now() })
         return this.status
       }
       this.release = release
@@ -153,8 +159,22 @@ export class Updater {
   }
 
   /** Installe la version téléchargée puis redémarre Learn. */
+  private installing = false
+
   async install(): Promise<void> {
     if (!this.file) throw new Error('Aucune mise à jour téléchargée')
+    // Double clic sur « Redémarrer » : une seule installation.
+    if (this.installing) return
+    this.installing = true
+    try {
+      await this.doInstall(this.file)
+    } finally {
+      this.installing = false
+    }
+  }
+
+  private async doInstall(file: string): Promise<void> {
+    this.file = file
     const kind = installKind(this.opts.platform)
     if (kind === 'mac') return this.installMac(this.file)
     if (kind === 'windows') {
@@ -163,7 +183,8 @@ export class Updater {
     }
     if (kind === 'appimage') {
       const target = process.env.APPIMAGE!
-      renameSync(this.file, `${target}.new`)
+      // Copie puis renommage dans le même dossier : /tmp est souvent sur un autre disque (renommer échouerait).
+      copyFileSync(this.file, `${target}.new`)
       chmodSync(`${target}.new`, 0o755)
       renameSync(`${target}.new`, target)
       this.opts.relaunch()

@@ -30,7 +30,8 @@ let refreshTimer: ReturnType<typeof setInterval> | null = null
 const isMac = process.platform === 'darwin'
 
 function send(e: LearnEvent): void {
-  win?.webContents.send('learn:event', e)
+  // Fenêtre fermée (macOS garde l'app ouverte) : les événements de fond n'ont plus de destinataire.
+  if (win && !win.isDestroyed()) win.webContents.send('learn:event', e)
 }
 
 function isSafeExternal(url: string): boolean {
@@ -93,6 +94,9 @@ function createWindow(): void {
   })
 
   win.once('ready-to-show', () => win?.show())
+  win.on('closed', () => {
+    win = null
+  })
   // Balayage à trois doigts (macOS) : replier ou rouvrir les volets, comme dans Reeder.
   win.on('swipe', (_e, direction) => {
     if (direction === 'left' || direction === 'right') send({ type: 'swipe', direction })
@@ -193,6 +197,7 @@ function registerIpc(): void {
       if ('theme' in patch) nativeTheme.themeSource = s.theme
       if ('glass' in patch || 'theme' in patch) applyGlass()
       if ('hiddenTerms' in patch) core.applyGlobalFilter()
+      if (patch.offline || patch.offlineImages) void core.prepareOffline()
       if ('obsidianSync' in patch || 'obsidianVault' in patch || 'obsidianFolder' in patch) sync.restart()
       if ('notionSync' in patch) notion.restart()
       // Nouvelle clé YouTube : on remonte tout de suite l'année des chaînes suivies.
@@ -213,6 +218,8 @@ function registerIpc(): void {
     updateItem: (id: string, patch: Parameters<typeof core.store.updateItem>[1]) => {
       const item = core.store.updateItem(id, patch)
       if (patch.tags) touch(id)
+      // Gardé pour plus tard : on prépare sa version hors ligne.
+      if (patch.later || patch.bookmarked || patch.favorite) void core.prepareOffline()
       return item
     },
     markAllRead: (view: Parameters<typeof core.store.markAllRead>[0]) => core.store.markAllRead(view),
@@ -267,6 +274,7 @@ function registerIpc(): void {
     allHighlights: () => core.store.allHighlights(),
     boardsForItem: (itemId: string) => core.boardsForItem(itemId),
     nativeGlass: () => nativeGlassActive(),
+    search: (text: string) => core.store.search(text),
     updateStatus: () => updater.status,
     checkForUpdates: () => updater.check(core.store.getSettings().autoUpdate !== false),
     downloadUpdate: () => updater.download(),
@@ -347,6 +355,8 @@ function handleLink(url: string): void {
   if (!link) return
   if (!win || win.webContents.isLoading()) {
     pendingLink = url
+    // macOS : fenêtre fermée, app toujours lancée → on la rouvre ; le lien suivra au chargement.
+    if (!win && app.isReady()) createWindow()
     return
   }
   if (win.isMinimized()) win.restore()
@@ -408,12 +418,18 @@ app.whenReady().then(async () => {
     exePath: app.getPath('exe'),
     openPath: (p) => shell.openPath(p),
     relaunch: () => {
+      // app.exit ne passe pas par « before-quit » : on enregistre la base d'abord.
+      sync?.stop()
+      notion?.stop()
+      core.store.flush()
       // AppImage : relancer le fichier remplacé, pas le programme monté de l'ancienne version.
       app.relaunch(process.env.APPIMAGE ? { execPath: process.env.APPIMAGE, args: process.argv.slice(1).filter((x) => !x.startsWith('--appimage')) } : undefined)
       app.exit(0)
     },
     quit: () => app.quit()
   })
+  // Articles gardés à préparer pour la lecture hors ligne, une fois l'app démarrée.
+  setTimeout(() => void core.prepareOffline(), 20_000)
   if (app.isPackaged) {
     const check = (): void => {
       if (core.store.getSettings().autoUpdate !== false) void updater.check(true)
@@ -423,6 +439,8 @@ app.whenReady().then(async () => {
   }
   nativeTheme.on('updated', () => {
     applyGlass()
+    // Windows, Linux : boutons de fenêtre lisibles dans le nouveau thème.
+    if (!isMac) win?.setTitleBarOverlay({ color: '#00000000', symbolColor: nativeTheme.shouldUseDarkColors ? '#e5e5e5' : '#333333', height: 44 })
     send({ type: 'glass-changed' })
   })
   scheduleRefresh()

@@ -19,6 +19,7 @@ import {
   Filter,
   Plus,
   RefreshCw,
+  Search,
   Scale,
   Settings as SettingsIcon,
   Tag,
@@ -223,6 +224,7 @@ export default function Sidebar(): React.JSX.Element {
   const setDialog = useApp((s) => s.setDialog)
   const updateSettings = useApp((s) => s.updateSettings)
   const tagKey = useKeyLabel('tags')
+  const searchKey = useKeyLabel('search')
   const api = useApp((s) => s.api)
   const reloadMeta = useApp((s) => s.reloadMeta)
   const toast = useApp((s) => s.toast)
@@ -348,6 +350,9 @@ function KindIcon({ kind }: { kind: SourceKind }): React.JSX.Element {
       <div className="sidebar-top drag">
         <button className="round-btn" onClick={() => setDialog('settings')} title={t.settings} aria-label={t.settings}>
           <SettingsIcon size={17} />
+        </button>
+        <button className="round-btn" onClick={() => setDialog('search')} title={`${t.searchAll} (${searchKey})`} aria-label={t.searchAll}>
+          <Search size={17} />
         </button>
         <button className="round-btn" onClick={() => setDialog('add')} title={t.addSource} aria-label={t.addSource}>
           <Plus size={19} />

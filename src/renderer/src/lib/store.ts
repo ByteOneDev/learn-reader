@@ -4,7 +4,7 @@ import { dictionaries } from './strings'
 
 export const PAGE = 80
 
-type Dialog = null | 'add' | 'settings' | 'catalog' | 'balance' | 'shortcuts' | 'report' | 'filter'
+type Dialog = null | 'add' | 'settings' | 'catalog' | 'balance' | 'shortcuts' | 'report' | 'filter' | 'search'
 
 /** Bilan d'un abonnement groupé (accueil, catalogue, OPML) : reste affiché tant qu'on ne le ferme pas. */
 export interface SubscribeReport {
@@ -202,7 +202,9 @@ export const useApp = create<AppState>((set, get) => ({
     if (view.type === 'board') return set({ loading: false })
     const page = await api.listItems({ view, search, limit: PAGE, offset, unreadOnly: false, showHidden })
     if (seq !== loadSeq) return
-    set({ items: reset ? page : [...items, ...page], hasMore: page.length === PAGE, loading: false })
+    // Page suivante : des articles arrivés entre-temps décalent la pagination ; on écarte les doublons.
+    const known = reset ? null : new Set(get().items.map((i) => i.id))
+    set({ items: reset ? page : [...get().items, ...page.filter((i) => !known!.has(i.id))], hasMore: page.length === PAGE, loading: false })
   },
 
   async select(id) {
@@ -236,8 +238,14 @@ export const useApp = create<AppState>((set, get) => ({
       items: s.items.map((i) => (i.id === id ? { ...i, ...patch } : i)),
       item: s.item?.id === id ? { ...s.item, ...patch } : s.item
     }))
-    const updated = await get().api.updateItem(id, patch)
-    set((s) => ({ item: s.item?.id === id ? { ...updated, fullHtml: s.item.fullHtml ?? updated.fullHtml } : s.item }))
+    try {
+      const updated = await get().api.updateItem(id, patch)
+      set((s) => ({ item: s.item?.id === id ? { ...updated, fullHtml: s.item.fullHtml ?? updated.fullHtml } : s.item }))
+    } catch (e) {
+      // Échec : on revient à l'état réel plutôt que d'afficher une marque qui n'existe pas.
+      get().toast((e as Error).message, 'error')
+      void get().loadItems(true)
+    }
     void get().reloadMeta()
   },
 
@@ -290,6 +298,8 @@ export const useApp = create<AppState>((set, get) => ({
       const lang = get().settings?.language ?? 'fr'
       const t = dictionaries[lang]
       get().toast(t.newItems(r.newItems) + (r.errors.length ? ` · ${t.errorsCount(r.errors.length)}` : ''), r.errors.length ? 'error' : 'ok')
+    } catch (e) {
+      get().toast((e as Error).message, 'error')
     } finally {
       set({ refreshing: false })
       void get().reloadMeta()

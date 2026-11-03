@@ -60,3 +60,45 @@ describe('mise à jour automatique', () => {
     expect(existsSync('/nonexistent')).toBe(false)
   })
 })
+
+describe('mise à jour déjà prête', () => {
+  it('ne retélécharge pas la même version', async () => {
+    let downloads = 0
+    const rel = release(sha)
+    const f = async (url: string): Promise<Response> => {
+      if (url.includes('api.github.com')) return new Response(JSON.stringify(rel))
+      downloads++
+      return new Response(new Blob([payload]).stream())
+    }
+    const u = new Updater(f, '0.13.0', () => {}, opts)
+    await u.check(true)
+    const again = await u.check(true)
+    expect(again.state).toBe('ready')
+    expect(downloads).toBe(1)
+  })
+})
+
+import { mkdtempSync, statSync, writeFileSync as writeTmp } from 'node:fs'
+import { join as joinPath } from 'node:path'
+import { tmpdir as osTmp } from 'node:os'
+describe.skipIf(process.platform === 'win32')('installation Linux (AppImage)', () => {
+  it('remplace le fichier de l’AppImage, exécutable, puis relance', async () => {
+    const dir = mkdtempSync(joinPath(osTmp(), 'learn-appimage-'))
+    const target = joinPath(dir, 'Learn.AppImage')
+    writeTmp(target, 'ancienne version')
+    const previous = process.env.APPIMAGE
+    process.env.APPIMAGE = target
+    let relaunched = 0
+    try {
+      const u = new Updater(fakeFetch(release(sha)), '0.13.0', () => {}, { ...opts, platform: 'linux', relaunch: () => relaunched++ })
+      await u.check(true)
+      await Promise.all([u.install(), u.install()])
+      expect(readFileSync(target)).toEqual(payload)
+      expect(statSync(target).mode & 0o111).not.toBe(0)
+      expect(relaunched).toBe(1)
+    } finally {
+      if (previous === undefined) delete process.env.APPIMAGE
+      else process.env.APPIMAGE = previous
+    }
+  })
+})

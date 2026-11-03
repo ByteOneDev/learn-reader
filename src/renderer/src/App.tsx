@@ -13,6 +13,7 @@ import Onboarding from './onboarding/Onboarding'
 import BalanceDialog from './components/BalanceDialog'
 import ShortcutsDialog from './components/ShortcutsDialog'
 import ReportDialog from './components/ReportDialog'
+import SearchPalette from './components/SearchPalette'
 import FilterDialog from './components/FilterDialog'
 import BoardView from './components/boards/BoardView'
 import PlayerBar from './components/media/PlayerBar'
@@ -34,7 +35,8 @@ export default function App(): React.JSX.Element {
   // Glisser-déposer d'EPUB et de PDF n'importe où dans la fenêtre.
   useEffect(() => {
     let depth = 0
-    const hasFiles = (e: DragEvent): boolean => !!e.dataTransfer?.types.includes('Files')
+    // Dans un board, les fichiers déposés appartiennent à l'éditeur (images dans un schéma Excalidraw).
+    const hasFiles = (e: DragEvent): boolean => !!e.dataTransfer?.types.includes('Files') && useApp.getState().view.type !== 'board'
     const enter = (e: DragEvent): void => {
       if (!hasFiles(e)) return
       depth++
@@ -141,6 +143,7 @@ export default function App(): React.JSX.Element {
         {dialog === 'settings' && <SettingsDialog key="settings" onClose={() => setDialog(null)} />}
         {dialog === 'balance' && <BalanceDialog key="balance" onClose={() => setDialog(null)} />}
         {dialog === 'report' && <ReportDialog key="report" />}
+        {dialog === 'search' && <SearchPalette key="search" onClose={() => setDialog(null)} />}
         {dialog === 'filter' && <FilterDialog key="filter" onClose={() => setDialog(null)} />}
         {dialog === 'shortcuts' && <ShortcutsDialog key="shortcuts" onClose={() => setDialog('settings')} />}
       </AnimatePresence>

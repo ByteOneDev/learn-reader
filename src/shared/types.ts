@@ -93,6 +93,8 @@ export interface Item {
   short?: boolean
   /** Masqué par un filtre (jamais supprimé). */
   hidden?: boolean
+  /** Prêt pour la lecture hors ligne (texte complet et images enregistrés). */
+  offlineAt?: number
 }
 
 export type MediaType = 'audio' | 'video' | 'youtube'
@@ -172,6 +174,12 @@ export interface BoardData {
   sketch?: { elements: unknown[]; appState?: Record<string, unknown>; files?: Record<string, unknown> }
   /** Ajouts venus du lecteur pour un schéma : transformés en éléments Excalidraw à l'ouverture. */
   pending?: NewBoardNode[]
+}
+
+/** Résultat de recherche plein texte. */
+export interface SearchResults {
+  items: { item: Item; snippet: string }[]
+  highlights: { highlight: Highlight; itemTitle: string; snippet: string }[]
 }
 
 /** État de la mise à jour automatique. */
@@ -295,6 +303,9 @@ export interface Settings {
   notionLastPull?: number
   /** Mise à jour automatique (vérifiée au démarrage et toutes les 6 h). Absent : activée. */
   autoUpdate?: boolean
+  /** Lecture hors ligne : préparer Plus tard, Signets et Favoris (absent : activée), avec les images. */
+  offline?: boolean
+  offlineImages?: boolean
   /** Mots masqués partout (titre et résumé), en plus des filtres par source. */
   hiddenTerms?: string[]
   /** Barre latérale : sources rangées par type de média (défaut) ou par catégorie. */
@@ -437,6 +448,8 @@ export interface LearnAPI {
   allHighlights(): Promise<HighlightWithItem[]>
   /** Boards qui citent ce document (dans un nœud, un élément de schéma ou en attente d'insertion). */
   boardsForItem(itemId: string): Promise<LinkedBoard[]>
+  /** Recherche plein texte dans tous les articles, livres, surlignages et notes. */
+  search(text: string): Promise<SearchResults>
   /** Mise à jour automatique : état, vérification (et téléchargement), installation puis redémarrage. */
   updateStatus(): Promise<UpdateStatus>
   checkForUpdates(): Promise<UpdateStatus>
@@ -516,6 +529,7 @@ export const API_METHODS = [
   'nativeGlass',
   'previewSourceFilter',
   'updateStatus',
+  'search',
   'checkForUpdates',
   'downloadUpdate',
   'installUpdate',

@@ -131,7 +131,8 @@ export default function Reader(): React.JSX.Element {
   const rawHtml = layer === 'full' ? item?.fullHtml : item?.contentHtml
   const html = useMemo(() => sanitize(rawHtml ?? (item?.summary ? `<p>${item.summary}</p>` : ''), item?.url), [rawHtml, item?.summary, item?.url])
   const layerHighlights = useMemo(() => highlights.filter((h) => h.layer === layer), [highlights, layer])
-  const showHero = !!item?.imageUrl && heroOk && !html.includes(item.imageUrl.split('?')[0])
+  // Version hors ligne : l'image d'en-tête est déjà dans le texte (data-learn-hero), pas besoin de la redoubler.
+  const showHero = !!item?.imageUrl && heroOk && !html.includes(item.imageUrl.split('?')[0]) && !rawHtml?.includes('data-learn-hero')
 
   useEffect(() => {
     setPending(null)

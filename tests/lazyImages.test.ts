@@ -72,3 +72,12 @@ describe('images en chargement différé', () => {
     expect(ex.contentHtml).not.toContain('data:image/svg')
   })
 })
+
+import { isPlaceholder as isPh } from '../src/shared/lazyImages'
+describe('images intégrées (hors ligne)', () => {
+  it('garde une vraie image en data: et écarte les images factices', () => {
+    expect(isPh(`data:image/png;base64,${'A'.repeat(4000)}`)).toBe(false)
+    expect(isPh('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7')).toBe(true)
+    expect(isPh(`data:image/svg+xml;base64,${'A'.repeat(4000)}`)).toBe(true)
+  })
+})

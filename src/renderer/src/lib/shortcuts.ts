@@ -75,7 +75,7 @@ export function useShortcuts(): void {
           void s.updateSettings({ sidebarGroup: (s.settings.sidebarGroup ?? 'type') === 'type' ? 'category' : 'type' })
           break
         case 'search':
-          window.dispatchEvent(new Event('learn:focus-search'))
+          s.setDialog('search')
           break
         case 'escape':
           if (s.panelOpen) s.togglePanel(false)

@@ -64,6 +64,17 @@ try {
     await w.locator('.dialog .btn.primary').click()
   }
 
+  // 2 ter. Recherche plein texte (index SQLite de l'app réelle) : la fenêtre s'ouvre et répond.
+  current = 'recherche plein texte'
+  const found = await w.evaluate(async () => (await window.learn.search('a')).items.length)
+  await w.locator('.sidebar-top button[aria-label="Rechercher partout"], .sidebar-top button[aria-label="Search everything"]').click()
+  await w.locator('.search-palette input').fill('sante')
+  await w.waitForTimeout(500)
+  await w.keyboard.press('Escape')
+  await w.locator('.search-palette').waitFor({ state: 'detached' })
+  console.log(`  recherche : ${found} résultat(s) pour « a »`)
+  step('recherche plein texte')
+
   // 3. Réglages et raccourcis.
   current = 'réglages et raccourcis'
   await w.locator('.sidebar-top button').first().click()

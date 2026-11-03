@@ -1,9 +1,10 @@
 import initSqlJs, { type Database, type SqlValue } from 'sql.js'
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
-import type { Board, BoardSummary, Counts, Highlight, HighlightWithItem, Item, ItemQuery, ReadingBalance, Settings, Source, View } from '@shared/types'
+import type { SearchResults, Board, BoardSummary, Counts, Highlight, HighlightWithItem, Item, ItemQuery, ReadingBalance, Settings, Source, View } from '@shared/types'
 import { DEFAULT_SETTINGS } from '@shared/types'
-import type { SourceFilter } from '@shared/filters'
+import { normalize, type SourceFilter } from '@shared/filters'
+import { ftsQuery, HIT_CLOSE, HIT_OPEN } from '@shared/search'
 import { boardItemIds, boardSize } from '@shared/boardExport'
 
 // SQLite compilé en WebAssembly (sql.js) : aucun module natif à recompiler pour Mac, Windows et Linux.
@@ -74,7 +75,25 @@ const MIGRATIONS = [
   `ALTER TABLE items ADD COLUMN categories TEXT;
    ALTER TABLE items ADD COLUMN short INTEGER;
    ALTER TABLE items ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0;
-   ALTER TABLE sources ADD COLUMN filter TEXT;`
+   ALTER TABLE sources ADD COLUMN filter TEXT;`,
+  // v0.15 : recherche plein texte (FTS4, sans accents). L'index lit le texte dans les tables elles-mêmes
+  // (« external content ») : rien n'est copié, et des déclencheurs le tiennent à jour.
+  `CREATE VIRTUAL TABLE items_fts USING fts4(content="items", title, author, summary, content_html, full_html, tokenize=unicode61 "remove_diacritics=2");
+   CREATE TRIGGER items_fts_bd BEFORE DELETE ON items BEGIN DELETE FROM items_fts WHERE docid = old.rowid; END;
+   CREATE TRIGGER items_fts_bu BEFORE UPDATE OF title, author, summary, content_html, full_html ON items BEGIN DELETE FROM items_fts WHERE docid = old.rowid; END;
+   CREATE TRIGGER items_fts_au AFTER UPDATE OF title, author, summary, content_html, full_html ON items BEGIN
+     INSERT INTO items_fts (docid, title, author, summary, content_html, full_html) VALUES (new.rowid, new.title, new.author, new.summary, new.content_html, new.full_html); END;
+   CREATE TRIGGER items_fts_ai AFTER INSERT ON items BEGIN
+     INSERT INTO items_fts (docid, title, author, summary, content_html, full_html) VALUES (new.rowid, new.title, new.author, new.summary, new.content_html, new.full_html); END;
+   INSERT INTO items_fts (items_fts) VALUES ('rebuild');
+   CREATE VIRTUAL TABLE highlights_fts USING fts4(content="highlights", quote, note, tokenize=unicode61 "remove_diacritics=2");
+   CREATE TRIGGER highlights_fts_bd BEFORE DELETE ON highlights BEGIN DELETE FROM highlights_fts WHERE docid = old.rowid; END;
+   CREATE TRIGGER highlights_fts_bu BEFORE UPDATE OF quote, note ON highlights BEGIN DELETE FROM highlights_fts WHERE docid = old.rowid; END;
+   CREATE TRIGGER highlights_fts_au AFTER UPDATE OF quote, note ON highlights BEGIN INSERT INTO highlights_fts (docid, quote, note) VALUES (new.rowid, new.quote, new.note); END;
+   CREATE TRIGGER highlights_fts_ai AFTER INSERT ON highlights BEGIN INSERT INTO highlights_fts (docid, quote, note) VALUES (new.rowid, new.quote, new.note); END;
+   INSERT INTO highlights_fts (highlights_fts) VALUES ('rebuild');`,
+  // v0.15 : lecture hors ligne (texte complet et images enregistrés).
+  `ALTER TABLE items ADD COLUMN offline_at INTEGER;`
 ]
 
 export interface NotionState {
@@ -127,9 +146,15 @@ export class Store {
     const version = (this.one('PRAGMA user_version')?.user_version as number) ?? 0
     for (let v = version; v < MIGRATIONS.length; v++) {
       this.db.run('BEGIN')
-      this.db.run(MIGRATIONS[v])
-      this.db.run(`PRAGMA user_version = ${v + 1}`)
-      this.db.run('COMMIT')
+      try {
+        this.db.run(MIGRATIONS[v])
+        this.db.run(`PRAGMA user_version = ${v + 1}`)
+        this.db.run('COMMIT')
+      } catch (e) {
+        // Échec : la base reste à la version précédente, intacte, au lieu d'une transaction laissée ouverte.
+        this.db.run('ROLLBACK')
+        throw new Error(`Mise à jour de la base (étape ${v + 1}) impossible : ${(e as Error).message}`)
+      }
     }
     if (version < MIGRATIONS.length) this.scheduleSave()
   }
@@ -356,7 +381,8 @@ export class Store {
       transcriptUrl: (r.transcript_url as string) ?? undefined,
       categories: r.categories ? (JSON.parse(r.categories as string) as string[]) : undefined,
       short: r.short == null ? undefined : !!r.short,
-      hidden: !!r.hidden
+      hidden: !!r.hidden,
+      offlineAt: (r.offline_at as number) ?? undefined
     }
   }
 
@@ -461,15 +487,16 @@ export class Store {
     if (q.unreadOnly) conds.push('i.read = 0')
     // Les filtres masquent dans les flux ; ce qu'on a gardé soi-même (plus tard, favoris…) reste visible.
     if (!q.showHidden && ['home', 'kind', 'source', 'category'].includes(q.view.type)) conds.push('i.hidden = 0')
-    if (q.search?.trim()) {
-      conds.push('(i.title LIKE ? OR i.summary LIKE ? OR i.author LIKE ?)')
-      const like = `%${q.search.trim().replace(/[%_]/g, '')}%`
-      vals.push(like, like, like)
+    const fts = q.search ? ftsQuery(q.search) : null
+    if (fts) {
+      // Recherche plein texte : titre, auteur, résumé, texte du flux et texte complet, sans tenir compte des accents.
+      conds.push('i.rowid IN (SELECT docid FROM items_fts WHERE items_fts MATCH ?)')
+      vals.push(fts)
     }
     const rows = this.all(
       `SELECT i.id, i.source_id, i.guid, i.url, i.title, i.author, i.summary, i.image_url, i.published_at, i.fetched_at,
               i.read, i.later, i.bookmarked, i.favorite, i.format, i.position, i.progress, i.read_at,
-              i.media_url, i.media_type, i.duration, i.transcript_url, i.categories, i.short, i.hidden,
+              i.media_url, i.media_type, i.duration, i.transcript_url, i.categories, i.short, i.hidden, i.offline_at,
               (SELECT COUNT(*) FROM highlights h WHERE h.item_id = i.id) AS highlight_count
        FROM items i JOIN sources s ON s.id = i.source_id
        WHERE ${conds.join(' AND ')}
@@ -577,6 +604,24 @@ export class Store {
       sourceId,
       limit
     ]).map((r) => this.toItem(r, []))
+  }
+
+  /** Articles gardés (plus tard, signets, favoris) pas encore prêts pour la lecture hors ligne. */
+  offlineQueue(limit = 20): Item[] {
+    return this.all(
+      `SELECT i.* FROM items i JOIN sources s ON s.id = i.source_id
+       WHERE (i.later = 1 OR i.bookmarked = 1 OR i.favorite = 1) AND i.offline_at IS NULL AND i.url IS NOT NULL
+         AND i.format IS NULL AND i.media_type IS NULL AND s.kind NOT IN ('book', 'youtube', 'podcast')
+       ORDER BY i.published_at DESC LIMIT ?`,
+      [limit]
+    ).map((r) => this.toItem(r, []))
+  }
+
+  /** Enregistre la version hors ligne (texte complet avec images) d'un article. */
+  setOffline(id: string, fullHtml: string | undefined, ok = true): void {
+    if (fullHtml !== undefined) this.run('UPDATE items SET full_html = ? WHERE id = ?', [fullHtml, id])
+    // 0 : échec (page inaccessible, payante…) ; on ne réessaie pas à chaque actualisation.
+    this.run('UPDATE items SET offline_at = ? WHERE id = ?', [ok ? Date.now() : 0, id])
   }
 
   /** Purge les vieux articles lus sans marque ni surlignage, pour garder une base légère. */
@@ -691,6 +736,39 @@ export class Store {
 
   deleteBoard(id: string): void {
     this.run('DELETE FROM boards WHERE id = ?', [id])
+  }
+
+  /**
+   * Recherche plein texte : articles (les titres qui correspondent d'abord, puis les plus récents) et
+   * surlignages ou notes, avec un extrait autour des mots trouvés.
+   */
+  search(text: string, limit = 60): SearchResults {
+    const q = ftsQuery(text)
+    if (!q) return { items: [], highlights: [] }
+    const rows = this.all(
+      `SELECT i.id, i.source_id, i.guid, i.url, i.title, i.author, i.summary, i.image_url, i.published_at, i.fetched_at,
+              i.read, i.later, i.bookmarked, i.favorite, i.format, i.position, i.progress, i.read_at,
+              i.media_url, i.media_type, i.duration, i.transcript_url, i.categories, i.short, i.hidden,
+              snippet(items_fts, '${HIT_OPEN}', '${HIT_CLOSE}', '…', -1, 14) AS snip,
+              (SELECT COUNT(*) FROM highlights h WHERE h.item_id = i.id) AS highlight_count
+       FROM items_fts JOIN items i ON i.rowid = items_fts.docid
+       WHERE items_fts MATCH ?
+       ORDER BY i.published_at DESC LIMIT 400`,
+      [q]
+    )
+    const words = q.split(' ').map((w) => normalize(w.slice(0, -1)))
+    const inTitle = (title: string): number => words.filter((w) => normalize(title).includes(w)).length
+    const items = rows
+      .map((r) => ({ item: this.toItem(r, []), snippet: r.snip as string }))
+      .sort((a, b) => inTitle(b.item.title) - inTitle(a.item.title))
+      .slice(0, limit)
+    const highlights = this.all(
+      `SELECT h.*, i.title AS item_title, snippet(highlights_fts, '${HIT_OPEN}', '${HIT_CLOSE}', '…', -1, 20) AS snip
+       FROM highlights_fts JOIN highlights h ON h.rowid = highlights_fts.docid JOIN items i ON i.id = h.item_id
+       WHERE highlights_fts MATCH ? ORDER BY h.updated_at DESC LIMIT ?`,
+      [q, limit]
+    ).map((r) => ({ highlight: this.toHighlight(r), itemTitle: r.item_title as string, snippet: r.snip as string }))
+    return { items, highlights }
   }
 
   allHighlights(): HighlightWithItem[] {

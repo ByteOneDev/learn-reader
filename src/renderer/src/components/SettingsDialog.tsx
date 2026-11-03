@@ -154,6 +154,24 @@ export default function SettingsDialog({ onClose }: { onClose(): void }): React.
       </div>
       <UpdateSettings />
       <div className="field">
+        <label>{t.offlineLabel}</label>
+        <div className="row-between gesture-row">
+          <span>{t.offlineSetting}</span>
+          <button className={`switch${settings.offline !== false ? ' on' : ''}`} role="switch" aria-checked={settings.offline !== false} aria-label={t.offlineSetting} onClick={() => set({ offline: settings.offline === false })} />
+        </div>
+        <div className="row-between gesture-row">
+          <span>{t.offlineImagesSetting}</span>
+          <button
+            className={`switch${settings.offlineImages !== false ? ' on' : ''}`}
+            role="switch"
+            aria-checked={settings.offlineImages !== false}
+            aria-label={t.offlineImagesSetting}
+            disabled={settings.offline === false}
+            onClick={() => set({ offlineImages: settings.offlineImages === false })}
+          />
+        </div>
+      </div>
+      <div className="field">
         <label>{t.hiddenTermsLabel}</label>
         <TermsInput terms={settings.hiddenTerms ?? []} onChange={(hiddenTerms) => set({ hiddenTerms })} placeholder={t.filterTermsPlaceholder} />
         <p className="hint" style={{ margin: '6px 0 0' }}>{t.hiddenTermsHint}</p>

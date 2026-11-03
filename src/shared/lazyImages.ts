@@ -10,7 +10,9 @@ const SRCSET_ATTRS = ['data-srcset', 'data-lazy-srcset', 'data-original-set']
 export function isPlaceholder(src: string | null | undefined): boolean {
   if (!src || !src.trim()) return true
   const s = src.trim()
-  if (s.startsWith('data:')) return true
+  // Les images factices en data: sont minuscules (GIF d'un pixel, SVG vide) ; une vraie image intégrée
+  // (version hors ligne d'un article) pèse des kilo-octets et doit rester.
+  if (s.startsWith('data:')) return s.length < 2048 || s.startsWith('data:image/svg')
   return /(^|[/_.-])(blank|spacer|placeholder|lazy|transparent|pixel|grey|gray|loading)[^/]*\.(gif|png|svg|jpe?g|webp)(\?|$)/i.test(s)
 }
 

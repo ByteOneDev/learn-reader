@@ -32,7 +32,8 @@ const esc = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;'
 export function buildOpml(sources: Source[]): string {
   const groups = new Map<string, Source[]>()
   for (const s of sources) {
-    if (s.kind === 'links') continue
+    // Sources internes (liens enregistrés, bibliothèque) : pas de flux à exporter.
+    if (s.kind === 'links' || s.kind === 'book') continue
     const key = s.category ?? ''
     groups.set(key, [...(groups.get(key) ?? []), s])
   }

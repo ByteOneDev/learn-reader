@@ -104,8 +104,12 @@ export class ObsidianSync {
     if (dir && existsSync(dir)) {
       for (const name of readdirSync(dir)) {
         if (!name.endsWith('.md')) continue
-        const r = this.handleFile(join(dir, name))
-        if (r) reports.push(r)
+        try {
+          const r = this.handleFile(join(dir, name))
+          if (r) reports.push(r)
+        } catch {
+          /* fichier illisible pour l'instant : il sera repris au prochain passage */
+        }
       }
     }
     const ids = new Set([...this.core.store.itemsWithHighlights(), ...this.core.store.syncedItems()])
@@ -142,7 +146,14 @@ export class ObsidianSync {
       path,
       setTimeout(() => {
         this.fileTimers.delete(path)
-        const r = this.handleFile(path)
+        let r: SyncReport | null = null
+        try {
+          r = this.handleFile(path)
+        } catch {
+          // Fichier verrouillé ou en cours d'écriture (iCloud, autre app) : le prochain passage le reprendra.
+          this.mtimes.delete(path)
+          return
+        }
         if (r && (r.updated || r.removed || r.tagsChanged)) {
           const parts = [r.updated && `${r.updated} modifié${r.updated > 1 ? 's' : ''}`, r.removed && `${r.removed} supprimé${r.removed > 1 ? 's' : ''}`, r.tagsChanged && 'tags']
           const message = `Obsidian → Learn : ${parts.filter(Boolean).join(', ')}${r.conflicts ? ` · ${r.conflicts} conflit${r.conflicts > 1 ? 's' : ''} conservé${r.conflicts > 1 ? 's' : ''}` : ''}`
