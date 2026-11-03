@@ -14,6 +14,15 @@ Direction graphique inspirée de [Reeder](https://reederapp.com) (2024), avec sa
 | Livre EPUB | PDF surligné |
 | ![](docs/screenshots/livre-epub.png) | ![](docs/screenshots/livre-pdf.png) |
 
+## Nouveautés de la v0.14
+
+- **Mise à jour automatique** : Learn vérifie les nouvelles versions au démarrage puis toutes les 6 heures, les télécharge en arrière-plan (empreinte SHA-256 vérifiée) et propose « Redémarrer » en bas de la barre latérale. Sur Mac, la nouvelle Learn.app remplace l'ancienne (il faut que Learn soit dans le dossier Applications) ; sur Windows, l'installeur se lance en silencieux ; sur Linux, l'AppImage est remplacée (paquet .deb : l'installeur du système s'ouvre). *Réglages → Mises à jour* pour vérifier à la main ou désactiver.
+- **Filtres** : clic droit sur une source → *Filtres…*. Masquer ce qui contient certains mots, ou garder seulement ce qui en contient, dans le titre, les catégories du flux, l'auteur ou le résumé ; les catégories annoncées par le flux s'ajoutent d'un clic ; *Masquer les Shorts* pour YouTube ; aperçu en direct. Les articles filtrés sont masqués, pas supprimés (*Afficher les articles filtrés* dans la liste). *Réglages → Masquer partout* pour des mots masqués dans toutes les sources.
+- **YouTube plus fiable** : les pages de chaîne passent le consentement aux cookies (cause d'échecs depuis l'Europe), les requêtes sont espacées, un flux qui répond mal est réessayé, et avec une clé d'API YouTube Learn passe par l'API quand le flux RSS ne répond pas.
+- **Médias de chercheurs** : The Conversation, CNRS Le Journal, Hypothèses, La Vie des idées, Pour la Science, Collège de France, Nature, Science, eLife, Knowable, Aeon, Retraction Watch… (296 sources au catalogue, toutes vérifiées par l'app).
+- **Fluidité** : la liste ne se redessine plus en entier, les cartes hors de l'écran ne sont plus dessinées, et les rafales de rechargements pendant une actualisation ou un import sont regroupées.
+- **Effet verre** : le reflet des boutons est aligné sur leur bord (il paraissait décalé, surtout au premier lancement).
+
 ## Nouveautés de la v0.13 : gestes
 
 - **Tirer pour actualiser** : tout en haut de la liste, deux doigts vers le bas ; « Relâche pour actualiser » s'affiche au bon moment.
@@ -236,6 +245,7 @@ L'orientation politique (−3 à +3) est une estimation de Learn à partir des l
 - ~~**v0.11** : tri par type ou catégorie, raccourcis modifiables, effet verre~~ ✓
 - ~~**v0.12** : import des abonnements (YouTube Takeout, OPML, liste)~~ ✓
 - ~~**v0.13** : gestes (tirer pour actualiser, balayer cartes et articles, pincer, images plein écran)~~ ✓
+- ~~**v0.14** : mise à jour automatique, filtres, YouTube fiable, médias de chercheurs~~ ✓
 - **Ensuite** : app native
 
 ## Licence

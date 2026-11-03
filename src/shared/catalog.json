@@ -2703,6 +2703,236 @@
       "input": "https://www.platformer.news/",
       "preselected": false,
       "niche": true
+    },
+    {
+      "id": "fr-sciences-the-conversation-france-2",
+      "category": "sciences",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "The Conversation France",
+      "input": "https://theconversation.com/fr/articles.atom",
+      "preselected": true,
+      "niche": true
+    },
+    {
+      "id": "fr-sciences-cnrs-le-journal-2",
+      "category": "sciences",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "CNRS Le Journal",
+      "input": "https://lejournal.cnrs.fr/rss",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-sciences-hypotheses-carnets-de-recherche",
+      "category": "sciences",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Hypothèses — carnets de recherche",
+      "input": "https://hypotheses.org/feed",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-culture-la-vie-des-idees",
+      "category": "culture",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "La Vie des idées",
+      "input": "https://laviedesidees.fr/spip.php?page=backend",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-sciences-pour-la-science",
+      "category": "sciences",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Pour la Science",
+      "input": "https://www.pourlascience.fr/rss.xml",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-culture-sciences-humaines",
+      "category": "culture",
+      "lang": "fr",
+      "kind": "rss",
+      "title": "Sciences Humaines",
+      "input": "https://www.scienceshumaines.com/rss.xml",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-sciences-college-de-france-audio-et-video",
+      "category": "sciences",
+      "lang": "fr",
+      "kind": "podcast",
+      "title": "Collège de France — Audio et vidéo",
+      "input": "https://www.college-de-france.fr/fr/audio-video-rss.xml",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-sciences-les-cours-du-college-de-france",
+      "category": "sciences",
+      "lang": "fr",
+      "kind": "podcast",
+      "title": "Les cours du Collège de France",
+      "input": "podcast:Les cours du Collège de France",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "fr-sciences-cnrs",
+      "category": "sciences",
+      "lang": "fr",
+      "kind": "youtube",
+      "title": "CNRS",
+      "input": "https://www.youtube.com/@CNRS",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-the-conversation-global",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "rss",
+      "title": "The Conversation (Global)",
+      "input": "https://theconversation.com/global/articles.atom",
+      "preselected": true,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-nature-news",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Nature — News",
+      "input": "https://www.nature.com/nature.rss",
+      "preselected": true,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-science-news",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Science — News",
+      "input": "https://www.science.org/rss/news_current.xml",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-culture-aeon-2",
+      "category": "culture",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Aeon",
+      "input": "https://aeon.co/feed.rss",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-knowable-magazine",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Knowable Magazine",
+      "input": "https://knowablemagazine.org/rss",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-lse-impact-blog",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "rss",
+      "title": "LSE Impact Blog",
+      "input": "https://blogs.lse.ac.uk/impactofsocialsciences/feed/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-retraction-watch-2",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Retraction Watch",
+      "input": "https://retractionwatch.com/feed/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-elife-latest-research",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "rss",
+      "title": "eLife — Latest research",
+      "input": "https://elifesciences.org/rss/recent.xml",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-scientific-american",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "rss",
+      "title": "Scientific American",
+      "input": "http://rss.sciam.com/ScientificAmerican-Global",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-new-scientist-2",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "rss",
+      "title": "New Scientist",
+      "input": "https://www.newscientist.com/feed/home/",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-tech-mit-news-research",
+      "category": "tech",
+      "lang": "en",
+      "kind": "rss",
+      "title": "MIT News — Research",
+      "input": "https://news.mit.edu/rss/research",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-nature-podcast",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "podcast",
+      "title": "Nature Podcast",
+      "input": "podcast:Nature Podcast",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-science-podcast",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "podcast",
+      "title": "Science Podcast",
+      "input": "podcast:Science Podcast",
+      "preselected": false,
+      "niche": true
+    },
+    {
+      "id": "en-sciences-sean-carroll-s-mindscape",
+      "category": "sciences",
+      "lang": "en",
+      "kind": "podcast",
+      "title": "Sean Carroll's Mindscape",
+      "input": "podcast:Sean Carroll's Mindscape",
+      "preselected": false,
+      "niche": true
     }
   ]
 }

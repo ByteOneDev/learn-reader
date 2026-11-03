@@ -368,6 +368,32 @@ const nicheRows = [
   // ── Newsletters (Substack et consorts publient un flux)
   ['tech', 'en', 'rss', "Pragmatic Engineer (newsletter)", 'https://newsletter.pragmaticengineer.com/', 0],
   ['tech', 'en', 'rss', 'Platformer (newsletter)', 'https://www.platformer.news/', 0],
+
+  // ── Chercheurs : revues, magazines écrits par des scientifiques, carnets de recherche, conférences.
+  //    Adresses vérifiées par l'app réelle sur macOS (scripts/candidates/chercheurs-2026-11.json).
+  ['sciences', 'fr', 'rss', 'The Conversation France', 'https://theconversation.com/fr/articles.atom', 1],
+  ['sciences', 'fr', 'rss', 'CNRS Le Journal', 'https://lejournal.cnrs.fr/rss', 0],
+  ['sciences', 'fr', 'rss', 'Hypothèses — carnets de recherche', 'https://hypotheses.org/feed', 0],
+  ['culture', 'fr', 'rss', 'La Vie des idées', 'https://laviedesidees.fr/spip.php?page=backend', 0],
+  ['sciences', 'fr', 'rss', 'Pour la Science', 'https://www.pourlascience.fr/rss.xml', 0],
+  ['culture', 'fr', 'rss', 'Sciences Humaines', 'https://www.scienceshumaines.com/rss.xml', 0],
+  ['sciences', 'fr', 'podcast', 'Collège de France — Audio et vidéo', 'https://www.college-de-france.fr/fr/audio-video-rss.xml', 0],
+  ['sciences', 'fr', 'podcast', 'Les cours du Collège de France', 'podcast:Les cours du Collège de France', 0],
+  ['sciences', 'fr', 'youtube', 'CNRS', 'https://www.youtube.com/@CNRS', 0],
+  ['sciences', 'en', 'rss', 'The Conversation (Global)', 'https://theconversation.com/global/articles.atom', 1],
+  ['sciences', 'en', 'rss', 'Nature — News', 'https://www.nature.com/nature.rss', 1],
+  ['sciences', 'en', 'rss', 'Science — News', 'https://www.science.org/rss/news_current.xml', 0],
+  ['culture', 'en', 'rss', 'Aeon', 'https://aeon.co/feed.rss', 0],
+  ['sciences', 'en', 'rss', 'Knowable Magazine', 'https://knowablemagazine.org/rss', 0],
+  ['sciences', 'en', 'rss', 'LSE Impact Blog', 'https://blogs.lse.ac.uk/impactofsocialsciences/feed/', 0],
+  ['sciences', 'en', 'rss', 'Retraction Watch', 'https://retractionwatch.com/feed/', 0],
+  ['sciences', 'en', 'rss', 'eLife — Latest research', 'https://elifesciences.org/rss/recent.xml', 0],
+  ['sciences', 'en', 'rss', 'Scientific American', 'http://rss.sciam.com/ScientificAmerican-Global', 0],
+  ['sciences', 'en', 'rss', 'New Scientist', 'https://www.newscientist.com/feed/home/', 0],
+  ['tech', 'en', 'rss', 'MIT News — Research', 'https://news.mit.edu/rss/research', 0],
+  ['sciences', 'en', 'podcast', 'Nature Podcast', 'podcast:Nature Podcast', 0],
+  ['sciences', 'en', 'podcast', 'Science Podcast', 'podcast:Science Podcast', 0],
+  ['sciences', 'en', 'podcast', "Sean Carroll's Mindscape", "podcast:Sean Carroll's Mindscape", 0],
 ]
 
 const slug = (s) =>
