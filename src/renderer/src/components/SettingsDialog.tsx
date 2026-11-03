@@ -6,6 +6,52 @@ import { useT } from '../lib/i18n'
 import Dialog from './Dialog'
 import NotionSettings from './NotionSettings'
 import { GESTURES } from '../lib/gestures'
+import { TermsInput } from './FilterDialog'
+
+/** Mises à jour : version installée, automatique ou non, vérification manuelle. */
+function UpdateSettings(): React.JSX.Element {
+  const t = useT()
+  const api = useApp((s) => s.api)
+  const settings = useApp((s) => s.settings)!
+  const update = useApp((s) => s.update)
+  const updateSettings = useApp((s) => s.updateSettings)
+  const auto = settings.autoUpdate !== false
+  const state = update?.state ?? 'idle'
+  const status =
+    state === 'checking'
+      ? t.updateChecking
+      : state === 'none'
+        ? t.updateUpToDate
+        : state === 'downloading'
+          ? `${t.updateTitle(update?.version ?? '')} · ${Math.round((update?.progress ?? 0) * 100)} %`
+          : state === 'ready'
+            ? `${t.updateTitle(update?.version ?? '')} · ${t.updateReady}`
+            : state === 'available'
+              ? t.updateTitle(update?.version ?? '')
+              : state === 'error'
+                ? update?.error ?? ''
+                : ''
+  return (
+    <div className="field">
+      <div className="row-between">
+        <span>
+          <span style={{ fontSize: 14.5, fontWeight: 600 }}>{t.updatesLabel}</span>
+          <p className="hint" style={{ margin: '2px 0 0' }}>
+            {t.updateVersion(update?.current ?? '')}
+            {status && ` · ${status}`}
+          </p>
+        </span>
+        <button className="btn" disabled={state === 'checking' || state === 'downloading'} onClick={() => void api.checkForUpdates()}>
+          {t.updateCheck}
+        </button>
+      </div>
+      <div className="row-between gesture-row">
+        <span>{t.updateAuto}</span>
+        <button className={`switch${auto ? ' on' : ''}`} role="switch" aria-checked={auto} aria-label={t.updateAuto} onClick={() => void updateSettings({ autoUpdate: !auto })} />
+      </div>
+    </div>
+  )
+}
 
 export default function SettingsDialog({ onClose }: { onClose(): void }): React.JSX.Element {
   const t = useT()
@@ -105,6 +151,12 @@ export default function SettingsDialog({ onClose }: { onClose(): void }): React.
         <button className="btn" onClick={() => useApp.getState().setDialog('shortcuts')}>
           <Keyboard size={15} /> {t.shortcutsCustomize}
         </button>
+      </div>
+      <UpdateSettings />
+      <div className="field">
+        <label>{t.hiddenTermsLabel}</label>
+        <TermsInput terms={settings.hiddenTerms ?? []} onChange={(hiddenTerms) => set({ hiddenTerms })} placeholder={t.filterTermsPlaceholder} />
+        <p className="hint" style={{ margin: '6px 0 0' }}>{t.hiddenTermsHint}</p>
       </div>
       <div className="field">
         <label>{t.gestures}</label>

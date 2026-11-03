@@ -98,6 +98,13 @@ jobs:
           else
             CSC_IDENTITY_AUTO_DISCOVERY=false npm run dist
           fi
+      - name: Tester la mise à jour automatique macOS (DMG réel)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          dmg=$(ls release/*-arm64.dmg 2>/dev/null | head -1)
+          [ -n "$dmg" ] || dmg=$(ls release/*.dmg | head -1)
+          LEARN_DMG="$PWD/$dmg" npx vitest run tests/updater-mac.test.ts
       - name: Vérifier la signature macOS
         if: runner.os == 'macOS'
         shell: bash

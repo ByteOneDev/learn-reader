@@ -1,6 +1,6 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowUp, Bookmark, BookPlus, Check, CheckCheck, Headphones, Heart, Highlighter, Layers, PanelLeft, Play, RefreshCw, Search, Tv, X } from 'lucide-react'
+import { ArrowUp, Bookmark, BookPlus, Check, CheckCheck, Filter, Headphones, Heart, Highlighter, Layers, PanelLeft, Play, RefreshCw, Search, Tv, X } from 'lucide-react'
 import { formatTime } from '@shared/media'
 import { categoryLabel } from './Sidebar'
 import { dictionaries } from '../lib/i18n'
@@ -189,7 +189,7 @@ const Card = memo(function Card({ item, index, source, selected, beforeSelected,
   return (
     <button
       ref={ref}
-      className={`card${selected ? ' selected' : ''}${beforeSelected ? ' before-selected' : ''}${item.read && !selected ? ' read' : ''}`}
+      className={`card${selected ? ' selected' : ''}${beforeSelected ? ' before-selected' : ''}${item.read && !selected ? ' read' : ''}${item.hidden ? ' filtered' : ''}`}
       onClick={() => onSelect(item.id)}
       data-id={item.id}
       style={{ ['--i' as string]: Math.min(index, 14) }}
@@ -305,7 +305,12 @@ export default function Timeline(): React.JSX.Element {
 
   const sourceMap = useMemo(() => new Map(sources.map((s) => [s.id, s])), [sources])
   const [title, subtitle] = viewTitle(view, t, sources)
+  const showHidden = useApp((s) => s.showHidden)
+  const setShowHidden = useApp((s) => s.setShowHidden)
+  const filteredSource = view.type === 'source' ? sources.find((x) => x.id === view.sourceId && x.filter) : undefined
   const selectedIndex = items.findIndex((i) => i.id === selectedId)
+  // Fonction stable : les cartes (mémoïsées) ne se redessinent que si leur propre contenu change.
+  const onSelect = useCallback((id: string) => void select(id), [select])
 
   useEffect(() => {
     const h = setTimeout(() => setSearch(q), 220)
@@ -450,6 +455,18 @@ export default function Timeline(): React.JSX.Element {
           </motion.button>
         )}
       </AnimatePresence>
+      {filteredSource && (
+        <div className="filter-bar">
+          <Filter size={13} />
+          <span>{t.filterActive}</span>
+          <button className="link-btn" onClick={() => setShowHidden(!showHidden)}>
+            {showHidden ? t.hideFiltered : t.showFiltered}
+          </button>
+          <button className="link-btn" onClick={() => useApp.getState().openFilter(filteredSource.id)}>
+            {t.filtersMenu}
+          </button>
+        </div>
+      )}
       <div className="list-scroll" ref={scrollRef}>
         {pull > 0 && (
           <div className={`pull-indicator${pull >= PULL_THRESHOLD ? ' armed' : ''}`} style={{ height: Math.min(pull, 150) * 0.55 }}>
@@ -484,7 +501,7 @@ export default function Timeline(): React.JSX.Element {
             beforeSelected={i === selectedIndex - 1}
             showUnread={!!settings?.showUnread}
             lang={settings?.language ?? 'fr'}
-            onSelect={(id) => void select(id)}
+            onSelect={onSelect}
           />
         ))}
         <div ref={sentinel} style={{ height: 1 }} />

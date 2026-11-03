@@ -16,6 +16,7 @@ import {
   Network,
   PenTool,
   Folder,
+  Filter,
   Plus,
   RefreshCw,
   Scale,
@@ -31,6 +32,7 @@ import { useT } from '../lib/i18n'
 import SourceIcon from './SourceIcon'
 import { catalog } from '@shared/catalog'
 import Popover from './Popover'
+import UpdateBanner from './UpdateBanner'
 import { useKeyLabel } from '../lib/shortcuts'
 
 function sameView(a: View, b: View): boolean {
@@ -246,7 +248,7 @@ export default function Sidebar(): React.JSX.Element {
         key={s.id}
         view={{ type: 'source', sourceId: s.id }}
         icon={<SourceIcon source={s} />}
-        trail={withKind ? <KindIcon kind={s.kind} /> : undefined}
+        trail={withKind || s.filter ? <>{s.filter && <Filter size={12} />}{withKind && <KindIcon kind={s.kind} />}</> : undefined}
         label={s.title}
         badge={unread(s.id)}
         error={s.error}
@@ -423,6 +425,7 @@ function KindIcon({ kind }: { kind: SourceKind }): React.JSX.Element {
           </motion.div>
         </AnimatePresence>
       </nav>
+      <UpdateBanner />
 
       <AnimatePresence>
         {menu && (
@@ -445,6 +448,15 @@ function KindIcon({ kind }: { kind: SourceKind }): React.JSX.Element {
               }}
             >
               <Folder size={15} /> {t.changeCategory}
+            </button>
+            <button
+              onClick={() => {
+                const id = menu.source.id
+                setMenu(null)
+                useApp.getState().openFilter(id)
+              }}
+            >
+              <Filter size={15} /> {t.filtersMenu}
             </button>
             <div className="sep" />
             <button

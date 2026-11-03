@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from '
 import { dirname } from 'node:path'
 import type { Board, BoardSummary, Counts, Highlight, HighlightWithItem, Item, ItemQuery, ReadingBalance, Settings, Source, View } from '@shared/types'
 import { DEFAULT_SETTINGS } from '@shared/types'
+import type { SourceFilter } from '@shared/filters'
 import { boardItemIds, boardSize } from '@shared/boardExport'
 
 // SQLite compilé en WebAssembly (sql.js) : aucun module natif à recompiler pour Mac, Windows et Linux.
@@ -68,7 +69,12 @@ const MIGRATIONS = [
    ALTER TABLE items ADD COLUMN transcript_url TEXT;
    ALTER TABLE items ADD COLUMN transcript TEXT;`,
   // v0.10 : année déjà récupérée en entier pour une chaîne YouTube (avec une clé d'API).
-  `ALTER TABLE sources ADD COLUMN backfilled_year INTEGER;`
+  `ALTER TABLE sources ADD COLUMN backfilled_year INTEGER;`,
+  // v0.14 : filtres (catégories du flux, Shorts YouTube, articles masqués sans être supprimés).
+  `ALTER TABLE items ADD COLUMN categories TEXT;
+   ALTER TABLE items ADD COLUMN short INTEGER;
+   ALTER TABLE items ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0;
+   ALTER TABLE sources ADD COLUMN filter TEXT;`
 ]
 
 export interface NotionState {
@@ -230,7 +236,8 @@ export class Store {
       error: (r.error as string) ?? undefined,
       leaning: (r.leaning as number) ?? undefined,
       owner: (r.owner as string) ?? undefined,
-      backfilledYear: (r.backfilled_year as number) ?? undefined
+      backfilledYear: (r.backfilled_year as number) ?? undefined,
+      filter: r.filter ? (JSON.parse(r.filter as string) as SourceFilter) : undefined
     }
   }
 
@@ -281,14 +288,16 @@ export class Store {
       error: 'error',
       leaning: 'leaning',
       owner: 'owner',
-      backfilledYear: 'backfilled_year'
+      backfilledYear: 'backfilled_year',
+      filter: 'filter'
     }
     const sets: string[] = []
     const vals: SqlValue[] = []
     for (const [k, col] of Object.entries(cols)) {
       if (k in patch) {
         sets.push(`${col} = ?`)
-        vals.push(((patch as Record<string, unknown>)[k] ?? null) as SqlValue)
+        const v = (patch as Record<string, unknown>)[k]
+        vals.push((k === 'filter' ? (v ? JSON.stringify(v) : null) : (v ?? null)) as SqlValue)
       }
     }
     if (sets.length) this.run(`UPDATE sources SET ${sets.join(', ')} WHERE id = ?`, [...vals, id])
@@ -344,7 +353,10 @@ export class Store {
       mediaUrl: (r.media_url as string) ?? undefined,
       mediaType: (r.media_type as Item['mediaType']) ?? undefined,
       duration: (r.duration as number) ?? undefined,
-      transcriptUrl: (r.transcript_url as string) ?? undefined
+      transcriptUrl: (r.transcript_url as string) ?? undefined,
+      categories: r.categories ? (JSON.parse(r.categories as string) as string[]) : undefined,
+      short: r.short == null ? undefined : !!r.short,
+      hidden: !!r.hidden
     }
   }
 
@@ -363,8 +375,8 @@ export class Store {
       for (const it of items) {
         added += this.run(
           `INSERT OR IGNORE INTO items (id, source_id, guid, url, title, author, summary, content_html, image_url, published_at, fetched_at, format, file_path,
-                                        media_url, media_type, duration, transcript_url)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                                        media_url, media_type, duration, transcript_url, categories, short, hidden)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             it.id,
             it.sourceId,
@@ -382,7 +394,10 @@ export class Store {
             it.mediaUrl ?? null,
             it.mediaType ?? null,
             it.duration ?? null,
-            it.transcriptUrl ?? null
+            it.transcriptUrl ?? null,
+            it.categories?.length ? JSON.stringify(it.categories) : null,
+            it.short == null ? null : it.short ? 1 : 0,
+            it.hidden ? 1 : 0
           ]
         )
       }
@@ -444,6 +459,8 @@ export class Store {
     const conds = [where]
     const vals: SqlValue[] = [...params]
     if (q.unreadOnly) conds.push('i.read = 0')
+    // Les filtres masquent dans les flux ; ce qu'on a gardé soi-même (plus tard, favoris…) reste visible.
+    if (!q.showHidden && ['home', 'kind', 'source', 'category'].includes(q.view.type)) conds.push('i.hidden = 0')
     if (q.search?.trim()) {
       conds.push('(i.title LIKE ? OR i.summary LIKE ? OR i.author LIKE ?)')
       const like = `%${q.search.trim().replace(/[%_]/g, '')}%`
@@ -452,7 +469,7 @@ export class Store {
     const rows = this.all(
       `SELECT i.id, i.source_id, i.guid, i.url, i.title, i.author, i.summary, i.image_url, i.published_at, i.fetched_at,
               i.read, i.later, i.bookmarked, i.favorite, i.format, i.position, i.progress, i.read_at,
-              i.media_url, i.media_type, i.duration, i.transcript_url,
+              i.media_url, i.media_type, i.duration, i.transcript_url, i.categories, i.short, i.hidden,
               (SELECT COUNT(*) FROM highlights h WHERE h.item_id = i.id) AS highlight_count
        FROM items i JOIN sources s ON s.id = i.source_id
        WHERE ${conds.join(' AND ')}
@@ -530,6 +547,38 @@ export class Store {
     return ids
   }
 
+  /**
+   * Recalcule les articles masqués d'une source (ou de toutes) après un changement de filtre.
+   * `passes` décide pour chaque article ; seules les lignes qui changent sont écrites.
+   */
+  recomputeHidden(sourceId: string | null, passes: (it: Item, source: Source) => boolean): { total: number; hidden: number } {
+    const sources = new Map(this.listSources().map((s) => [s.id, s]))
+    const rows = this.all(
+      `SELECT id, source_id, title, author, summary, categories, short, hidden FROM items WHERE ${sourceId ? 'source_id = ?' : '1'}`,
+      sourceId ? [sourceId] : []
+    )
+    let hidden = 0
+    this.transaction(() => {
+      for (const r of rows) {
+        const source = sources.get(r.source_id as string)
+        if (!source) continue
+        const it = this.toItem(r, [])
+        const hide = !passes(it, source)
+        if (hide) hidden++
+        if (hide !== !!r.hidden) this.run('UPDATE items SET hidden = ? WHERE id = ?', [hide ? 1 : 0, r.id as string])
+      }
+    })
+    return { total: rows.length, hidden }
+  }
+
+  /** Articles d'une source pour l'aperçu d'un filtre (les plus récents). */
+  filterSample(sourceId: string, limit = 300): Item[] {
+    return this.all('SELECT id, source_id, title, author, summary, categories, short, published_at FROM items WHERE source_id = ? ORDER BY published_at DESC LIMIT ?', [
+      sourceId,
+      limit
+    ]).map((r) => this.toItem(r, []))
+  }
+
   /** Purge les vieux articles lus sans marque ni surlignage, pour garder une base légère. */
   prune(olderThan: number, keep: Iterable<string> = []): number {
     const kept = [...keep]
@@ -549,7 +598,7 @@ export class Store {
     const unreadBySource: Record<string, number> = {}
     let unreadTotal = 0
     for (const r of this.all(
-      "SELECT source_id, COUNT(*) AS n FROM items WHERE read = 0 AND source_id NOT IN (SELECT id FROM sources WHERE kind IN ('links', 'book')) GROUP BY source_id"
+      "SELECT source_id, COUNT(*) AS n FROM items WHERE read = 0 AND hidden = 0 AND source_id NOT IN (SELECT id FROM sources WHERE kind IN ('links', 'book')) GROUP BY source_id"
     )) {
       unreadBySource[r.source_id as string] = r.n as number
       unreadTotal += r.n as number

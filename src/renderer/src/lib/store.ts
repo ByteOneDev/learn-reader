@@ -1,10 +1,10 @@
 import { create } from 'zustand'
-import type { NewSource, BoardMode, BoardSummary, Counts, Highlight, Item, LearnAPI, Settings, Source, View } from '@shared/types'
+import type { UpdateStatus, NewSource, BoardMode, BoardSummary, Counts, Highlight, Item, LearnAPI, Settings, Source, View } from '@shared/types'
 import { dictionaries } from './strings'
 
 export const PAGE = 80
 
-type Dialog = null | 'add' | 'settings' | 'catalog' | 'balance' | 'shortcuts' | 'report'
+type Dialog = null | 'add' | 'settings' | 'catalog' | 'balance' | 'shortcuts' | 'report' | 'filter'
 
 /** Bilan d'un abonnement groupé (accueil, catalogue, OPML) : reste affiché tant qu'on ne le ferme pas. */
 export interface SubscribeReport {
@@ -47,6 +47,13 @@ interface AppState {
   dialog: Dialog
   refreshing: boolean
   toasts: Toast[]
+  update: UpdateStatus | null
+  /** Afficher aussi les articles masqués par un filtre (vue courante). */
+  showHidden: boolean
+  setShowHidden(on: boolean): void
+  /** Source dont on édite le filtre. */
+  filterSourceId: string | null
+  openFilter(sourceId: string): void
   report: SubscribeReport | null
   showReport(r: SubscribeReport | null): void
 
@@ -106,6 +113,16 @@ export const useApp = create<AppState>((set, get) => ({
   dialog: null,
   refreshing: false,
   toasts: [],
+  update: null,
+  showHidden: false,
+  setShowHidden(on) {
+    set({ showHidden: on })
+    void get().loadItems(true)
+  },
+  filterSourceId: null,
+  openFilter(sourceId) {
+    set({ filterSourceId: sourceId, dialog: 'filter' })
+  },
   report: null,
   showReport(r) {
     set({ report: r, dialog: r ? 'report' : null })
@@ -117,6 +134,22 @@ export const useApp = create<AppState>((set, get) => ({
     set({ settings, ready: true })
     await get().reloadMeta()
     await get().loadItems(true)
+    void api.updateStatus().then((update) => set({ update }))
+    // Pendant une actualisation ou un import, chaque source (et chaque icône) signale un changement :
+    // on regroupe ces signaux en un seul rechargement, au plus toutes les 400 ms, au lieu de dizaines.
+    let reloadTimer: ReturnType<typeof setTimeout> | null = null
+    let firstSignal = 0
+    const scheduleReload = (): void => {
+      const now = Date.now()
+      if (!reloadTimer) firstSignal = now
+      if (reloadTimer) clearTimeout(reloadTimer)
+      const wait = now - firstSignal > 1500 ? 0 : 400
+      reloadTimer = setTimeout(() => {
+        reloadTimer = null
+        void get().reloadMeta()
+        void get().loadItems(true)
+      }, wait)
+    }
     api.onEvent((e) => {
       if (e.type === 'refresh-started') set({ refreshing: true })
       if (e.type === 'refresh-finished') set({ refreshing: false })
@@ -131,10 +164,8 @@ export const useApp = create<AppState>((set, get) => ({
       if (e.type === 'boards-changed') void get().reloadBoards()
       if (e.type === 'open-link') void get().openLink(e.itemId, e.highlightId)
       if (e.type === 'swipe') get().swipe(e.direction)
-      if (e.type === 'items-changed') {
-        void get().reloadMeta()
-        void get().loadItems(true)
-      }
+      if (e.type === 'update-status') set({ update: e.status })
+      if (e.type === 'items-changed') scheduleReload()
       if (e.type === 'menu') {
         if (e.action === 'refresh') void get().refresh()
         else set({ dialog: e.action === 'add-source' ? 'add' : 'settings' })
@@ -154,7 +185,7 @@ export const useApp = create<AppState>((set, get) => ({
   },
 
   setView(view) {
-    set({ view, selectedId: null, item: null, highlights: [], search: '' })
+    set({ view, selectedId: null, item: null, highlights: [], search: '', showHidden: false })
     if (view.type !== 'board') void get().loadItems(true)
   },
 
@@ -164,12 +195,12 @@ export const useApp = create<AppState>((set, get) => ({
   },
 
   async loadItems(reset = false) {
-    const { api, view, search, items } = get()
+    const { api, view, search, items, showHidden } = get()
     const seq = ++loadSeq
     set({ loading: true })
     const offset = reset ? 0 : items.length
     if (view.type === 'board') return set({ loading: false })
-    const page = await api.listItems({ view, search, limit: PAGE, offset, unreadOnly: false })
+    const page = await api.listItems({ view, search, limit: PAGE, offset, unreadOnly: false, showHidden })
     if (seq !== loadSeq) return
     set({ items: reset ? page : [...items, ...page], hasMore: page.length === PAGE, loading: false })
   },

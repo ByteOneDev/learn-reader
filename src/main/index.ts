@@ -10,12 +10,14 @@ import { parseLearnLink } from '@shared/links'
 import { boardToFreeMind, boardToOpml, boardToSvg } from '@shared/boardExport'
 import { execFile } from 'node:child_process'
 import { ObsidianSync } from './sync/obsidianSync'
+import { Updater } from './updater'
 import { NotionSync, type SecretBox } from './notion/notionSync'
 
 let win: BrowserWindow | null = null
 let core: LearnCore
 let sync: ObsidianSync
 let notion: NotionSync
+let updater: Updater
 
 /** Le jeton Notion est chiffré par le trousseau du système (Keychain, DPAPI, libsecret) quand il est disponible. */
 const secretBox: SecretBox = {
@@ -190,6 +192,7 @@ function registerIpc(): void {
       if ('refreshMinutes' in patch) scheduleRefresh()
       if ('theme' in patch) nativeTheme.themeSource = s.theme
       if ('glass' in patch || 'theme' in patch) applyGlass()
+      if ('hiddenTerms' in patch) core.applyGlobalFilter()
       if ('obsidianSync' in patch || 'obsidianVault' in patch || 'obsidianFolder' in patch) sync.restart()
       if ('notionSync' in patch) notion.restart()
       // Nouvelle clé YouTube : on remonte tout de suite l'année des chaînes suivies.
@@ -264,6 +267,12 @@ function registerIpc(): void {
     allHighlights: () => core.store.allHighlights(),
     boardsForItem: (itemId: string) => core.boardsForItem(itemId),
     nativeGlass: () => nativeGlassActive(),
+    updateStatus: () => updater.status,
+    checkForUpdates: () => updater.check(core.store.getSettings().autoUpdate !== false),
+    downloadUpdate: () => updater.download(),
+    installUpdate: () => updater.install(),
+    previewSourceFilter: (sourceId: string, filter: Parameters<LearnCore['previewSourceFilter']>[1]) => core.previewSourceFilter(sourceId, filter),
+    setSourceFilter: (sourceId: string, filter: Parameters<LearnCore['setSourceFilter']>[1]) => core.setSourceFilter(sourceId, filter),
     saveFile: async (defaultName: string, data: string | Uint8Array) => {
       const ext = defaultName.split('.').pop() ?? ''
       const r = await dialog.showSaveDialog(win!, { defaultPath: defaultName, filters: ext ? [{ name: ext.toUpperCase(), extensions: [ext] }] : [] })
@@ -370,6 +379,10 @@ app.on('open-url', (e, url) => {
 pendingLink = linkFromArgv(process.argv) ?? null
 
 app.whenReady().then(async () => {
+  // Consentement YouTube déjà donné : en Europe, sans lui, les pages de chaîne renvoient vers un formulaire
+  // de cookies au lieu de la chaîne (et Learn ne trouve pas son flux).
+  for (const [name, value] of [['SOCS', 'CAI'], ['CONSENT', 'YES+cb']])
+    void session.defaultSession.cookies.set({ url: 'https://www.youtube.com', domain: '.youtube.com', name, value, secure: true, expirationDate: Date.now() / 1000 + 3600 * 24 * 365 * 5 }).catch(() => {})
   // Pas de permissions (caméra, micro, notifications…) pour le contenu affiché ; seul le plein écran vidéo est permis.
   session.defaultSession.setPermissionRequestHandler((_wc, perm, cb) => cb(perm === 'fullscreen'))
   // Le lecteur YouTube refuse de s'afficher sans Referer (erreur 153), ce qui est le cas d'une page file://.
@@ -388,6 +401,26 @@ app.whenReady().then(async () => {
   registerIpc()
   Menu.setApplicationMenu(buildMenu(send))
   createWindow()
+  // Mise à jour : vérifiée peu après le démarrage puis toutes les 6 heures (app installée seulement).
+  updater = new Updater(net.fetch.bind(net), app.getVersion(), (status) => send({ type: 'update-status', status }), {
+    platform: process.platform,
+    arch: process.arch,
+    exePath: app.getPath('exe'),
+    openPath: (p) => shell.openPath(p),
+    relaunch: () => {
+      // AppImage : relancer le fichier remplacé, pas le programme monté de l'ancienne version.
+      app.relaunch(process.env.APPIMAGE ? { execPath: process.env.APPIMAGE, args: process.argv.slice(1).filter((x) => !x.startsWith('--appimage')) } : undefined)
+      app.exit(0)
+    },
+    quit: () => app.quit()
+  })
+  if (app.isPackaged) {
+    const check = (): void => {
+      if (core.store.getSettings().autoUpdate !== false) void updater.check(true)
+    }
+    setTimeout(check, 8000)
+    setInterval(check, 6 * 3600_000)
+  }
   nativeTheme.on('updated', () => {
     applyGlass()
     send({ type: 'glass-changed' })

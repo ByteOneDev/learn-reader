@@ -29,14 +29,26 @@ function isReddit(url: string): boolean {
   }
 }
 
-// Requêtes vers Reddit espacées (au plus une toutes les 2 s), même pendant une actualisation en parallèle.
-let redditQueue: Promise<void> = Promise.resolve()
-const REDDIT_SPACING = 2000
-function redditSlot(): Promise<void> {
-  const slot = redditQueue.then(() => new Promise<void>((r) => setTimeout(r, REDDIT_SPACING)))
-  const mine = redditQueue
-  redditQueue = slot
-  return mine
+// Requêtes espacées vers les hôtes qui limitent les clients trop pressés, même pendant une actualisation
+// en parallèle : Reddit (une toutes les 2 s), YouTube (une toutes les 250 ms, sinon des 404/500 en rafale
+// quand on suit beaucoup de chaînes).
+const queues = new Map<string, Promise<void>>()
+function slot(host: string, spacing: number): Promise<void> {
+  const prev = queues.get(host) ?? Promise.resolve()
+  queues.set(
+    host,
+    prev.then(() => new Promise<void>((r) => setTimeout(r, spacing)))
+  )
+  return prev
+}
+const redditSlot = (): Promise<void> => slot('reddit', 2000)
+
+function isYoutube(url: string): boolean {
+  try {
+    return /(^|\.)youtube\.com$/.test(new URL(url).hostname)
+  } catch {
+    return false
+  }
 }
 
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms))
@@ -54,6 +66,7 @@ export async function fetchText(fetchFn: FetchFn, url: string, headers: Record<s
   let asBrowser = false
   for (let attempt = 0; ; attempt++) {
     if (reddit) await redditSlot()
+    else if (isYoutube(url)) await slot('youtube', 250)
     const ctrl = new AbortController()
     const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS)
     try {

@@ -16,6 +16,8 @@ export interface ParsedItem {
   mediaType?: MediaType
   duration?: number
   transcriptUrl?: string
+  /** Catégories annoncées par le flux (RSS <category>, Atom <category term>, JSON Feed tags). */
+  categories?: string[]
 }
 
 export interface ParsedFeed {
@@ -155,6 +157,15 @@ function finishItem(p: ParsedItem): ParsedItem {
   return p
 }
 
+/** Catégories d'un article : texte des balises (RSS) ou attribut term/label (Atom), dédoublonnées. */
+function categoriesOf(it: Record<string, unknown>): string[] | undefined {
+  const out = arr(it.category)
+    .map((c) => (typeof c === 'string' ? c : attr(c, 'term') ?? attr(c, 'label') ?? text(c)))
+    .map((c) => htmlToText(String(c ?? '')).trim())
+    .filter((c) => c && c.length < 80)
+  return out.length ? [...new Set(out)].slice(0, 20) : undefined
+}
+
 function parseRss(channel: Record<string, unknown>, items: Node[], feedUrl: string): ParsedFeed {
   const siteUrl = absolutize(text(arr(channel.link).find((l) => typeof l === 'string' || !attr(l, 'href')) ?? channel.link), feedUrl)
   const image = channel.image as Record<string, unknown> | undefined
@@ -176,6 +187,7 @@ function parseRss(channel: Record<string, unknown>, items: Node[], feedUrl: stri
         contentHtml,
         imageUrl: mediaImage(it, url ?? feedUrl),
         publishedAt: parseDate(text(it.pubDate) || text(it['dc:date']) || text(it.published)),
+        categories: categoriesOf(it),
         ...mediaOf(it, url ?? feedUrl)
       })
     })
@@ -228,6 +240,7 @@ function parseAtom(feed: Record<string, unknown>, feedUrl: string): ParsedFeed {
         contentHtml: contentHtml ?? (text(it.summary) || undefined),
         imageUrl: mediaImage(it, url ?? feedUrl),
         publishedAt: parseDate(text(it.published) || text(it.updated)),
+        categories: categoriesOf(it),
         ...mediaOf(it, url ?? feedUrl),
         ...youtube
       })
@@ -248,6 +261,7 @@ interface JsonFeedItem {
   date_modified?: string
   author?: { name?: string }
   authors?: { name?: string }[]
+  tags?: unknown[]
 }
 
 function parseJsonFeed(json: Record<string, unknown>, feedUrl: string): ParsedFeed {
@@ -266,7 +280,8 @@ function parseJsonFeed(json: Record<string, unknown>, feedUrl: string): ParsedFe
         summary: it.summary,
         contentHtml: it.content_html ?? (it.content_text ? `<p>${it.content_text.replace(/</g, '&lt;')}</p>` : undefined),
         imageUrl: it.image ?? it.banner_image,
-        publishedAt: parseDate(it.date_published ?? it.date_modified ?? '')
+        publishedAt: parseDate(it.date_published ?? it.date_modified ?? ''),
+        categories: Array.isArray(it.tags) ? it.tags.filter((x): x is string => typeof x === 'string').slice(0, 20) : undefined
       })
     )
   }

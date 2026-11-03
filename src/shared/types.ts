@@ -1,6 +1,8 @@
 // Modèle de données partagé entre le processus principal, le preload et l'interface.
 // Ce modèle est volontairement indépendant d'Electron : la future app native réutilisera la même base.
 
+import type { SourceFilter } from './filters'
+
 export type Lang = 'fr' | 'en'
 
 export type SourceKind =
@@ -35,6 +37,8 @@ export interface Source {
   owner?: string
   /** YouTube : année déjà récupérée en entier grâce à la clé d'API. */
   backfilledYear?: number
+  /** Filtre d'articles propre à cette source. */
+  filter?: SourceFilter
 }
 
 export type BookFormat = 'epub' | 'pdf'
@@ -83,6 +87,12 @@ export interface Item {
   duration?: number
   /** Transcription annoncée par le flux (balise podcast:transcript). */
   transcriptUrl?: string
+  /** Catégories annoncées par le flux (pour les filtres). */
+  categories?: string[]
+  /** Short YouTube. */
+  short?: boolean
+  /** Masqué par un filtre (jamais supprimé). */
+  hidden?: boolean
 }
 
 export type MediaType = 'audio' | 'video' | 'youtube'
@@ -164,6 +174,30 @@ export interface BoardData {
   pending?: NewBoardNode[]
 }
 
+/** État de la mise à jour automatique. */
+export interface UpdateStatus {
+  state: 'idle' | 'checking' | 'none' | 'available' | 'downloading' | 'ready' | 'error'
+  current: string
+  version?: string
+  notesUrl?: string
+  /** Avancement du téléchargement, de 0 à 1. */
+  progress?: number
+  size?: number
+  checkedAt?: number
+  error?: string
+}
+
+/** Aperçu d'un filtre de source. */
+export interface FilterPreview {
+  total: number
+  hidden: number
+  hiddenTitles: string[]
+  keptTitles: string[]
+  /** Catégories trouvées dans les articles récents, les plus fréquentes d'abord. */
+  categories: { name: string; count: number }[]
+  shorts: number
+}
+
 /** Board qui fait référence à un document (surlignage, extrait, document entier). */
 export interface LinkedBoard {
   id: string
@@ -214,6 +248,8 @@ export type View =
 
 export interface ItemQuery {
   view: View
+  /** Inclure les articles masqués par un filtre. */
+  showHidden?: boolean
   search?: string
   unreadOnly?: boolean
   limit?: number
@@ -257,6 +293,10 @@ export interface Settings {
   /** Synchronisation automatique avec Notion (relève toutes les 5 minutes, envoi après chaque modification). */
   notionSync?: boolean
   notionLastPull?: number
+  /** Mise à jour automatique (vérifiée au démarrage et toutes les 6 h). Absent : activée. */
+  autoUpdate?: boolean
+  /** Mots masqués partout (titre et résumé), en plus des filtres par source. */
+  hiddenTerms?: string[]
   /** Barre latérale : sources rangées par type de média (défaut) ou par catégorie. */
   sidebarGroup?: 'type' | 'category'
   /** Raccourcis personnalisés : action → combinaison (« k », « Cmd+Shift+j »…). Absents : valeurs par défaut. */
@@ -334,6 +374,7 @@ export type LearnEvent =
   | { type: 'refresh-started' }
   /** Thème système ou réglage « Réduire la transparence » modifié : l'effet verre natif a pu changer. */
   | { type: 'glass-changed' }
+  | { type: 'update-status'; status: UpdateStatus }
   | { type: 'refresh-finished'; result: RefreshResult }
   | { type: 'items-changed' }
   | { type: 'highlights-changed'; itemId: string; message?: string }
@@ -396,6 +437,14 @@ export interface LearnAPI {
   allHighlights(): Promise<HighlightWithItem[]>
   /** Boards qui citent ce document (dans un nœud, un élément de schéma ou en attente d'insertion). */
   boardsForItem(itemId: string): Promise<LinkedBoard[]>
+  /** Mise à jour automatique : état, vérification (et téléchargement), installation puis redémarrage. */
+  updateStatus(): Promise<UpdateStatus>
+  checkForUpdates(): Promise<UpdateStatus>
+  downloadUpdate(): Promise<UpdateStatus>
+  installUpdate(): Promise<void>
+  /** Filtre d'une source : aperçu sans enregistrer, puis application. */
+  previewSourceFilter(sourceId: string, filter: SourceFilter | null): Promise<FilterPreview>
+  setSourceFilter(sourceId: string, filter: SourceFilter | null): Promise<{ total: number; hidden: number }>
   /** La fenêtre est-elle translucide (vibrancy macOS, Mica Windows 11) ? Sinon l'effet verre est dessiné par l'interface. */
   nativeGlass(): Promise<boolean>
   /** Enregistre un fichier choisi par l'utilisateur (export de schéma, etc.). */
@@ -465,6 +514,12 @@ export const API_METHODS = [
   'allHighlights',
   'boardsForItem',
   'nativeGlass',
+  'previewSourceFilter',
+  'updateStatus',
+  'checkForUpdates',
+  'downloadUpdate',
+  'installUpdate',
+  'setSourceFilter',
   'saveFile',
   'exportBoardToObsidian',
   'exportBoardFile',

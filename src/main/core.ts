@@ -1,9 +1,10 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { basename, extname, join, relative, sep } from 'node:path'
-import type { Board, BoardMode, BookFormat, Cue, Highlight, LinkedBoard, Item, LearnEvent, NewBoardNode, NewSource, RefreshResult, ResolvedInput, Source, TocEntry } from '@shared/types'
+import type { Board, BoardMode, BookFormat, Cue, FilterPreview, Highlight, LinkedBoard, Item, LearnEvent, NewBoardNode, NewSource, RefreshResult, ResolvedInput, Source, TocEntry } from '@shared/types'
 import { findRoot, layoutMindmap, nodeHeight, NODE_WIDTH } from '@shared/boardLayout'
 import { boardCitesItem } from '@shared/boardExport'
+import { filterIsActive, itemPasses, looksLikeShort, type SourceFilter } from '@shared/filters'
 import { hostOf, uid } from '@shared/util'
 import { fetchArticle } from './article'
 import { Epub } from './books/epub'
@@ -12,7 +13,7 @@ import { buildMarkdown, mergeWithExisting, safeFileName } from './export/markdow
 import { boardOutline, buildCanvas } from './export/canvas'
 import { fetchFeed, fetchIcon, fetchText, HttpError, type FetchFn } from './feeds/fetcher'
 import { parseTranscript } from './media/transcript'
-import { fetchYearVideos, startOfYear, uploadsPlaylist } from './media/youtube'
+import { fetchYearVideos, fetchYoutubeFeed, startOfYear, uploadsPlaylist } from './media/youtube'
 import { pickPodcast, searchPodcasts, type PodcastResult } from './feeds/podcastSearch'
 import { formatTime, timeLink } from '@shared/media'
 import { resolveInput } from './feeds/resolve'
@@ -68,7 +69,7 @@ export class LearnCore {
     }
     let fetched: Awaited<ReturnType<typeof fetchFeed>>
     try {
-      fetched = await fetchFeed(this.fetchFn, resolved.url)
+      fetched = resolved.kind === 'youtube' ? await fetchYoutubeFeed(this.fetchFn, resolved.url, this.store.getSettings().youtubeApiKey) : await fetchFeed(this.fetchFn, resolved.url)
     } catch (e) {
       // Limite de débit (Reddit surtout) : on s'abonne quand même, les articles viendront à la prochaine actualisation.
       if (e instanceof HttpError && e.status === 429 && resolved.kind !== 'rss') {
@@ -170,8 +171,11 @@ export class LearnCore {
     const now = Date.now()
     // YouTube : uniquement les vidéos de l'année en cours.
     const kept = source.kind === 'youtube' ? items.filter((p) => (p.publishedAt ?? now) >= startOfYear(now)) : items
+    const globalTerms = this.store.getSettings().hiddenTerms ?? []
     return this.store.insertItems(
-      kept.slice(0, source.kind === 'youtube' ? 1000 : MAX_ITEMS_PER_FETCH).map((p, i) => ({
+      kept.slice(0, source.kind === 'youtube' ? 1000 : MAX_ITEMS_PER_FETCH).map((p, i) => {
+        const short = source.kind === 'youtube' ? looksLikeShort(p.url, p.title) : undefined
+        return {
         id: uid('i_'),
         sourceId: source.id,
         guid: p.guid,
@@ -185,11 +189,52 @@ export class LearnCore {
         mediaType: p.mediaType,
         duration: p.duration,
         transcriptUrl: p.transcriptUrl,
+        categories: p.categories,
+        short,
+        // Filtre de la source et mots masqués partout : l'article est gardé, mais masqué.
+        hidden: !itemPasses({ title: p.title, author: p.author, summary: p.summary, categories: p.categories, short }, source.filter, globalTerms),
         // Sans date, on garde l'ordre du flux.
         publishedAt: Math.min(p.publishedAt ?? now - i * 1000, now),
         fetchedAt: now
-      }))
+        }
+      })
     )
+  }
+
+  // ── Filtres ───────────────────────────────────────────────────────────────
+
+  /** Applique (ou retire) le filtre d'une source et recalcule ses articles masqués. */
+  setSourceFilter(sourceId: string, filter: SourceFilter | null): { total: number; hidden: number } {
+    const active = filterIsActive(filter) ? filter : null
+    this.store.updateSource(sourceId, { filter: active ?? undefined })
+    const globalTerms = this.store.getSettings().hiddenTerms ?? []
+    const r = this.store.recomputeHidden(sourceId, (it, s) => itemPasses(it, s.filter, globalTerms))
+    this.emit({ type: 'items-changed' })
+    return r
+  }
+
+  /** Mots masqués partout modifiés : toutes les sources sont recalculées. */
+  applyGlobalFilter(): void {
+    const globalTerms = this.store.getSettings().hiddenTerms ?? []
+    this.store.recomputeHidden(null, (it, s) => itemPasses(it, s.filter, globalTerms))
+    this.emit({ type: 'items-changed' })
+  }
+
+  /** Aperçu d'un filtre sur les articles récents d'une source, sans rien enregistrer. */
+  previewSourceFilter(sourceId: string, filter: SourceFilter | null): FilterPreview {
+    const items = this.store.filterSample(sourceId)
+    const globalTerms = this.store.getSettings().hiddenTerms ?? []
+    const hiddenItems = items.filter((it) => !itemPasses(it, filter, globalTerms))
+    const counts = new Map<string, number>()
+    for (const it of items) for (const c of it.categories ?? []) counts.set(c, (counts.get(c) ?? 0) + 1)
+    return {
+      total: items.length,
+      hidden: hiddenItems.length,
+      hiddenTitles: hiddenItems.slice(0, 6).map((it) => it.title),
+      keptTitles: items.filter((it) => !hiddenItems.includes(it)).slice(0, 6).map((it) => it.title),
+      categories: [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 24).map(([name, count]) => ({ name, count })),
+      shorts: items.filter((it) => it.short).length
+    }
   }
 
   // ── Actualisation ─────────────────────────────────────────────────────────
@@ -209,7 +254,7 @@ export class LearnCore {
     const result: RefreshResult = { sources: sources.length, newItems: 0, errors: [] }
     await pool(sources, CONCURRENCY, async (s) => {
       try {
-        const { feed } = await fetchFeed(this.fetchFn, s.url)
+        const { feed } = s.kind === 'youtube' ? await fetchYoutubeFeed(this.fetchFn, s.url, this.store.getSettings().youtubeApiKey) : await fetchFeed(this.fetchFn, s.url)
         result.newItems += this.storeItems(s, feed.items)
         if (s.kind === 'youtube') result.newItems += await this.backfillYear(s)
         this.store.updateSource(s.id, { lastFetchedAt: Date.now(), error: undefined })

@@ -1,8 +1,9 @@
 // API simulée, en mémoire : permet de développer et tester l'interface dans un simple navigateur
 // (npm run web), sans Electron ni réseau. Jamais utilisée dans l'application réelle.
-import type { Board, NotionStatus, Counts, Highlight, Item, ItemQuery, LearnAPI, LearnEvent, NewSource, ReadingBalance, Settings, Source, TocEntry, View } from '@shared/types'
+import type { UpdateStatus, Board, NotionStatus, Counts, Highlight, Item, ItemQuery, LearnAPI, LearnEvent, NewSource, ReadingBalance, Settings, Source, TocEntry, View } from '@shared/types'
 import { layoutMindmap } from '@shared/boardLayout'
 import { boardCitesItem, boardSize } from '@shared/boardExport'
+import { itemPasses } from '@shared/filters'
 import { DEFAULT_SETTINGS } from '@shared/types'
 import { uid } from '@shared/util'
 
@@ -279,6 +280,10 @@ items.push(
 let highlights: Highlight[] = []
 let notion: NotionStatus = { connected: false }
 
+// Catégories du flux de démonstration (pour l'aperçu des filtres).
+const DEMO_CATEGORIES = [['Réseaux', 'Sécurité'], ['Matériel'], ['Sécurité', 'Bons plans'], ['Logiciel'], ['Bons plans']]
+items.filter((i) => i.sourceId === 's1').forEach((it, i) => (it.categories = DEMO_CATEGORIES[i % DEMO_CATEGORIES.length]))
+
 const boards: Board[] = [
   {
     id: 'board1',
@@ -320,6 +325,7 @@ const boards: Board[] = [
 ]
 for (const b of boards) if (b.mode === 'mindmap') for (const [id, p] of layoutMindmap(b.data)) Object.assign(b.data.nodes.find((n) => n.id === id)!, p)
 let settings: Settings = { ...DEFAULT_SETTINGS, onboarded: new URLSearchParams(location.search).get('onboarding') === null, obsidianVault: '/Users/moi/Obsidian' }
+let update: UpdateStatus = { state: 'idle', current: '0.13.0' }
 const listeners = new Set<(e: LearnEvent) => void>()
 const emit = (e: LearnEvent): void => listeners.forEach((l) => l(e))
 const delay = <T,>(v: T, ms = 60): Promise<T> => new Promise((r) => setTimeout(() => r(structuredClone(v)), ms))
@@ -413,6 +419,7 @@ export const mockApi: LearnAPI = {
     const search = q.search?.toLowerCase().trim()
     const list = items
       .filter((i) => matches(q.view, i) && (!q.unreadOnly || !i.read) && (!search || i.title.toLowerCase().includes(search)))
+      .filter((i) => q.showHidden || !i.hidden || !['home', 'kind', 'source', 'category'].includes(q.view.type))
       .sort((a, b) => b.publishedAt - a.publishedAt)
       .slice(q.offset ?? 0, (q.offset ?? 0) + (q.limit ?? 100))
       .map((i) => ({ ...i, contentHtml: undefined, highlightCount: highlights.filter((h) => h.itemId === i.id).length }))
@@ -520,6 +527,45 @@ export const mockApi: LearnAPI = {
     return delay(b)
   },
   boardsForItem: async (itemId) => delay(boards.filter((b) => boardCitesItem(b.data, itemId)).map((b) => ({ id: b.id, title: b.title, mode: b.mode }))),
+  updateStatus: async () => delay(update),
+  checkForUpdates: async () => {
+    // ?update dans l'adresse : simule une nouvelle version, téléchargée en quelques secondes.
+    if (!new URLSearchParams(location.search).has('update')) return delay((update = { state: 'none', current: '0.13.0', checkedAt: Date.now() }))
+    update = { state: 'downloading', current: '0.13.0', version: '0.14.0', progress: 0 }
+    emit({ type: 'update-status', status: update })
+    for (let i = 1; i <= 5; i++) {
+      await delay(null, 300)
+      update = { ...update, progress: i / 5, state: i === 5 ? 'ready' : 'downloading' }
+      emit({ type: 'update-status', status: update })
+    }
+    return update
+  },
+  downloadUpdate: async () => delay(update),
+  installUpdate: async () => {
+    console.info('[mock] installUpdate')
+  },
+  previewSourceFilter: async (sourceId, filter) => {
+    const list = items.filter((i) => i.sourceId === sourceId)
+    const hidden = list.filter((i) => !itemPasses(i, filter, settings.hiddenTerms ?? []))
+    const counts = new Map<string, number>()
+    for (const it of list) for (const c of it.categories ?? []) counts.set(c, (counts.get(c) ?? 0) + 1)
+    return delay({
+      total: list.length,
+      hidden: hidden.length,
+      hiddenTitles: hidden.slice(0, 6).map((i) => i.title),
+      keptTitles: list.filter((i) => !hidden.includes(i)).slice(0, 6).map((i) => i.title),
+      categories: [...counts.entries()].map(([name, count]) => ({ name, count })),
+      shorts: list.filter((i) => i.short).length
+    })
+  },
+  setSourceFilter: async (sourceId, filter) => {
+    const src = sources.find((x) => x.id === sourceId)!
+    src.filter = filter ?? undefined
+    const list = items.filter((i) => i.sourceId === sourceId)
+    for (const it of list) it.hidden = !itemPasses(it, src.filter, settings.hiddenTerms ?? [])
+    emit({ type: 'items-changed' })
+    return delay({ total: list.length, hidden: list.filter((i) => i.hidden).length })
+  },
   nativeGlass: async () => delay(new URLSearchParams(location.search).has('native-glass') && settings.glass !== 'off'),
   saveFile: async (name) => {
     console.info('[mock] saveFile', name)

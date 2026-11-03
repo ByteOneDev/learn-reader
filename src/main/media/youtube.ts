@@ -1,5 +1,5 @@
-import type { FetchFn } from '../feeds/fetcher'
-import type { ParsedItem } from '../feeds/parse'
+import { fetchText, type FetchFn } from '../feeds/fetcher'
+import { discoverFeeds, parseFeed, type ParsedFeed, type ParsedItem } from '../feeds/parse'
 
 // Vidéos YouTube de l'année en cours. Le flux RSS d'une chaîne ne donne que ses 15 dernières vidéos ;
 // avec une clé d'API YouTube (gratuite), on remonte toute l'année via la playlist « uploads » de la
@@ -68,4 +68,95 @@ export async function fetchYearVideos(fetchFn: FetchFn, apiKey: string, playlist
     token = json.nextPageToken
   }
   return out
+}
+
+// ── Récupération robuste d'une chaîne ─────────────────────────────────────
+// 1. Page de chaîne (@pseudo, /c/, /user/) : en Europe, YouTube redirige d'abord vers sa page de
+//    consentement aux cookies, sans lien vers le flux. On présente un consentement déjà donné, et on lit
+//    l'identifiant UC… directement dans la page.
+// 2. Flux RSS : il renvoie parfois des 404 ou 500 passagers ; un second essai suffit souvent.
+// 3. En dernier recours, avec une clé d'API : la playlist « uploads » (1 unité de quota par chaîne).
+
+export const YOUTUBE_CONSENT_COOKIE = 'SOCS=CAI; CONSENT=YES+cb'
+
+export function isYoutubePage(url: string): boolean {
+  try {
+    const u = new URL(url)
+    return /(^|\.)youtube\.com$/.test(u.hostname) && !u.pathname.startsWith('/feeds/')
+  } catch {
+    return false
+  }
+}
+
+/** Identifiant de chaîne (UC…) lu dans le HTML d'une page YouTube. */
+export function channelIdFromHtml(html: string): string | undefined {
+  const patterns = [
+    /<meta itemprop="(?:channelId|identifier)" content="(UC[\w-]{22})"/,
+    /"externalId":"(UC[\w-]{22})"/,
+    /<link rel="canonical" href="https:\/\/www\.youtube\.com\/channel\/(UC[\w-]{22})"/,
+    /feeds\/videos\.xml\?channel_id=(UC[\w-]{22})/,
+    /"channelId":"(UC[\w-]{22})"/
+  ]
+  for (const re of patterns) {
+    const m = html.match(re)
+    if (m) return m[1]
+  }
+  return undefined
+}
+
+export const channelFeedUrl = (id: string): string => `https://www.youtube.com/feeds/videos.xml?channel_id=${id}`
+
+const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms))
+
+/** Nom d'une chaîne par l'API (1 unité), quand elle n'a encore rien publié cette année. */
+async function channelTitle(fetchFn: FetchFn, apiKey: string, channelId: string): Promise<string | undefined> {
+  try {
+    const res = await fetchFn(`https://www.googleapis.com/youtube/v3/channels?part=snippet&id=${channelId}&key=${encodeURIComponent(apiKey)}`)
+    const json = (await res.json()) as { items?: { snippet?: { title?: string } }[] }
+    return json.items?.[0]?.snippet?.title
+  } catch {
+    return undefined
+  }
+}
+
+export async function fetchYoutubeFeed(fetchFn: FetchFn, url: string, apiKey?: string): Promise<{ feed: ParsedFeed; feedUrl: string; viaApi?: boolean }> {
+  let feedUrl = url
+  if (isYoutubePage(url)) {
+    const { body, url: finalUrl } = await fetchText(fetchFn, url, {
+      Cookie: YOUTUBE_CONSENT_COOKIE,
+      Accept: 'text/html',
+      'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8'
+    })
+    const id = channelIdFromHtml(body)
+    const discovered = discoverFeeds(body, finalUrl)[0]
+    if (id) feedUrl = channelFeedUrl(id)
+    else if (discovered) feedUrl = discovered
+    else throw new Error('Chaîne YouTube introuvable à cette adresse')
+  }
+  let lastError: Error | undefined
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const { body, url: finalUrl } = await fetchText(fetchFn, feedUrl)
+      return { feed: parseFeed(body, finalUrl), feedUrl }
+    } catch (e) {
+      lastError = e as Error
+      if (attempt === 0) await sleep(1500)
+    }
+  }
+  const playlist = uploadsPlaylist(feedUrl)
+  const key = apiKey?.trim()
+  if (key && playlist) {
+    const items = await fetchYearVideos(fetchFn, key, playlist, startOfYear(), 1)
+    const channelId = new URL(feedUrl).searchParams.get('channel_id')
+    const title = items[0]?.author ?? (channelId ? await channelTitle(fetchFn, key, channelId) : undefined) ?? 'YouTube'
+    return {
+      feed: { title, siteUrl: channelId ? `https://www.youtube.com/channel/${channelId}` : undefined, youtube: true, items },
+      feedUrl,
+      viaApi: true
+    }
+  }
+  throw new Error(
+    `YouTube ne fournit pas le flux de cette chaîne en ce moment (${lastError?.message ?? 'erreur'}). ` +
+      'Avec une clé d’API YouTube (Réglages → Vidéos YouTube), Learn passe par l’API à la place.'
+  )
 }
