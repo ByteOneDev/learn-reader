@@ -3924,3 +3924,127 @@ kbd {
   font-weight: 650;
   flex: none;
 }
+
+/* ── Fenêtre d'ajout : sources conseillées ──────────────────────────── */
+.suggest {
+  margin-top: 14px;
+}
+.suggest-head {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-3, var(--muted));
+  margin-bottom: 8px;
+}
+.suggest-scroll {
+  max-height: min(360px, 45vh);
+  overflow-y: auto;
+  margin: 0 -6px;
+  padding: 0 6px;
+}
+.suggest-group + .suggest-group {
+  margin-top: 12px;
+}
+.suggest-cat {
+  font-size: 13px;
+  font-weight: 650;
+  margin-bottom: 6px;
+}
+.suggest-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.suggest-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: 11px;
+  background: var(--control);
+  transition: background 0.15s;
+}
+.suggest-row:hover {
+  background: var(--control-hover, var(--control));
+}
+.suggest-kind {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.suggest-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.suggest-text .t {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 560;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.suggest-text .a,
+.suggest-text .error-text {
+  font-size: 12px;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.suggest-text .error-text {
+  color: var(--danger, #e5484d);
+  margin: 0;
+}
+.suggest-add {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  display: grid;
+  place-items: center;
+  flex: none;
+  cursor: pointer;
+  background: var(--accent);
+  color: #fff;
+  transition: transform 0.15s, background 0.15s;
+}
+.suggest-add:hover:not(:disabled) {
+  transform: scale(1.08);
+}
+.suggest-add:disabled {
+  cursor: default;
+}
+.suggest-add.done {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.suggest-more {
+  margin-top: 10px;
+  width: 100%;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.suggest-empty {
+  margin: 12px 0 0;
+}
+.suggest-scroll.short {
+  max-height: min(230px, 30vh);
+}

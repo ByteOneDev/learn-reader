@@ -7,9 +7,6 @@ import {
   Headphones,
   Heart,
   Highlighter,
-  AtSign,
-  MessagesSquare,
-  Rss,
   LayoutGrid,
   Layers,
   Link2,
@@ -30,6 +27,7 @@ import {
 import type { Source, SourceKind, View } from '@shared/types'
 import { useApp } from '../lib/store'
 import { useT } from '../lib/i18n'
+import KindIcon from './KindIcon'
 import SourceIcon from './SourceIcon'
 import { catalog } from '@shared/catalog'
 import Popover from './Popover'
@@ -264,14 +262,6 @@ export default function Sidebar(): React.JSX.Element {
   /** Ordre des sections en tri par type, et dans une catégorie (sous-groupes). */
 const TYPE_SECTIONS = ['podcasts', 'youtube', 'social', 'reddit', 'forums', 'feeds'] as const
 
-function KindIcon({ kind }: { kind: SourceKind }): React.JSX.Element {
-  const size = 13
-  if (kind === 'podcast') return <Headphones size={size} />
-  if (kind === 'youtube') return <Tv size={size} />
-  if (kind === 'reddit' || kind === 'forum') return <MessagesSquare size={size} />
-  if (kind === 'mastodon' || kind === 'bluesky' || kind === 'x') return <AtSign size={size} />
-  return <Rss size={size} />
-}
 
 /** Sources regroupées par catégorie dès qu'il y en a plusieurs ; sans catégorie : « Autres », en dernier. */
   const sourceRows = (list: Source[], section: SectionId, kinds: SourceKind[]): ReactNode => {
