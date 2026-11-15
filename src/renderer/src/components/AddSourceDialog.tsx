@@ -4,6 +4,7 @@ import { useApp } from '../lib/store'
 import { useT } from '../lib/i18n'
 import Dialog from './Dialog'
 import ImportPanel from './ImportPanel'
+import SuggestedSources from './SuggestedSources'
 
 export default function AddSourceDialog({ onClose }: { onClose(): void }): React.JSX.Element {
   const t = useT()
@@ -154,6 +155,7 @@ export default function AddSourceDialog({ onClose }: { onClose(): void }): React
           placeholder={tab === 'feed' ? t.sourceInput : t.linkInput}
           spellCheck={false}
         />
+        {tab === 'feed' && <SuggestedSources query={input} />}
         {detected && (
           <div className="detected">
             {t.detected} <span className="chip">{t.kinds[detected.kind]}</span>
